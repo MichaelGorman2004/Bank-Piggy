@@ -42,24 +42,7 @@
 .breadcrumb > span {
   opacity: 0.5;
 }
-.topBar > div {
-  display: flex;
-  align-items: center;
-  gap: 17px;
-}
-.mode {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-}
-.mode i {
-  height: 5px;
-  width: 5px;
-  border-radius: 50%;
-  background: var(--orange);
-}
-.saved {
+.saving {
   font-size: 9px;
   color: var(--walnut-soft);
 }
@@ -143,14 +126,11 @@
     font: 600 19px var(--font-display);
     letter-spacing: -0.5px;
   }
-  .mobileStatus {
+  .mobileSaving {
     display: block;
     font: 400 10px var(--font-body);
     color: var(--walnut-soft);
     letter-spacing: 0;
-  }
-  .mobileStatus > span:first-child {
-    margin-inline: 5px;
   }
   .mobileBar > img {
     height: 46px;

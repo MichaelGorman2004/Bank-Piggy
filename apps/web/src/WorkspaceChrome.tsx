@@ -16,7 +16,7 @@ interface ReloadNoticeProps {
 }
 
 /**
- * Keeps the household plan and save status visible above every finance view.
+ * Keeps navigation and transient save feedback above every finance view.
  * @param props Component values and event handlers.
  * @returns Rendered interface.
  */
@@ -33,10 +33,8 @@ export function WorkspaceBar(props: WorkspaceBarProps) {
         </button>
         <span>
           Bank Piggy
-          <small className={styles.mobileStatus}>
-            Household plan
-            <span>·</span>
-            <span role="status">{props.saving ? 'Saving…' : 'Plan saved'}</span>
+          <small className={styles.mobileSaving} role="status">
+            {props.saving ? 'Saving…' : ''}
           </small>
         </span>
         <img src="/assets/banker-piggy.png" alt="" />
@@ -46,15 +44,9 @@ export function WorkspaceBar(props: WorkspaceBarProps) {
           Our household<span>/</span>
           {VIEW_DETAILS[props.view].label}
         </span>
-        <div>
-          <span className={styles.mode}>
-            <i />
-            Household plan
-          </span>
-          <span className={styles.saved} role="status">
-            {props.saving ? 'Saving…' : 'Plan saved'}
-          </span>
-        </div>
+        <span className={styles.saving} role="status">
+          {props.saving ? 'Saving…' : ''}
+        </span>
       </div>
     </>
   );
