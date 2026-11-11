@@ -2,3 +2,4 @@ package-lock.json linguist-generated=true
 packages/contracts/index.ts linguist-generated=true
 packages/contracts/schema.json linguist-generated=true
 apps/api/internal/budget/contracts.gen.go linguist-generated=true
+apps/web/public/assets/providers/*.svg linguist-generated=true

@@ -1,4 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreBinaries": ["go", "gofmt", "golangci-lint"]
+  "ignoreBinaries": ["go", "gofmt", "golangci-lint"],
+  "workspaces": {
+    "apps/web": {
+      "project": ["src/**/*.{ts,tsx}"]
+    }
+  }
 }

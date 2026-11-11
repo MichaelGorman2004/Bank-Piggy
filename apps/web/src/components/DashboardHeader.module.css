@@ -1,0 +1,176 @@
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.heading {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+.heading h1 {
+  font-size: 28px;
+  letter-spacing: -0.8px;
+}
+.heading p {
+  color: var(--walnut-soft);
+  margin-top: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.headerAction {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+.headerControls {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 8px;
+}
+.selectField {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 550;
+}
+.scopeField {
+  flex: 1;
+  max-width: 220px;
+}
+.select {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  border-radius: 10px;
+  background: var(--glass);
+  border-color: var(--line);
+  padding: 9px 36px 9px 10px;
+  font-size: 12px;
+  font-weight: 550;
+}
+.selectChevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.selectSizer {
+  visibility: hidden;
+  white-space: nowrap;
+  padding: 9px 36px 9px 10px;
+  border: 1px solid var(--clear);
+}
+.periodField > select {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+.periodNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--walnut-soft);
+  margin: 0 0 10px;
+}
+.periodNote svg {
+  flex-shrink: 0;
+}
+@media (max-width: 1150px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .headerAction {
+    grid-column: 2;
+  }
+  .headerControls {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+@media (max-width: 800px) {
+  .header {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .heading h1 {
+    font-size: 23px;
+  }
+  .headerControls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .scopeField {
+    max-width: none;
+  }
+  .headerAction {
+    padding: 9px 11px;
+  }
+  .headerAction span {
+    display: none;
+  }
+}
+@media (pointer: coarse) {
+  .selectField {
+    font-size: 16px;
+  }
+}
+@media (max-height: 650px) and (min-width: 650px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    margin-bottom: 8px;
+    gap: 10px;
+  }
+  .heading h1 {
+    font-size: 22px;
+  }
+  .heading p {
+    display: none;
+  }
+  .headerControls {
+    grid-row: 1;
+    grid-column: 2;
+    width: auto;
+  }
+  .headerAction {
+    grid-column: 3;
+    padding: 8px;
+  }
+  .headerAction span {
+    display: none;
+  }
+}
+@media (max-height: 650px) and (min-width: 800px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-bottom: 0;
+  }
+  .heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .headerControls {
+    grid-column: 1;
+  }
+  .headerAction {
+    grid-column: 2;
+  }
+}

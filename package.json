@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "workspaces": [
+    "apps/web",
     "packages/contracts"
   ],
   "engines": {
@@ -11,18 +12,20 @@
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dev:web": "npm run dev --workspace @bank-piggy/web",
     "dev:api": "cd apps/api && go run ./cmd/server",
-    "build": "npm run build:api",
+    "build": "npm run build --workspace @bank-piggy/web && npm run build:api",
     "build:api": "cd apps/api && go build -o ../../dist/bank-piggy ./cmd/server",
-    "typecheck": "tsc --noEmit --strict --skipLibCheck --target ES2024 packages/contracts/index.ts",
-    "lint": "npm run lint:scripts && npm run lint:api",
+    "typecheck": "npm run typecheck --workspace @bank-piggy/web",
+    "lint": "npm run lint:web && npm run lint:scripts && npm run lint:api",
     "vet:api": "cd apps/api && go vet ./...",
-    "test": "npm run test:api",
+    "test": "npm run test:web && npm run test:api",
     "format": "prettier --write . && cd apps/api && gofmt -w .",
     "format:check": "prettier --check . && node scripts/check-go-format.mjs",
     "unused:check": "knip",
     "contracts:generate": "python3 packages/contracts/generate.py",
-    "check": "npm run contracts:check && npm run format:check && npm run size:check && npm run lint && npm run typecheck && npm run unused:check && npm test && npm run build",
+    "check": "npm run contracts:check && npm run providers:check && npm run format:check && npm run size:check && npm run lint && npm run typecheck && npm run unused:check && npm test && npm run build",
+    "lint:web": "eslint apps/web/src apps/web/vite.config.ts --max-warnings=0",
     "lint:scripts": "eslint scripts eslint.config.mjs --max-warnings=0",
     "lint:api": "cd apps/api && golangci-lint run --config ../../.golangci.yml",
     "size:check": "node scripts/check-source-size.mjs",
@@ -30,16 +33,23 @@
     "hooks:install": "git config core.hooksPath .githooks",
     "audit": "npm run audit:npm && npm run audit:go",
     "test:api": "cd apps/api && go test -race -count=1 ./...",
+    "test:web": "node --test",
+    "providers:generate": "node scripts/generate-provider-icons.mjs",
+    "providers:check": "node scripts/generate-provider-icons.mjs --check",
     "audit:npm": "npm audit --audit-level=moderate",
     "audit:go": "cd apps/api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./..."
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.14.0",
+    "eslint-plugin-jsdoc": "^65.4.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.0.0",
     "knip": "^6.45.0",
     "prettier": "^3.9.10",
-    "typescript": "~6.0.3"
+    "simple-icons": "^16.37.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.2"
   },
   "overrides": {
     "minimatch": "^11.0.7"
