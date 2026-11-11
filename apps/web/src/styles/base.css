@@ -5,9 +5,17 @@
   scrollbar-width: thin;
   scrollbar-color: var(--taupe) var(--clear);
 }
+@supports selector(::-webkit-scrollbar) {
+  * {
+    /* Standard properties otherwise override the shared WebKit scrollbar styles. */
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+  background: var(--clear);
 }
 ::-webkit-scrollbar-track {
   background: var(--clear);
