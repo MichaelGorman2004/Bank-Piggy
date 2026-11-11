@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"bankpiggy/api/internal/budget"
+	"bankpiggy/api/internal/testbudget"
 	"bankpiggy/api/internal/testdb"
 )
 
@@ -22,6 +23,9 @@ type testClient struct {
 func newTestClient(t *testing.T) *testClient {
 	t.Helper()
 	database := testdb.Open(t)
+	if err := database.Seed(t.Context(), "demo-household", testbudget.Sample()); err != nil {
+		t.Fatal(err)
+	}
 	config := Config{Mode: "demo", ListenAddr: "127.0.0.1:8080", BaseURL: testOrigin, DatabaseURL: "configured", WebDistDir: t.TempDir()}
 	app, err := New(t.Context(), config, database)
 	if err != nil {
@@ -120,7 +124,7 @@ func TestPlanPersistenceConflictAndOwnerChange(t *testing.T) {
 	if saved.Revision != plan.Revision+1 || saved.Expenses[0].OwnerID != "member-2" || saved.Members[0].Accounts[0].BalanceCents != 12345 {
 		t.Fatal("plan did not persist exactly")
 	}
-	if err := client.app.store.Seed(t.Context(), "demo-household", budget.Sample()); err != nil {
+	if err := client.app.store.Seed(t.Context(), "demo-household", testbudget.Sample()); err != nil {
 		t.Fatal(err)
 	}
 	if readPlan(t, client).Revision != saved.Revision {

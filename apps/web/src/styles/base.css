@@ -1,0 +1,166 @@
+@import './tokens.css';
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--taupe) var(--clear);
+}
+@supports selector(::-webkit-scrollbar) {
+  * {
+    /* Standard properties otherwise override the shared WebKit scrollbar styles. */
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: var(--clear);
+}
+::-webkit-scrollbar-track {
+  background: var(--clear);
+  margin: 10px;
+}
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--clear);
+  border-radius: 20px;
+  background: var(--taupe);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: var(--clear);
+}
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--walnut);
+  background: var(--walnut);
+  font-size: 14px;
+  line-height: 1.5;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button,
+a,
+input,
+select,
+summary {
+  -webkit-tap-highlight-color: var(--clear);
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+a {
+  color: inherit;
+}
+button,
+input,
+select,
+a {
+  outline-offset: 4px;
+}
+:focus-visible {
+  outline: 3px solid var(--orange-dark);
+}
+button {
+  color: inherit;
+}
+button svg,
+a svg {
+  flex-shrink: 0;
+}
+button {
+  border: 0;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+}
+h1 {
+  font-size: clamp(28px, 2.5vw, 39px);
+  letter-spacing: -1.3px;
+}
+h2 {
+  font-size: 20px;
+  letter-spacing: -0.45px;
+}
+h3 {
+  font-size: 16px;
+}
+input,
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--walnut);
+  background: var(--paper);
+}
+input::placeholder {
+  color: var(--walnut-soft);
+}
+select {
+  cursor: pointer;
+  appearance: none;
+  padding-right: 38px;
+  background-image:
+    linear-gradient(45deg, var(--clear) 50%, var(--walnut) 50%),
+    linear-gradient(135deg, var(--walnut) 50%, var(--clear) 50%);
+  background-position:
+    calc(100% - 19px) 50%,
+    calc(100% - 14px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 550;
+}
+small {
+  font-size: 12px;
+}
+@media (pointer: coarse) {
+  :root button,
+  :root input,
+  :root select,
+  :root textarea,
+  :root summary,
+  :root a[href] {
+    min-height: 44px;
+  }
+  :root button {
+    min-width: 44px;
+  }
+  :root input,
+  :root select,
+  :root textarea {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

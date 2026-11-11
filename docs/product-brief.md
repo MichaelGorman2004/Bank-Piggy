@@ -8,7 +8,7 @@ The signed-in app has five focused views behind a left navigation bar. Overview 
 
 Each Sankey stream's width shows its amount. The default scope combines the household. The person selector switches to the signed-in member's allocated share. Keep scope, period, and planning month consistent across views. Month is the default. The yearly projection covers the selected month and following eleven months, including scheduled payment changes. The paycheck view shows an average for regular pay schedules. Actual spending history and real pay dates belong to a later phase.
 
-Keep the app frame within the visible viewport. Scroll only card bodies; keep their headers, actions, filters, and footers fixed. The document and outer workspace stay still, including on short screens. Overview uses three bounded cards for Plan totals, Plan inputs, and Balances on desktop. On narrow or short screens, three native section buttons show one card at a time. Use thin taupe scrollbars with transparent tracks.
+Keep the app frame within the visible viewport. Scroll only card bodies; keep their headers, actions, filters, and footers fixed. The document and outer workspace stay still, including on short screens. Overview has Plan totals, At a glance, and Balances sections. At a glance uses two compact income and balance tables for both members instead of a long member list. On narrow or short screens, three native section buttons show one section at a time. Use thin taupe scrollbars with transparent tracks.
 
 Measure the Money flow chart's available height and let its body scroll. Projection assumptions are available through the month control's native disclosure. Keep the largest expense categories visible and combine smaller categories into an explicit `Other costs (N)` row when needed. Preserve every cent. Detailed records remain in Expenses.
 
@@ -24,12 +24,14 @@ Use brown and cream surfaces, orange accents, and translucent glass panels over 
 
 Prioritize iPhone use. Keep controls readable at narrow widths, use comfortable touch targets and native form text sizes, preserve keyboard focus, and account for safe areas. Chart labels must stay within the diagram and remain readable when a stream is too thin to contain its label.
 
-Use household labels consistently: Our household, the current member names, Household member, and Household plan. The local entry action is Open household plan. These labels do not change runtime access rules or turn seeded reference data into live financial data.
+Payment icon colors follow the payment type and stay consistent after filtering or sorting.
+
+Use household labels consistently: Our household, the current member names, Household member, and Household plan. The local entry action is Open household plan. New households start empty. Populated examples belong in tests and documentation, outside the running application. These labels do not change runtime access rules.
 
 ## Onboarding and the first monthly plan
 
 - Ask each member for take-home pay and pay frequency, plus housing costs, groceries, other regular expenses, and minimum debt payments. Collect annual base salary when members choose salary-based expense splits or want to show gross salary in the money flow. Convert recurring amounts to a monthly estimate. Let the user revise estimates as they learn more. Ask for actual paycheck deductions when the user wants to expand the money flow to show them.
-- Ask for current savings, investments, and outstanding debts when the user wants to track balances or set goals.
+- Let each member enter named, typed account balances and outstanding debt when they want to track balances. Keep saved-goal progress as a separate manual input.
 - Ask for state when a feature uses it. Take-home pay already accounts for payroll withholding, so the first cash-flow calculation can work without state. If Bank Piggy later estimates taxes from gross pay, define that as a separate feature with its own inputs and assumptions.
 
 The first useful result is estimated monthly take-home pay minus living expenses and minimum debt payments. Show the amount available for goals or the size of the shortfall. If the user skips a material cost, show that the estimate is incomplete. Keep planned amounts, actual spending, and account balances distinct. A bank feed can inform the estimate, but the user still decides what to budget for groceries next month.
@@ -54,6 +56,8 @@ Let users keep savings, extra debt payments, and retirement contributions active
 
 Use the monthly amount left over to show how the goals fit together. For example, with $600 available, a user could assign $250 to savings, $200 to extra debt payments, and $150 to retirement. If the total exceeds $600, show the gap so the user can adjust the amounts. Count minimum debt payments in regular expenses and extra payments in goals. If a retirement contribution already comes out of a paycheck, avoid deducting it again from take-home pay.
 
+An ordinary goal can optionally track a positive target amount and money already saved. Show saved amount of target with a bounded progress bar. Without a target, show only the planned contribution. Saved progress does not change account balances, income, or the chosen contribution. Ordinary progress has no deadline or saving-rate suggestion and cannot coexist with trip or purchase details on one goal.
+
 ## Recurring payments
 
 Manage subscriptions, bills, and loan payments together in Expenses. Offer All types, Subscriptions, Bills & costs, and Loans filters. Show the largest allocated amount first for the selected scope and period. Retain upcoming, ended, and zero-share records; keep saved order when amounts tie. The card's add action starts with the selected payment type, while the header's Add expense starts as a bill.
@@ -72,7 +76,13 @@ Use the same saving-period rules for trips and purchases. Clamp the remaining am
 
 Keep the user's chosen monthly contribution editable. That contribution is the amount allocated in the household budget. Manual target progress does not create income or change account balances. Shared contributions divide evenly, while the full shared target remains visible in a personal view.
 
-## Accounts and automatic updates
+## Manual account balances
+
+Each member can keep up to 20 accounts with a stable ID, name, type, and integer-cent balance. Support Traditional 401(k), Roth 401(k), Traditional IRA, Roth IRA, Brokerage, High-yield savings, Savings, and Other investment. Savings and high-yield savings form the savings total; the other types form investments. Keep debt as a separate entered balance.
+
+Derive totals from accounts rather than storing duplicate savings and investment totals on each member. Preserve older aggregate balances as generic Savings and Other investments during upgrade. Existing data does not identify a Roth, retirement, or brokerage account. Users choose those details when they edit the accounts.
+
+## Future connected accounts and automatic updates
 
 Track checking, savings, credit cards, brokerage and retirement accounts, and health savings accounts (HSAs). For cards, track spending, balances, and credit usage when the credit limit is available. Let people enter balances and contributions manually for accounts that do not connect. Specific bank and HSA providers will be selected after the first implementation.
 
@@ -90,7 +100,7 @@ Later, an optional assistant could answer “Where could I cut spending?” The 
 
 ## Stack and deployment
 
-Keep the Go backend and TypeScript frontend in one monorepo. The first implementation uses React, Vite, ECharts, and PostgreSQL. Hosting remains a proposal.
+Keep the Go backend and TypeScript frontend in one monorepo. The first implementation uses React, Vite, ECharts, and PostgreSQL. The private application and PostgreSQL are hosted on Railway.
 
 - **Backend.** Use one Go application with PostgreSQL. Go owns sign-in, permissions, finance calculations, and synchronization. Plaid maintains an official Go client. [Plaid client libraries](https://plaid.com/docs/api/libraries/)
 - **Frontend.** Use React and TypeScript with Vite, which builds the browser app. Use Apache ECharts for the Sankey, bar, and line charts. React suits the shared period filters, onboarding steps, and multiple dashboard views. Go can serve the frontend build and the application API from the same domain. [Vite React and TypeScript support](https://vite.dev/guide/) · [Apache ECharts Sankey](https://github.com/apache/echarts-doc/blob/master/en/option/series/sankey.md) · [Go embed package](https://pkg.go.dev/embed)
@@ -112,4 +122,4 @@ Both members can access the combined household view. Attribute personal records 
 ## Open decisions
 
 1. How should ownership of joint account balances appear in the personal views? Expense splits are defined separately.
-2. Choose the hosting environment and configure live Google sign-in before a private hosted release. Railway remains the suggested target.
+2. Verify the second invited Google login and select a backup method with a tested restore. Private Railway hosting and the first invited login have passed.

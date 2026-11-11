@@ -1,0 +1,116 @@
+.goalIntro {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px 0 17px;
+}
+.goalRing {
+  height: 69px;
+  width: 69px;
+  border-radius: 50%;
+  padding: 8px;
+  background: conic-gradient(var(--sage) var(--goal-fill, 0%), var(--line) 0);
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+}
+.goalRingInner {
+  height: 53px;
+  width: 53px;
+  border-radius: 50%;
+  background: var(--cream);
+  display: grid;
+  place-content: center;
+  color: var(--sage-dark);
+}
+.goalIntro strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font: 600 27px var(--font-display);
+  letter-spacing: -0.8px;
+}
+.goalIntro p {
+  font-size: 10px;
+  color: var(--walnut-soft);
+  margin-top: 3px;
+}
+.goalIntro > :last-child {
+  min-width: 0;
+}
+.goalRow {
+  padding: 13px 0;
+  border-top: 1px solid var(--line);
+}
+.goalRowTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  justify-content: space-between;
+}
+.goalName {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.dot {
+  flex-shrink: 0;
+  height: 7px;
+  width: 7px;
+  border-radius: 50%;
+  background: var(--sage);
+}
+.goalRow:nth-child(2n) .dot {
+  background: var(--orange);
+}
+.goalRow:nth-child(3n) .dot {
+  background: var(--gold);
+}
+.goalValue {
+  display: flex;
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
+  overflow-wrap: anywhere;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.goalTrack {
+  display: block;
+  appearance: none;
+  width: calc(100% - 15px);
+  height: 6px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--line);
+  margin: 10px 0 0 15px;
+  overflow: hidden;
+}
+.goalTrack::-webkit-progress-bar {
+  background: var(--line);
+}
+.goalTrack::-webkit-progress-value {
+  background: var(--sage);
+  border-radius: 3px;
+}
+.goalTrack::-moz-progress-bar {
+  background: var(--sage);
+  border-radius: 3px;
+}
+.contribution {
+  margin: 5px 0 0 15px;
+  color: var(--walnut-soft);
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .goalIntro {
+    padding-top: 12px;
+  }
+}

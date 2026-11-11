@@ -1,0 +1,38 @@
+.target {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--glass-light);
+  color: var(--walnut-soft);
+  font-size: 11px;
+  line-height: 1.65;
+}
+.target p {
+  margin: 0 0 6px;
+}
+.target .title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--walnut);
+  font-weight: 600;
+}
+.target details {
+  margin-top: 7px;
+}
+.target summary {
+  cursor: pointer;
+  color: var(--orange-dark);
+}
+.target dl {
+  margin: 8px 0 0;
+}
+.target dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.target dd {
+  margin: 0;
+}

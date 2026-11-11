@@ -1,0 +1,21 @@
+.filter {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 12px;
+  font-size: 12px;
+  color: var(--walnut-soft);
+}
+.filter select {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 35px;
+  padding: 6px 38px 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: var(--glass-light);
+  color: var(--walnut);
+}

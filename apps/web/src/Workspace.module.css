@@ -1,0 +1,178 @@
+.app {
+  height: 100dvh;
+  min-height: 0;
+  padding: 20px;
+  display: flex;
+  align-items: stretch;
+  gap: 20px;
+  overflow: hidden;
+  background:
+    linear-gradient(var(--shadow), var(--shadow)),
+    url('/assets/warm-interior.webp') center / cover fixed;
+}
+.workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--glass-light);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--line-light);
+  border-radius: 26px;
+}
+.topBar {
+  height: 42px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10px;
+  color: var(--walnut-soft);
+}
+.breadcrumb > span {
+  opacity: 0.5;
+}
+.saving {
+  font-size: 9px;
+  color: var(--walnut-soft);
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 16px 24px 20px;
+  overflow: hidden;
+}
+.main > * {
+  flex-shrink: 0;
+}
+.filters,
+.headingArea,
+.monthArea {
+  min-width: 0;
+}
+.view {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  outline-offset: -4px;
+}
+.mobileBar {
+  display: none;
+}
+.skip {
+  position: absolute;
+  z-index: 60;
+  top: -80px;
+  left: 30px;
+  background: var(--paper);
+  color: var(--walnut);
+  padding: 10px 16px;
+  border-radius: 10px;
+}
+.skip:focus {
+  top: 25px;
+}
+@media (min-width: 1650px) {
+  .app {
+    padding-inline: max(20px, calc((100vw - 1640px) / 2));
+  }
+}
+@media (max-width: 1150px) {
+  .main {
+    padding: 16px 18px;
+  }
+}
+@media (max-width: 800px), (pointer: coarse) and (max-height: 500px) {
+  .app {
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    gap: 0;
+  }
+  .workspace {
+    border-radius: 20px;
+  }
+  .mobileBar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+    border-bottom: 1px solid var(--line);
+    padding: 4px 12px;
+    gap: 10px;
+  }
+  .mobileBar > button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--clear);
+    border-radius: 8px;
+  }
+  .mobileBar > span {
+    font: 600 19px var(--font-display);
+    letter-spacing: -0.5px;
+  }
+  .mobileSaving {
+    display: block;
+    font: 400 10px var(--font-body);
+    color: var(--walnut-soft);
+    letter-spacing: 0;
+  }
+  .mobileBar > img {
+    height: 46px;
+    width: 46px;
+    object-fit: contain;
+    margin-left: auto;
+  }
+  .topBar {
+    display: none;
+  }
+  .main {
+    padding: 12px;
+  }
+}
+@media (max-height: 650px) and (min-width: 650px) {
+  .app {
+    padding: 8px;
+    gap: 12px;
+  }
+  .main {
+    padding: 10px;
+  }
+}
+@media (max-height: 650px) and (min-width: 800px) {
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .headingArea {
+    flex: 1;
+  }
+  .monthArea {
+    flex: 0 1 320px;
+  }
+  .mobileBar {
+    min-height: 44px;
+    padding-block: 0;
+  }
+  .mobileBar > img {
+    height: 38px;
+    width: 38px;
+  }
+}

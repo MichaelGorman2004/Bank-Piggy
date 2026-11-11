@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"bankpiggy/api/internal/budget"
 	"bankpiggy/api/internal/store"
+	"bankpiggy/api/internal/testbudget"
 	"bankpiggy/api/internal/testdb"
 )
 
 func TestNewAuthenticationRecordsPruneExpiredRows(t *testing.T) {
 	database := testdb.Open(t)
-	if err := database.Seed(t.Context(), "household", budget.Sample()); err != nil {
+	if err := database.Seed(t.Context(), "household", testbudget.Sample()); err != nil {
 		t.Fatal(err)
 	}
 	session := store.Session{HouseholdID: "household", MemberID: "member-1", CSRF: "csrf", ExpiresAt: time.Now().Add(-time.Minute)}

@@ -7,7 +7,7 @@ const developmentEnvironment = {
   ...process.env,
   APP_MODE: process.env.APP_MODE ?? 'demo',
   LISTEN_ADDR: process.env.LISTEN_ADDR ?? '127.0.0.1:8080',
-  APP_BASE_URL: process.env.APP_BASE_URL ?? 'http://127.0.0.1:8080',
+  APP_BASE_URL: process.env.APP_BASE_URL ?? 'http://127.0.0.1:5173',
 };
 const useProcessGroups = process.platform !== 'win32';
 
@@ -18,10 +18,15 @@ const processes = [
     stdio: 'inherit',
     detached: useProcessGroups,
   }),
+  spawn('npm', ['run', 'dev:web'], {
+    env: developmentEnvironment,
+    stdio: 'inherit',
+    detached: useProcessGroups,
+  }),
 ];
 let isStopping = false;
 
-/** Stops the API process group when either exits or the terminal closes. */
+/** Stops both development processes when either exits or the terminal closes. */
 function stopProcesses() {
   if (isStopping) return;
   isStopping = true;
