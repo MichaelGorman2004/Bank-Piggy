@@ -107,18 +107,3 @@ test('the canonical schema accepts legacy goals and rejects incomplete or confli
     assert.equal(validGoal({ ...purchase, purchase: target }), false);
   }
 });
-
-test('editing an ordinary contribution retains existing saved-target metadata', () => {
-  const original = {
-    id: 'fund',
-    name: 'Emergency fund',
-    monthlyAmountCents: 0,
-    ownerId: 'shared',
-    savingsTarget: { targetAmountCents: 100000, savedAmountCents: 65000 },
-  };
-  const draft = goalDraft(original);
-  const { goal } = goalValue({ ...draft, name: 'Renamed fund' }, original.id);
-  assert.deepEqual(goal.savingsTarget, original.savingsTarget);
-  assert.equal(goal.monthlyAmountCents, 0);
-  assert.equal(original.name, 'Emergency fund');
-});

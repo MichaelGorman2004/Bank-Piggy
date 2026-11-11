@@ -79,7 +79,7 @@ export function loadSession(): Promise<Session> {
   return request('/api/session', isSession);
 }
 /**
- * Opens the loopback-only sample household session.
+ * Opens the saved loopback-only local household session.
  * @returns The new sample session.
  */
 export function startDemo(): Promise<Session> {

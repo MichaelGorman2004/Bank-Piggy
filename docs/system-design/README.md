@@ -4,7 +4,7 @@ Bank Piggy turns one saved household plan into consistent household and personal
 
 These documents describe the implemented first version. Update the diagrams when routes, state ownership, or transaction boundaries change. The [product brief](../product-brief.md) includes future work that is outside this implementation.
 
-See Overview on [desktop](images/overview.png) or [mobile](images/mobile.png), Money flow on [desktop](images/money-flow.png) or [mobile](images/mobile-money-flow.png), and unified Expenses on [desktop](images/expenses.png) or [mobile](images/mobile-expenses.png). The previews use fictional local reference data.
+See Overview on [desktop](images/overview.png) or [mobile](images/mobile.png), Money flow on [desktop](images/money-flow.png) or [mobile](images/mobile-money-flow.png), Expenses on [desktop](images/expenses.png) or [mobile](images/mobile-expenses.png), and Goals on [desktop](images/goals.png) or [mobile](images/mobile-goals.png). The previews use fictional local reference data.
 
 ## Architecture
 
@@ -13,7 +13,7 @@ flowchart LR
     Member["Household member"]
     Browser["React dashboard<br/>Drafts, scope, planning month, charts"]
     HTTP["Go HTTP server<br/>Session, origin, CSRF, input checks"]
-    Budget["Budget feature<br/>Splits, schedules, trip and purchase targets"]
+    Budget["Budget feature<br/>Account totals, allocations, schedules, target rules"]
     Store["PostgreSQL store<br/>Scoped queries and revision transaction"]
     DB[("PostgreSQL<br/>Plans, identities, sessions, sign-in attempts")]
     Google["Google OpenID Connect<br/>Private mode only"]
@@ -22,7 +22,7 @@ flowchart LR
     Browser -->|"Same-origin API requests with month"| HTTP
     HTTP -->|"Validate plan and calculate selected periods"| Budget
     HTTP -->|"Authorized household ID"| Store
-    Store -->|"Read or atomically replace plan"| DB
+    Store -->|"Read, upgrade, or atomically replace plan"| DB
     HTTP -->|"Plan, period summaries, target projections"| Browser
     Browser -->|"Private sign-in redirect"| Google
     Google -->|"Authorization callback via browser"| HTTP
@@ -30,6 +30,8 @@ flowchart LR
 ```
 
 There is one Go process and one PostgreSQL database. The built Go process can serve the frontend and API from the same origin. During development, Vite serves the frontend and proxies API and sign-in paths to Go. No queue, background sync worker, cache service, or bank provider participates in this version.
+
+Before the listener starts, [Store.Open](../../apps/api/internal/store/store.go) applies schema creation and the account upgrade in one transaction. A failed upgrade stops startup. See the [account upgrade](data-model.md#account-upgrade) for preservation and revision rules.
 
 ### Ownership
 
@@ -45,7 +47,7 @@ There is one Go process and one PostgreSQL database. The built Go process can se
 
 ## Focused workspace
 
-Overview is the default and renders [HouseholdOverview](../../apps/web/src/components/HouseholdOverview.tsx): plan totals, both members' recorded inputs, and scoped balance snapshots. Money flow renders the Sankey. Expenses combines every payment type. Goals selects ordinary contributions; Trips & purchases selects trip and purchase goals, including zero-contribution and overdue targets. These views share one saved plan.
+Overview is the default and renders [HouseholdOverview](../../apps/web/src/components/HouseholdOverview.tsx): Plan totals, At a glance, and Balances. [At a glance](../../apps/web/src/components/PlanDetails.tsx) compares both members in compact income and balance tables. Large display values keep their exact amounts in accessible labels and hover text. Balances shows scoped account-type breakdowns; plan setup manages individual account records. Money flow renders the Sankey. Expenses combines every payment type. Goals selects ordinary contributions with optional saved progress; Trips & purchases selects dated trip and purchase goals. These views share one saved plan.
 
 Scope, period, and planning month stay above the active view. [Record selectors](../../apps/web/src/features/plan/viewRecords.ts) preserve ownership and leave the plan unchanged. Expenses filters All types, Subscriptions, Bills & costs, or Loans, then sorts the selected scope and period's canonical allocations from largest to smallest. Ties retain saved order. Upcoming, ended, and zero-share records remain reachable. The card's add actions inherit its filter; All types and the header's Add expense default to a bill. The [view registry](../../apps/web/src/features/plan/views.ts) owns the five navigation labels and header actions.
 
@@ -53,7 +55,9 @@ The frame uses `100dvh`, the browser's dynamic viewport height. The document, `.
 
 [Modal](../../apps/web/src/components/Modal.tsx) keeps its heading and close action fixed. Its inset, named body owns form scrolling and leaves room for visible field focus rings. Thin taupe scrollbars use transparent tracks and remain inside the rounded surface.
 
-[HouseholdOverview](../../apps/web/src/components/HouseholdOverview.tsx) gives Plan totals, Plan inputs, and Balances bounded desktop cards. Narrow or short layouts show one card chosen through three native buttons with `aria-pressed`. Compact short-screen controls preserve the body area. Scrolling stays inside the selected card.
+[HouseholdOverview](../../apps/web/src/components/HouseholdOverview.tsx) gives Plan totals, At a glance, and Balances bounded desktop sections. Narrow or short layouts show one section chosen through three native buttons with `aria-pressed`. Compact tables keep the core comparison together; long balance breakdowns scroll within their card.
+
+Account balances, planned contributions, and manually recorded goal progress have separate owners and meanings. Go derives savings and investment summaries from member-owned account records. Goal rows use [progress presentation](../../apps/web/src/features/plan/goalProgress.ts) only when a target exists: saved amount of target and a bounded native bar, with the contribution shown separately. Untargeted rows show the contribution alone. Payment icon colors follow the saved payment kind, so sorting and filtering preserve their meaning.
 
 The Money flow chart measures its actual height with `ResizeObserver`. It reserves rows for goals and money left to plan, then keeps the largest expense categories that fit. Remaining categories combine into `Other costs (N)`. [Category grouping](../../apps/web/src/components/moneyFlowCategories.ts) adds exact cents and leaves the saved records unchanged. Full detail stays in Expenses.
 
@@ -108,7 +112,7 @@ Read generations ignore results from older requests or an unmounted component. S
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `GET /healthz`                     | Database health check; `503` when PostgreSQL is unavailable.                                                       |
 | `GET /api/session`                 | Current session metadata, or an unauthenticated response.                                                          |
-| `POST /api/demo/session`           | Exact-origin, demo-only sample session.                                                                            |
+| `POST /api/demo/session`           | Exact-origin, loopback-only local session. New plans start empty.                                                  |
 | `GET /api/household?month=YYYY-MM` | Valid session and supported month; saved plan, period summaries, and trip and purchase projections.                |
 | `PUT /api/household?month=YYYY-MM` | Valid session, exact origin, CSRF token, valid plan, and current revision; returns projections for the same month. |
 | `POST /api/logout`                 | Same mutation checks; revoke session and clear cookie.                                                             |
@@ -142,16 +146,19 @@ The generator supports the schema features used by this contract. It is a small 
 
 ## Verification boundary
 
-The installed pre-commit gate passed after the final navigation, calendar, dialog, and icon changes: contract and provider drift checks, formatting, 137 authored files within size limits, strict lint with zero issues, types, unused checks, 39 Node regressions, Go race tests with real PostgreSQL, and both builds. The local database was PostgreSQL 14.15; the configured CI database is PostgreSQL 17.
+The installed quality hook passed contract and provider drift checks, formatting, 159 authored files within size limits, strict lint with zero issues, types, unused checks, 44 Node regressions, Go race tests with real PostgreSQL, and both builds. The local database is PostgreSQL 14.15. GitHub checks also passed for the [API layer](https://github.com/MichaelGorman2004/Bank-Piggy/actions/runs/43041241482) and [dashboard layer](https://github.com/MichaelGorman2004/Bank-Piggy/actions/runs/43043309580) using PostgreSQL 17 and Node.js 24.
 
 The repository checks cover these contracts:
 
-| Check                                                                                                                                                                                                     | Covered behavior                                                                                                    |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| [PostgreSQL store tests](../../apps/api/internal/store/store_test.go) and [HTTP tests](../../apps/api/internal/server/purchases_test.go)                                                                  | Saved revisions, competing writes, session expiry, identity binding, and complete schedule/target JSON round-trips. |
-| [Budget tests](../../apps/api/internal/budget/calculate_test.go), [schedule tests](../../apps/api/internal/budget/schedule_test.go), and [target tests](../../apps/api/internal/budget/purchases_test.go) | Exact cents, inclusive payment dates, repeated monthly shares, target periods, and separation from balances.        |
-| [Signed local identity provider](../../apps/api/internal/server/google_token_test.go)                                                                                                                     | Signature, audience, issuer, expiry, nonce, verified email, and subject checks. This simulates Google.              |
-| [Selector tests](../../apps/web/src/features/plan/viewRecords.test.mjs) and [category tests](../../apps/web/src/components/moneyFlowCategories.test.mjs)                                                  | Canonical expense sorting, type filtering, ownership, stable ties, and cent-preserving chart grouping.              |
+| Check                                                                                                                                                                                                     | Covered behavior                                                                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| [PostgreSQL store tests](../../apps/api/internal/store/store_test.go) and [HTTP tests](../../apps/api/internal/server/purchases_test.go)                                                                  | Saved revisions, competing writes, session expiry, identity binding, and complete schedule/target JSON round-trips.                          |
+| [Startup tests](../../apps/api/internal/server/startup_test.go)                                                                                                                                           | Empty local startup and complete preservation of saved local and private plans across repeated startup.                                      |
+| [Budget tests](../../apps/api/internal/budget/calculate_test.go), [schedule tests](../../apps/api/internal/budget/schedule_test.go), and [target tests](../../apps/api/internal/budget/purchases_test.go) | Exact cents, inclusive payment dates, repeated monthly shares, target periods, and separation from balances.                                 |
+| [Signed local identity provider](../../apps/api/internal/server/google_token_test.go)                                                                                                                     | Signature, audience, issuer, expiry, nonce, verified email, and subject checks. This simulates Google.                                       |
+| [Selector tests](../../apps/web/src/features/plan/viewRecords.test.mjs) and [category tests](../../apps/web/src/components/moneyFlowCategories.test.mjs)                                                  | Canonical expense sorting, type filtering, ownership, stable ties, and cent-preserving chart grouping.                                       |
+| [Account tests](../../apps/api/internal/budget/accounts_test.go) and [migration tests](../../apps/api/internal/store/accounts_migration_test.go)                                                          | All eight types, group bounds, preserved legacy totals, typed-account precedence, idempotence, revision conflicts, and atomic rollback.      |
+| [Saved-progress HTTP tests](../../apps/api/internal/server/savings_targets_test.go) and [UI tests](../../apps/web/src/features/plan/savingsTargets.test.mjs)                                              | Complete progress fields, mutually exclusive target kinds, whole-cent preservation, overfunded bars, and unchanged allocations and balances. |
 
 Local browser checks covered populated plans, keyboard focus, card-body scrolling, mobile and short layouts, and editor reachability. Empty, sparse, and error states used browser-only simulations. A simulated `503` retained drafts; a real competing PostgreSQL update returned `409` and recovered through explicit reload. Temporary test records were removed.
 
@@ -159,16 +166,16 @@ Meaningful financial cases included a $10.01 expense with a 0% share retained th
 
 Controlled chart checks retained one SVG element across period, scope, editor, response, and resize changes. Fixtures also checked removed nodes, empty transitions, stale observer callbacks, and failure cleanup. Calendar checks covered automatic application, failed-request recovery, newer choices winning over held responses, and returning to the accepted month while an older successful request remained pending. Keyboard navigation, Escape, light dismiss, focus return, optional clearing, required validation, payment terms, and retained target drafts passed.
 
-The final UI pass checked all five views at 320×568, 390×844, 844×390, and 1366×768 without document or workspace overflow. Expense filters and descending household/member allocations passed monthly and yearly cases. Inset dialog bodies reached their ends while headings and close actions stayed fixed. The compiled app passed populated, empty, error/retry, and keyboard checks without financial writes or browser errors; the nine-expense, three-goal reference plan remained unchanged.
+The final browser pass checked all five views at 320×568, 390×844, 844×390, 1366×768, and 1512×857. At a glance shows both tables, twelve values, and the shared split without internal scrolling. Account insertion, removal, exact-cent saves, reopen, simulated `503` recovery, and keyboard focus passed. Ordinary goal create/edit/reopen, saved/target drafts, zero-target rejection, overfunded progress, and failed-save retry passed. These tests restored the isolated reference records and totals after writes. The compiled preview additionally passed empty/error retry and phone containment checks without financial writes or browser errors.
 
 Browser review uses the compiled Go app at `http://127.0.0.1:5173`, serving the API and static frontend without Vite hot module replacement. The native context uses `viewport: null`; all five views fit its measured 1512×857 window after reload. Health returned `200`, and no Vite client or browser errors were present. Human review of the compiled preview reported “No blink now.” The earlier idle blink was not reproduced in headless checks, and its cause remains unproven.
 
-All evidence is local and uses reference data. Hosted CI, deployment, live Google sign-in, bank connections, physical iOS, and WebKit remain unverified.
+Populated application browser evidence uses isolated local reference data. Private Railway deployment, HTTPS, PostgreSQL health, one invited Google sign-in, and saved-name persistence through restart and redeployment have also passed. Native Safari review covered the deployed interface. The second invited login, live rejection of an uninvited account, physical iOS, connected banks, and backup restore remain unverified. CI evidence is separate from live service checks.
 
 ## Browser verification procedure
 
 1. Isolate emulated viewport and device profiles in separate browser contexts.
 2. Use the actual window with `viewport: null` and the compiled Go app for handoff. Reload and check measured frame bounds before screenshots.
-3. Test all five views, expense sorting and type filters, named card-body scrolling, Overview section buttons, and calendar selection, clearing, bounds, keyboard focus, and short-screen placement.
+3. Test all five views, typed-account edits and grouped totals, targeted and untargeted goal rows, compact At a glance tables, expense filters, named card-body scrolling, calendar bounds, keyboard focus, and short-screen placement.
 
 Continue with the [data model](data-model.md), [security model](security.md), [design decisions](decisions.md), or [user stories](../user-stories.md).

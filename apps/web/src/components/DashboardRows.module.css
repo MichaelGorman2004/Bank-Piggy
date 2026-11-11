@@ -13,18 +13,18 @@
   width: 35px;
   height: 35px;
   border-radius: 11px;
-  background: var(--orange-wash);
-  color: var(--orange-dark);
+  background: var(--cream);
+  color: var(--walnut-soft);
   display: grid;
   place-content: center;
 }
-.expenseRow:nth-child(3n) .categoryIcon {
+.categoryIcon[data-kind='subscription'] {
   background: var(--sage-wash);
   color: var(--sage-dark);
 }
-.expenseRow:nth-child(3n + 1) .categoryIcon {
-  background: var(--cream);
-  color: var(--walnut-soft);
+.categoryIcon[data-kind='loan'] {
+  background: var(--orange-wash);
+  color: var(--orange-dark);
 }
 .rowName {
   font-size: 12px;
@@ -90,47 +90,6 @@
   margin-top: 13px;
   font-size: 10px;
   color: var(--walnut-soft);
-}
-.planMembers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin: 20px 0;
-}
-.planMember {
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  padding: 18px;
-}
-.planMember h3 {
-  font-size: 20px;
-  margin-bottom: 17px;
-  overflow-wrap: anywhere;
-}
-.planMember dl {
-  margin: 0;
-  display: grid;
-  gap: 11px;
-}
-.planMember dl > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.planMember dt {
-  font-size: 12px;
-  color: var(--walnut-soft);
-}
-.planMember dd {
-  margin: 0;
-  font-weight: 600;
-  font-size: 12px;
-}
-@media (max-width: 700px) {
-  .planMembers {
-    grid-template-columns: 1fr;
-  }
 }
 @media (max-width: 700px) {
   .expenseRow {

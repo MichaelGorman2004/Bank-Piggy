@@ -1,7 +1,7 @@
 import { MoreHorizontal } from 'lucide-react';
 import type { Goal, GoalProjection } from '@bank-piggy/contracts';
-import type { CSSProperties } from 'react';
 import { money } from '../features/plan/format';
+import { goalProgress } from '../features/plan/goalProgress';
 import { GoalTargetProgress } from './GoalTargetProgress';
 import styles from './Dashboard.module.css';
 import ownStyles from './GoalPanel.module.css';
@@ -9,13 +9,9 @@ import ownStyles from './GoalPanel.module.css';
 interface GoalRowProps {
   readonly goal: Goal;
   readonly amount: number;
-  readonly total: number;
   readonly factor: number;
   readonly projection?: GoalProjection;
   readonly onEdit: (goal: Goal) => void;
-}
-interface ProgressStyle extends CSSProperties {
-  readonly '--goal-width': string;
 }
 
 /**
@@ -24,6 +20,7 @@ interface ProgressStyle extends CSSProperties {
  * @returns Goal name, contribution, and accessible edit button.
  */
 function GoalRowHeading(props: GoalRowProps) {
+  const progress = goalProgress(props.goal, props.projection);
   return (
     <div className={ownStyles.goalRowTop}>
       <span className={ownStyles.goalName}>
@@ -31,7 +28,9 @@ function GoalRowHeading(props: GoalRowProps) {
         {props.goal.name}
       </span>
       <span className={ownStyles.goalValue}>
-        {money(props.amount, props.factor)}
+        {progress
+          ? `${money(progress.savedAmountCents)} of ${money(progress.targetAmountCents)}`
+          : money(props.amount, props.factor)}
         <button
           className={styles.iconButton}
           aria-label={`Edit ${props.goal.name}`}
@@ -47,20 +46,30 @@ function GoalRowHeading(props: GoalRowProps) {
 }
 
 /**
- * Keeps the monthly allocation bar separate from trip or purchase target progress.
- * @param props Goal contribution, budget total, and optional target projection.
+ * Shows manual saved-to-target progress separately from the chosen contribution.
+ * @param props Scoped contribution, editing action, and optional target projection.
  * @returns Goal row with manual target planning when configured.
  */
 export function GoalRow(props: GoalRowProps) {
-  const style: ProgressStyle = {
-    '--goal-width': `${String(props.total > 0 ? (props.amount / props.total) * 100 : 0)}%`,
-  };
+  const progress = goalProgress(props.goal, props.projection);
   return (
     <div className={ownStyles.goalRow}>
       <GoalRowHeading {...props} />
-      <div className={ownStyles.goalTrack}>
-        <div style={style} className={ownStyles.goalFill} />
-      </div>
+      <p className={ownStyles.contribution}>
+        {progress
+          ? `${money(props.amount, props.factor)} planned contribution`
+          : 'Planned contribution'}
+        {progress && props.goal.ownerId === 'shared' && ' · Shared target'}
+      </p>
+      {progress && (
+        <progress
+          className={ownStyles.goalTrack}
+          aria-label={`${props.goal.name} saved toward target`}
+          aria-valuetext={`${money(progress.savedAmountCents)} of ${money(progress.targetAmountCents)} saved`}
+          max={progress.max}
+          value={progress.value}
+        />
+      )}
       <GoalTargetProgress goal={props.goal} projection={props.projection} />
     </div>
   );

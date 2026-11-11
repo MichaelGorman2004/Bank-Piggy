@@ -27,6 +27,9 @@
 .iconButton:hover {
   background: var(--orange-wash);
 }
+.iconButton:focus-visible {
+  outline-offset: -3px;
+}
 .negative {
   color: var(--danger);
 }
@@ -54,7 +57,6 @@
   min-width: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
   outline-offset: -3px;
 }
 .textButton {

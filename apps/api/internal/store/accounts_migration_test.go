@@ -10,6 +10,7 @@ import (
 
 	"bankpiggy/api/internal/budget"
 	"bankpiggy/api/internal/store"
+	"bankpiggy/api/internal/testbudget"
 	"bankpiggy/api/internal/testdb"
 )
 
@@ -100,7 +101,7 @@ func assertMigratedPlan(t *testing.T, database *store.Store, id string, original
 
 func TestLegacyAccountsMigrateOnceAndRejectStaleRevisions(t *testing.T) {
 	database := testdb.Open(t)
-	original := budget.Sample()
+	original := testbudget.Sample()
 	original.Revision = 7
 	insertStoredJSON(t, database, "legacy", original.Revision, legacyPlanJSON(t, original, 0, 1))
 	migrated := reopenStore(t, database)
@@ -132,7 +133,7 @@ func TestLegacyAccountsMigrateOnceAndRejectStaleRevisions(t *testing.T) {
 
 func TestMixedAndTypedPlansPreserveTypedAccounts(t *testing.T) {
 	database := testdb.Open(t)
-	original := budget.Sample()
+	original := testbudget.Sample()
 	insertStoredJSON(t, database, "mixed", original.Revision, legacyPlanJSON(t, original, 0))
 	insertStoredJSON(t, database, "typed", original.Revision, mustJSON(t, original))
 	typedBefore, _ := storedJSON(t, database, "typed")
@@ -149,7 +150,7 @@ func TestMixedAndTypedPlansPreserveTypedAccounts(t *testing.T) {
 
 func TestStaleAggregateKeysAreRemovedWithoutDuplicatingTypedAccounts(t *testing.T) {
 	database := testdb.Open(t)
-	original := budget.Sample()
+	original := testbudget.Sample()
 	var object map[string]json.RawMessage
 	decodeJSON(t, mustJSON(t, original), &object)
 	var members []map[string]json.RawMessage
@@ -174,7 +175,7 @@ func TestStaleAggregateKeysAreRemovedWithoutDuplicatingTypedAccounts(t *testing.
 
 func TestAccountMigrationRollsBackAllPlansOnFailure(t *testing.T) {
 	database := testdb.Open(t)
-	plan := budget.Sample()
+	plan := testbudget.Sample()
 	insertStoredJSON(t, database, "valid", plan.Revision, legacyPlanJSON(t, plan, 0, 1))
 	before, _ := storedJSON(t, database, "valid")
 	plan.Revision = math.MaxInt64

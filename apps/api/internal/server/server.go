@@ -51,7 +51,7 @@ func New(ctx context.Context, c Config, s *store.Store) (*Server, error) {
 			Scopes:       []string{oidc.ScopeOpenID, "email", "profile"},
 		}
 	}
-	h := budget.Sample()
+	h := budget.Blank("Member 1", "Member 2")
 	if c.Mode == "private" {
 		names := []string{strings.Split(c.Invites[0], "@")[0], strings.Split(c.Invites[1], "@")[0]}
 		h = budget.Blank(names[0], names[1])

@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"bankpiggy/api/internal/budget"
 	"bankpiggy/api/internal/store"
+	"bankpiggy/api/internal/testbudget"
 	"bankpiggy/api/internal/testdb"
 )
 
 func TestConcurrentUpdatesPreserveOneRevision(t *testing.T) {
 	database := testdb.Open(t)
-	plan := budget.Sample()
+	plan := testbudget.Sample()
 	if err := database.Seed(t.Context(), "household", plan); err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestConcurrentUpdatesPreserveOneRevision(t *testing.T) {
 
 func TestIdentityCannotBeReboundAndExpiredSessionsAreRejected(t *testing.T) {
 	database := testdb.Open(t)
-	if err := database.Seed(t.Context(), "household", budget.Sample()); err != nil {
+	if err := database.Seed(t.Context(), "household", testbudget.Sample()); err != nil {
 		t.Fatal(err)
 	}
 	if err := database.BindIdentity(t.Context(), "household", "member-1", "one@example.com", "original-subject"); err != nil {
@@ -82,7 +82,7 @@ func assertOneSuccessOneConflict(t *testing.T, results <-chan error) {
 
 func TestBindingDistinguishesIdentityConflictsFromDatabaseFailures(t *testing.T) {
 	database := testdb.Open(t)
-	if err := database.Seed(t.Context(), "household", budget.Sample()); err != nil {
+	if err := database.Seed(t.Context(), "household", testbudget.Sample()); err != nil {
 		t.Fatal(err)
 	}
 	if err := database.BindIdentity(t.Context(), "household", "member-1", "one@example.com", "subject"); err != nil {

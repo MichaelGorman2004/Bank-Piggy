@@ -101,7 +101,6 @@
 .months button[aria-pressed='true'] {
   background: var(--walnut);
   color: var(--paper);
-  box-shadow: inset 0 -3px var(--orange);
 }
 .clear {
   width: 100%;

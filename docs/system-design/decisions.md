@@ -48,11 +48,11 @@ The first version optimizes for a correct, reviewable plan for two people. These
 
 ## 6. Explicit local demo and honest estimates
 
-**Decision.** Require an explicit demo mode bound to loopback. Keep its fictional household separate from the private household. Label planned contributions, scheduled forecasts, and paycheck estimates. Show target progress from the user's manual saved amount.
+**Decision.** Require an explicit demo mode bound to loopback. Keep its local household separate from the private household. Start both modes with empty plans and keep populated fixtures in test code. Label planned contributions, scheduled forecasts, and paycheck estimates. Show target progress from the user's manual saved amount.
 
-**Reason.** The application can demonstrate finance and persistence flows with sample data. Clear labels explain where the figures come from. A labeled Sankey shortfall makes a funding gap visible.
+**Reason.** The local application can exercise finance and persistence flows with user-entered data. Automated tests use populated fixtures without inserting example finances into the running application. Clear labels explain where the figures come from. A labeled Sankey shortfall makes a funding gap visible.
 
-**Tradeoff.** Demo users share one saved sample plan in the local database. The demo is not a public hosted sandbox. Salary edits recalculate the current plan, and year/paycheck estimates contain no historical activity or real pay dates.
+**Tradeoff.** Demo users share one saved plan in the local database. Existing records remain intact during startup; the app cannot safely infer whether an older local record is still an example or has been edited. The demo is not a public hosted sandbox. Salary edits recalculate the current plan, and year/paycheck estimates contain no historical activity or real pay dates.
 
 ## 7. Strict checks with a real persistence boundary
 
@@ -64,9 +64,9 @@ The first version optimizes for a correct, reviewable plan for two people. These
 
 ## 8. Calculate schedules from one current plan
 
-**Decision.** Add optional dates and payment metadata to expenses. Store a finite term as its inclusive final month. Calculate monthly and 12-month forecasts from the selected planning month. Extend a goal with mutually exclusive trip or purchase details while retaining the user's chosen contribution.
+**Decision.** Add optional dates and payment metadata to expenses. Store a finite term as its inclusive final month. Calculate monthly and 12-month forecasts from the selected planning month. Let a goal optionally record ordinary saved progress or one dated trip/purchase target while retaining its chosen contribution.
 
-**Reason.** Subscriptions, bills, and loan payments already belong in living expenses. A dated expense can stop contributing without losing its editable record. A rolling 12-month calculation respects those dates and preserves repeated monthly cent allocations. Shared target math handles deadlines and cent rounding for trips and purchases. The existing goal contribution controls the budget.
+**Reason.** Subscriptions, bills, and loan payments already belong in living expenses. A dated expense can stop contributing without losing its editable record. A rolling forecast preserves repeated monthly cent allocations. Shared target math handles trip and purchase deadlines. Ordinary progress needs no deadline projection. A recorded saved amount supports a real progress bar; a monthly contribution alone does not establish progress.
 
 **Tradeoff.** This is a forecast from the current plan. It has no actual payment log, automatic cancellation, interest schedule, or historical salary snapshots. Each month uses the current income and chosen goal contributions. Target suggestions use equal monthly saving periods and a manual saved amount. Separate projection arrays preserve the existing trip response and identify purchases explicitly.
 
@@ -80,10 +80,18 @@ The first version optimizes for a correct, reviewable plan for two people. These
 
 ## 10. Keep one task in the active viewport
 
-**Decision.** Open Overview by default and keep Money flow, Expenses, Goals, and Trips & purchases focused on their tasks. Combine all payment types in Expenses with a type filter and descending canonical allocations. Keep scope, period, and planning month shared. Fit the frame to `100dvh` and scroll only bounded card bodies. Narrow or short Overview layouts select one of three cards through native buttons.
+**Decision.** Open Overview by default and keep Money flow, Expenses, Goals, and Trips & purchases focused on their tasks. Combine payment types in one filtered list. Keep scope, period, and planning month shared. Fit the frame to `100dvh` and scroll bounded card bodies. At a glance uses compact income and balance tables; narrow or short Overview layouts select one section through native buttons.
 
 **Reason.** Overview gives immediate access to the plan totals and inputs. The separate Money flow chart can use the available space. One expense list keeps subscriptions and other payments in the same context, while sorting surfaces the largest current allocation. Fixed card controls remain reachable during scrolling. Grouping small chart categories preserves all cents while keeping labels readable; detail remains in Expenses.
 
 **Tradeoff.** A narrow chart can combine several categories into one labeled total. Users open the relevant payment view for detail. Short screens need compact controls and a usable body height. Browser review must check body scrolling and stationary outer regions in isolated emulated profiles and in the actual handoff window.
+
+## 11. Store typed snapshots with a safe legacy upgrade
+
+**Decision.** Make named, member-owned account records the canonical balance input. Derive savings and investment totals. Upgrade old aggregate totals inside the same startup transaction as schema creation.
+
+**Reason.** One account list supports separate retirement and savings types without duplicated totals drifting apart. Legacy amounts lack account-type evidence, so migration uses generic Savings and Other investments. Users supply more specific types when known.
+
+**Tradeoff.** Balances remain manual snapshots with no provider reconciliation or joint-account model. Startup can change an affected plan's revision. Row locks, matching JSON/row revisions, idempotent predicates, and transaction rollback preserve coherent saved state. Group bounds limit totals as well as individual accounts.
 
 See [user stories](../user-stories.md) for observable behavior, [data rules](data-model.md) for numerical examples, and [security](security.md) for trust boundaries and rejection paths.

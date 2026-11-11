@@ -9,12 +9,14 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 ## What works today
 
 - Build a monthly plan with income, regular expenses, goals, and manually entered balances.
+- Track named savings, retirement, and investment accounts by type. Derive savings and investment totals from those snapshots.
 - Switch between the household view and the signed-in member's allocated share.
 - Divide shared expenses evenly, by custom percentage, or by annual base salary. Record the payer separately.
 - Add, edit, and remove expenses and goals. Keep several goals active in the same budget.
 - Schedule subscriptions, bills, and loan payments with a start month and an inclusive final month or finite term.
 - Choose from 100 service names and local logos, or keep a custom expense name.
 - Build trip budgets from six cost categories or enter a purchase target. Record the amount already saved and calculate a monthly saving suggestion.
+- Optionally record saved progress toward an ordinary goal. Goals without a target show their planned contribution.
 - Read a Sankey money flow, summary totals, goal allocations, and balance cards from the same server calculation.
 - Change the planning month to update the forecast automatically. View its next 12 months with payment schedules or an average paycheck estimate for a member with regular pay frequency.
 - Save plans in PostgreSQL. Detect concurrent edits instead of overwriting another window's changes.
@@ -30,11 +32,11 @@ Each navigation view has one task. The household scope, period, and planning mon
 | Goals              | Ordinary savings, investment, and debt contributions.              |
 | Trips & purchases  | Manual targets, saved progress, deadlines, and saving suggestions. |
 
-The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview shows three bounded cards on desktop; narrow or short layouts use section buttons to show one card at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
+The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance compares both members in compact income and balance tables. Narrow or short layouts show one section at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
 
-This version uses manual plans and fictional demo data. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Both invited members can read and edit the complete household plan. Bank connections, transaction history, service cancellation, loan repayment, and investment advice are outside this version.
+New households start with empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Both invited members can read and edit the complete household plan. Bank connections, transaction history, service cancellation, loan repayment, and investment advice are outside this version.
 
-[Mobile Overview](docs/system-design/images/mobile.png) · [Money flow](docs/system-design/images/money-flow.png) · [Mobile Money flow](docs/system-design/images/mobile-money-flow.png) · [Expenses](docs/system-design/images/expenses.png) · [Mobile Expenses](docs/system-design/images/mobile-expenses.png)
+[Mobile Overview](docs/system-design/images/mobile.png) · [Money flow](docs/system-design/images/money-flow.png) · [Mobile Money flow](docs/system-design/images/mobile-money-flow.png) · [Expenses](docs/system-design/images/expenses.png) · [Mobile Expenses](docs/system-design/images/mobile-expenses.png) · [Goals](docs/system-design/images/goals.png) · [Mobile Goals](docs/system-design/images/mobile-goals.png)
 
 ## Run locally
 
@@ -52,9 +54,9 @@ Open **http://127.0.0.1:5173** and select **Open household plan**. Use `127.0.0.
 
 The development script reads `.env`, starts the Go API on port 8080, and starts Vite on port 5173. Vite proxies API and sign-in requests to Go. Closing the development process stops both servers. The Compose database listens only on loopback.
 
-Demo sessions use the same persisted sample household. Changes survive sign-out and server restarts. Demo mode has a separate household from private mode. It does not isolate data by visitor or reset the sample on each visit.
+Local demo sessions use one persisted household that starts empty. Changes survive sign-out and server restarts. Demo mode has a separate household from private mode. It does not isolate data by visitor or reset an existing plan.
 
-The interface uses household names and labels in both modes. Local reference data remains fictional, and the server still requires explicit demo mode and loopback access.
+The interface uses saved household names and labels in both modes. Populated examples exist only in test fixtures and the documentation screenshots. The server still requires explicit demo mode and loopback access for local sessions.
 
 ### Private sign-in
 
@@ -79,7 +81,9 @@ npm run build
 WEB_DIST_DIR=apps/web/dist ./dist/bank-piggy
 ```
 
-The binary does not read `.env` itself. `npm run dev` does. The default frontend path, `../web/dist`, fits the development API working directory; the root-level binary command needs the override shown above. Hosting, HTTPS termination, backups, and a live Google login have not been verified in a deployed environment.
+The binary does not read `.env` itself. `npm run dev` does. The default frontend path, `../web/dist`, fits the development API working directory; the root-level binary command needs the override shown above. Private Railway hosting and one invited Google login have been verified. The second invited login and database backup restore remain unverified. See the [deployment guide](docs/system-design/deployment.md).
+
+Startup upgrades older saved balance totals to generic Savings and Other investments accounts in one database transaction. Existing typed accounts keep their values and order. The upgrade advances affected plan revisions once, so an editor opened before the upgrade must reload. See [data upgrades](docs/system-design/data-model.md#account-upgrade).
 
 ## Validate changes
 
@@ -97,7 +101,7 @@ TEST_DATABASE_URL='postgresql://bankpiggy:bankpiggy@127.0.0.1:5432/bankpiggy_tes
 
 Each integration test creates and removes its own schema. The test database user must have permission to create schemas. Without `TEST_DATABASE_URL`, database-backed tests skip; a passing command alone then does not prove persistence behavior.
 
-`npm run check` checks generated contracts and provider assets, Prettier and Go formatting, source size, ESLint, Go lint, TypeScript types, unused code, Node regression tests, Go tests with the race detector, and both builds. The [pre-commit hook](.githooks/pre-commit) runs this gate after `npm run hooks:install`. Fresh clones need that installation step. The [quality workflow](.github/workflows/quality.yml) configures PostgreSQL and also runs `npm run audit`.
+`npm run check` checks generated contracts and provider assets, Prettier and Go formatting, source size, ESLint, Go lint, TypeScript types, unused code, Node regression tests, Go tests with the race detector, and both builds. The [pre-commit hook](.githooks/pre-commit) runs this gate after `npm run hooks:install`. Fresh clones need that installation step. The [quality workflow](.github/workflows/quality.yml) configures PostgreSQL, runs `npm run audit`, and builds the production Docker image.
 
 The audit command checks npm advisories and runs the pinned official Go vulnerability checker. Weekly dependency-update configuration covers npm, Go modules, and GitHub Actions. The workflow and update configuration become active after the repository changes are pushed.
 
@@ -108,13 +112,14 @@ The audit command checks npm advisories and runs the pinned official Go vulnerab
 | PostgreSQL integration tests   | Real persistence, identity binding, expiry, and competing revisions.                                                                          |
 | Local signed identity provider | Signature and claim verification, nonce, PKCE, and callback replay checks. This simulates Google.                                             |
 | Browser review                 | Local sample data and manual plans. See the current verification note in [system design](docs/system-design/README.md#verification-boundary). |
-| Live services                  | No deployment, live Google sign-in, or connected bank account is claimed.                                                                     |
+| Live services                  | Private Railway deployment, HTTPS, PostgreSQL health, and one invited Google login. No connected bank account or verified backup restore.     |
 
 ## Read the design
 
 - [Architecture and request flow](docs/system-design/README.md)
 - [Data model and financial rules](docs/system-design/data-model.md)
 - [Security boundaries and defenses](docs/system-design/security.md)
+- [Private Railway deployment and recovery](docs/system-design/deployment.md)
 - [Design decisions and tradeoffs](docs/system-design/decisions.md)
 - [User stories and acceptance criteria](docs/user-stories.md)
 - [Product brief and longer-term scope](docs/product-brief.md)

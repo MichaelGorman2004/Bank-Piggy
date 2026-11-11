@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"bankpiggy/api/internal/budget"
+	"bankpiggy/api/internal/testbudget"
 )
 
 func purchasePlan(plan budget.Household) budget.Household {
@@ -53,7 +54,7 @@ func TestPurchaseAndOlderTripSurviveHTTPAndPostgreSQLRoundTrip(t *testing.T) {
 }
 
 func TestOptionalPurchaseRequiresCompleteWholeCentJSON(t *testing.T) {
-	plan := purchasePlan(budget.Sample())
+	plan := purchasePlan(testbudget.Sample())
 	valid := planJSON(t, plan)
 	purchaseJSON, err := json.Marshal(plan.Goals[1].Purchase)
 	if err != nil {

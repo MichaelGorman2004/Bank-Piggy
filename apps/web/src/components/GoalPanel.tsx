@@ -112,7 +112,7 @@ function GoalIntro({
 }
 
 /**
- * Goal bars describe planned contribution shares, not invented progress toward a target.
+ * Rows pair canonical planned contributions with optional manual saved-to-target progress.
  * @param root0 Component values and event handlers.
  * @param root0.data Validated household response.
  * @param root0.summary Server-calculated totals.
@@ -153,7 +153,6 @@ export function GoalPanel({ data, summary, scope, factor, view, onEdit, onAdd }:
               (item) => item.goalId === goal.id,
             )}
             amount={goalAmount(goal, data, scope)}
-            total={amountCents}
             factor={factor}
             onEdit={onEdit}
           />
