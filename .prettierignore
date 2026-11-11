@@ -1,0 +1,7 @@
+node_modules/
+apps/web/dist/
+dist/
+package-lock.json
+packages/contracts/index.ts
+apps/api/
+.playwright-mcp/
