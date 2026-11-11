@@ -14,7 +14,7 @@ interface HouseholdOverviewProps {
   readonly onEdit: () => void;
 }
 const SECTIONS = [
-  { id: 'details', label: 'Plan inputs' },
+  { id: 'details', label: 'At a glance' },
   { id: 'balances', label: 'Balances' },
   { id: 'totals', label: 'Plan totals' },
 ] satisfies ReadonlyArray<{ readonly id: string; readonly label: string }>;
@@ -52,7 +52,7 @@ export function HouseholdOverview(props: HouseholdOverviewProps) {
           </FinanceCard>
         </div>
         <div className={styles.details} data-active={active === 'details'}>
-          <PlanDetails household={props.household} onEdit={props.onEdit} />
+          <PlanDetails household={props.household} />
         </div>
         <div className={styles.balances} data-active={active === 'balances'}>
           <BalancePanel

@@ -157,9 +157,9 @@ A personal paycheck estimate scales the selected month's values by `12 / paychec
 
 An ordinary goal can opt into `savingsTarget: {targetAmountCents, savedAmountCents}`. The target must be positive and the saved amount nonnegative, both within `MaxMoneyCents`. It has no date, so it does not create a deadline projection or suggested monthly amount. It is mutually exclusive with `trip` and `purchase` details.
 
-The dashboard preserves existing ordinary target metadata when a contribution is edited. Editable ordinary saved/target fields and their progress readouts are introduced in the next review layer. Trip and purchase progress already remains separate from the selected member’s monthly allocation.
+Rows with a target show the recorded saved amount of target and a native progress bar. The bar is bounded at the target, while the text retains the full saved amount if it exceeds the target. An untargeted goal shows its planned contribution with no progress bar. Shared target progress remains whole-goal context; the selected member's contribution stays separately allocated.
 
-Saved progress is independent of account snapshots and chosen monthly contributions. Editing it changes neither the monthly summary nor the yearly summary. See [server validation](../../apps/api/internal/budget/targets.go) and [goal draft conversion](../../apps/web/src/features/plan/goalDraft.ts).
+Saved progress is independent of account snapshots and chosen monthly contributions. Editing it changes neither the monthly summary nor the yearly summary. See [server validation](../../apps/api/internal/budget/targets.go) and [progress presentation](../../apps/web/src/features/plan/goalProgress.ts).
 
 ## Trip and purchase targets
 

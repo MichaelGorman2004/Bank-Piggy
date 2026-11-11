@@ -1,6 +1,7 @@
 import type { GoalDraft } from './goalDraft';
 import { MonthPicker } from '../../components/MonthPicker';
 import { TripFields } from './TripFields';
+import { SavingsTargetFields } from './SavingsTargetFields';
 import styles from './Editors.module.css';
 
 interface GoalTargetFieldsProps {
@@ -99,6 +100,7 @@ export function GoalTargetFields(props: GoalTargetFieldsProps) {
   return (
     <>
       <GoalType {...props} />
+      {props.draft.kind === 'goal' && <SavingsTargetFields {...props} />}
       {props.draft.kind !== 'goal' && (
         <>
           <TargetProgressFields {...props} />

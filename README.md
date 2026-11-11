@@ -9,12 +9,14 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 ## What works today
 
 - Build a monthly plan with income, regular expenses, goals, and manually entered balances.
+- Track named savings, retirement, and investment accounts by type. Derive savings and investment totals from those snapshots.
 - Switch between the household view and the signed-in member's allocated share.
 - Divide shared expenses evenly, by custom percentage, or by annual base salary. Record the payer separately.
 - Add, edit, and remove expenses and goals. Keep several goals active in the same budget.
 - Schedule subscriptions, bills, and loan payments with a start month and an inclusive final month or finite term.
 - Choose from 100 service names and local logos, or keep a custom expense name.
 - Build trip budgets from six cost categories or enter a purchase target. Record the amount already saved and calculate a monthly saving suggestion.
+- Optionally record saved progress toward an ordinary goal. Goals without a target show their planned contribution.
 - Read a Sankey money flow, summary totals, goal allocations, and balance cards from the same server calculation.
 - Change the planning month to update the forecast automatically. View its next 12 months with payment schedules or an average paycheck estimate for a member with regular pay frequency.
 - Save plans in PostgreSQL. Detect concurrent edits instead of overwriting another window's changes.
@@ -30,11 +32,11 @@ Each navigation view has one task. The household scope, period, and planning mon
 | Goals              | Ordinary savings, investment, and debt contributions.              |
 | Trips & purchases  | Manual targets, saved progress, deadlines, and saving suggestions. |
 
-The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview shows three bounded cards on desktop; narrow or short layouts use section buttons to show one card at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
+The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance compares both members in compact income and balance tables. Narrow or short layouts show one section at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
 
 This version uses manual plans and fictional demo data. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Both invited members can read and edit the complete household plan. Bank connections, transaction history, service cancellation, loan repayment, and investment advice are outside this version.
 
-[Mobile Overview](docs/system-design/images/mobile.png) · [Money flow](docs/system-design/images/money-flow.png) · [Mobile Money flow](docs/system-design/images/mobile-money-flow.png) · [Expenses](docs/system-design/images/expenses.png) · [Mobile Expenses](docs/system-design/images/mobile-expenses.png)
+[Mobile Overview](docs/system-design/images/mobile.png) · [Money flow](docs/system-design/images/money-flow.png) · [Mobile Money flow](docs/system-design/images/mobile-money-flow.png) · [Expenses](docs/system-design/images/expenses.png) · [Mobile Expenses](docs/system-design/images/mobile-expenses.png) · [Goals](docs/system-design/images/goals.png) · [Mobile Goals](docs/system-design/images/mobile-goals.png)
 
 ## Run locally
 
@@ -80,6 +82,8 @@ WEB_DIST_DIR=apps/web/dist ./dist/bank-piggy
 ```
 
 The binary does not read `.env` itself. `npm run dev` does. The default frontend path, `../web/dist`, fits the development API working directory; the root-level binary command needs the override shown above. Hosting, HTTPS termination, backups, and a live Google login have not been verified in a deployed environment.
+
+Startup upgrades older saved balance totals to generic Savings and Other investments accounts in one database transaction. Existing typed accounts keep their values and order. The upgrade advances affected plan revisions once, so an editor opened before the upgrade must reload. See [data upgrades](docs/system-design/data-model.md#account-upgrade).
 
 ## Validate changes
 
