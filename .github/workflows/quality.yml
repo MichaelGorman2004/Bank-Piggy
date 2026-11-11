@@ -51,3 +51,4 @@ jobs:
           args: --config ../../.golangci.yml
       - run: npm run check
       - run: npm run audit
+      - run: docker build --platform linux/amd64 --tag bank-piggy:ci .
