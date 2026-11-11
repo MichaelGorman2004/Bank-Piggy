@@ -101,7 +101,7 @@ TEST_DATABASE_URL='postgresql://bankpiggy:bankpiggy@127.0.0.1:5432/bankpiggy_tes
 
 Each integration test creates and removes its own schema. The test database user must have permission to create schemas. Without `TEST_DATABASE_URL`, database-backed tests skip; a passing command alone then does not prove persistence behavior.
 
-`npm run check` checks generated contracts and provider assets, Prettier and Go formatting, source size, ESLint, Go lint, TypeScript types, unused code, Node regression tests, Go tests with the race detector, and both builds. The [pre-commit hook](.githooks/pre-commit) runs this gate after `npm run hooks:install`. Fresh clones need that installation step. The [quality workflow](.github/workflows/quality.yml) configures PostgreSQL and also runs `npm run audit`.
+`npm run check` checks generated contracts and provider assets, Prettier and Go formatting, source size, ESLint, Go lint, TypeScript types, unused code, Node regression tests, Go tests with the race detector, and both builds. The [pre-commit hook](.githooks/pre-commit) runs this gate after `npm run hooks:install`. Fresh clones need that installation step. The [quality workflow](.github/workflows/quality.yml) configures PostgreSQL, runs `npm run audit`, and builds the production Docker image.
 
 The audit command checks npm advisories and runs the pinned official Go vulnerability checker. Weekly dependency-update configuration covers npm, Go modules, and GitHub Actions. The workflow and update configuration become active after the repository changes are pushed.
 
@@ -119,6 +119,7 @@ The audit command checks npm advisories and runs the pinned official Go vulnerab
 - [Architecture and request flow](docs/system-design/README.md)
 - [Data model and financial rules](docs/system-design/data-model.md)
 - [Security boundaries and defenses](docs/system-design/security.md)
+- [Private Railway deployment and recovery](docs/system-design/deployment.md)
 - [Design decisions and tradeoffs](docs/system-design/decisions.md)
 - [User stories and acceptance criteria](docs/user-stories.md)
 - [Product brief and longer-term scope](docs/product-brief.md)

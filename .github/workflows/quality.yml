@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_USER: bankpiggy
           POSTGRES_PASSWORD: bankpiggy
@@ -51,3 +51,4 @@ jobs:
           args: --config ../../.golangci.yml
       - run: npm run check
       - run: npm run audit
+      - run: docker build --platform linux/amd64 --tag bank-piggy:ci .

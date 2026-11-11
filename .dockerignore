@@ -1,0 +1,37 @@
+# Send only build inputs. Documentation and setup screenshots stay outside the context.
+**
+!package.json
+!package-lock.json
+!.prettierrc.json
+!apps/
+!apps/api/
+!apps/api/**
+!apps/web/
+!apps/web/**
+!packages/
+!packages/contracts/
+!packages/contracts/**
+!scripts/
+!scripts/generate-provider-icons.mjs
+!scripts/provider-sources/
+!scripts/provider-sources/**
+
+# Keep local data and credentials out, including inside the allowed source trees.
+**/node_modules/
+**/dist/
+**/.env
+**/.env.*
+**/.git/
+**/.aws/
+**/.ssh/
+**/.codex/
+**/.agents/
+**/.npmrc
+**/*.pem
+**/*.key
+**/*.log
+**/.DS_Store
+**/coverage/
+**/playwright-report/
+**/test-results/
+**/.playwright-mcp/
