@@ -1,24 +1,63 @@
 import js from '@eslint/js';
+import babelParser from '@babel/eslint-parser';
+import { defineConfig } from 'eslint/config';
 import jsdoc from 'eslint-plugin-jsdoc';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
-import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default defineConfig(
   { ignores: ['**/dist/**', '**/node_modules/**', 'packages/contracts/index.ts'] },
   js.configs.recommended,
   {
     files: ['apps/web/**/*.{ts,tsx}'],
-    extends: [...tseslint.configs.strictTypeChecked],
     languageOptions: {
       globals: globals.browser,
-      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+      parser: babelParser,
+      parserOptions: {
+        requireConfigFile: false,
+        babelOptions: {
+          babelrc: false,
+          configFile: false,
+          parserOpts: { plugins: ['typescript'] },
+        },
+      },
     },
     plugins: { 'react-hooks': reactHooks, jsdoc },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/consistent-type-imports': 'error',
+      // Preserve strictTypeChecked's core overrides; Oxlint owns the TypeScript rules.
+      'constructor-super': 'off',
+      'getter-return': 'off',
+      'no-class-assign': 'off',
+      'no-const-assign': 'off',
+      'no-dupe-args': 'off',
+      'no-dupe-class-members': 'off',
+      'no-dupe-keys': 'off',
+      'no-func-assign': 'off',
+      'no-import-assign': 'off',
+      'no-new-native-nonconstructor': 'off',
+      'no-new-symbol': 'off',
+      'no-obj-calls': 'off',
+      'no-redeclare': 'off',
+      'no-setter-return': 'off',
+      'no-this-before-super': 'off',
+      'no-undef': 'off',
+      'no-unreachable': 'off',
+      'no-unsafe-negation': 'off',
+      'no-var': 'error',
+      'no-with': 'off',
+      'prefer-const': 'error',
+      'prefer-rest-params': 'error',
+      'prefer-spread': 'error',
+      'no-array-constructor': 'off',
+      'no-implied-eval': 'off',
+      'no-unused-expressions': 'off',
+      'no-unused-vars': 'off',
+      'no-useless-constructor': 'off',
+      'no-throw-literal': 'off',
+      'prefer-promise-reject-errors': 'off',
+      'require-await': 'off',
+      'no-return-await': 'off',
       'no-restricted-syntax': [
         'error',
         { selector: 'TSAsExpression', message: 'Validate or narrow the type instead of casting.' },
@@ -28,6 +67,7 @@ export default tseslint.config(
       'jsdoc/require-jsdoc': [
         'error',
         {
+          exemptEmptyConstructors: true,
           contexts: [
             'FunctionDeclaration',
             'MethodDefinition',
@@ -41,6 +81,12 @@ export default tseslint.config(
       'jsdoc/check-tag-names': 'error',
       'jsdoc/require-param': 'error',
       'jsdoc/require-returns': 'error',
+    },
+  },
+  {
+    files: ['apps/web/**/*.tsx'],
+    languageOptions: {
+      parserOptions: { babelOptions: { parserOpts: { plugins: ['typescript', 'jsx'] } } },
     },
   },
   {

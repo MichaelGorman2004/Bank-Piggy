@@ -60,6 +60,8 @@ The first version optimizes for a correct, reviewable plan for two people. These
 
 **Reason.** Mock SQL cannot prove locking, uniqueness, expiry queries, or transaction behavior. The source-size and function-complexity checks make responsibility growth visible. Generated-file checks keep consumers aligned with the contract.
 
+**TypeScript 7.** Use its native compiler for builds and type checks, plus Oxlint and `tsgolint` for strict typed lint. Keep Babel-backed ESLint for the existing syntax, documentation, React Hooks, and source-structure rules. Knip v6 uses OXC for unused-code analysis. These tools do not need a TypeScript 6 compiler. Pin `eslint-plugin-jsdoc` to `64.2.1`; later releases introduce the older TypeScript API dependency. Explicit unused-variable options retain checks for underscore parameters and runtime values used only by types. Negative lint-policy tests verify that the migration retains the required rejections. See [native typed lint](https://oxc.rs/docs/guide/usage/linter/type-aware.html), [Knip v6](https://knip.dev/blog/knip-v6), and the [JSDoc package manifest](https://github.com/gajus/eslint-plugin-jsdoc/blob/v64.2.1/package.json).
+
 **Tradeoff.** The full gate needs Node, Go, Python, `golangci-lint`, and a test database. Database tests explicitly skip without `TEST_DATABASE_URL`; reviewers must distinguish that run from real integration evidence. A hook can be bypassed, so its presence does not prove that a hosted workflow passed.
 
 ## 8. Calculate schedules from one current plan

@@ -25,7 +25,7 @@
     "unused:check": "knip",
     "contracts:generate": "python3 packages/contracts/generate.py",
     "check": "npm run contracts:check && npm run providers:check && npm run format:check && npm run size:check && npm run lint && npm run typecheck && npm run unused:check && npm test && npm run build",
-    "lint:web": "eslint apps/web/src apps/web/vite.config.ts --max-warnings=0",
+    "lint:web": "oxlint --type-aware apps/web/src apps/web/vite.config.ts && eslint apps/web/src apps/web/vite.config.ts --max-warnings=0",
     "lint:scripts": "eslint scripts eslint.config.mjs --max-warnings=0",
     "lint:api": "cd apps/api && golangci-lint run --config ../../.golangci.yml",
     "size:check": "node scripts/check-source-size.mjs",
@@ -40,16 +40,19 @@
     "audit:go": "cd apps/api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./..."
   },
   "devDependencies": {
+    "@babel/core": "^8.1.2",
+    "@babel/eslint-parser": "^8.1.2",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.14.0",
-    "eslint-plugin-jsdoc": "^65.4.5",
+    "eslint-plugin-jsdoc": "64.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.0.0",
     "knip": "^6.45.0",
+    "oxlint": "^1.93.0",
+    "oxlint-tsgolint": "~7.0.2006",
     "prettier": "^3.9.10",
     "simple-icons": "^16.37.0",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.2"
+    "typescript": "~7.0.2"
   },
   "overrides": {
     "minimatch": "^11.0.7"
