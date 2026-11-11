@@ -25,7 +25,7 @@
     "/api/demo/session": {
       "post": {
         "operationId": "createDemoSession",
-        "description": "Loopback demo mode only. Seeds sample data once. Requires same-origin request.",
+        "description": "Loopback demo mode only. Opens the saved local household, which starts empty. Requires same-origin request.",
         "responses": {
           "200": {
             "description": "Success",

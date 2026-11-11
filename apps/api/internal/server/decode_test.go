@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	"bankpiggy/api/internal/budget"
+	"bankpiggy/api/internal/testbudget"
 )
 
 func TestDecodePlanEnforcesRequiredFieldsAndSafeMoney(t *testing.T) {
-	valid := planJSON(t, budget.Sample())
+	valid := planJSON(t, testbudget.Sample())
 	unknown := append(bytes.TrimSuffix(valid, []byte("}")), []byte(`,"householdId":"foreign"}`)...)
 	tests := []struct {
 		name string
@@ -35,7 +36,7 @@ func TestDecodePlanEnforcesRequiredFieldsAndSafeMoney(t *testing.T) {
 }
 
 func TestOptionalTripRequiresItsCompleteNestedContract(t *testing.T) {
-	plan := scheduledTripPlan(budget.Sample())
+	plan := scheduledTripPlan(testbudget.Sample())
 	valid := planJSON(t, plan)
 	tripJSON, err := json.Marshal(plan.Goals[0].Trip)
 	if err != nil {
@@ -68,7 +69,7 @@ func TestLegacyGoalsOmitTripAndEnteredZeroTripSavingsSurviveDecoding(t *testing.
 	if bytes.Contains(legacy, []byte(`"trip"`)) {
 		t.Fatal("a non-trip goal serialized an empty trip object")
 	}
-	plan := scheduledTripPlan(budget.Sample())
+	plan := scheduledTripPlan(testbudget.Sample())
 	plan.Goals[0].Trip.SavedAmountCents = 0
 	request := httptest.NewRequest("PUT", "/api/household", bytes.NewReader(planJSON(t, plan)))
 	request.Header.Set("Content-Type", "application/json")

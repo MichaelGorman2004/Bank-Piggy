@@ -48,11 +48,11 @@ The first version optimizes for a correct, reviewable plan for two people. These
 
 ## 6. Explicit local demo and honest estimates
 
-**Decision.** Require an explicit demo mode bound to loopback. Keep its fictional household separate from the private household. Label planned contributions, scheduled forecasts, and paycheck estimates. Show target progress from the user's manual saved amount.
+**Decision.** Require an explicit demo mode bound to loopback. Keep its local household separate from the private household. Start both modes with empty plans and keep populated fixtures in test code. Label planned contributions, scheduled forecasts, and paycheck estimates. Show target progress from the user's manual saved amount.
 
-**Reason.** The application can demonstrate finance and persistence flows with sample data. Clear labels explain where the figures come from. A labeled Sankey shortfall makes a funding gap visible.
+**Reason.** The local application can exercise finance and persistence flows with user-entered data. Automated tests use populated fixtures without inserting example finances into the running application. Clear labels explain where the figures come from. A labeled Sankey shortfall makes a funding gap visible.
 
-**Tradeoff.** Demo users share one saved sample plan in the local database. The demo is not a public hosted sandbox. Salary edits recalculate the current plan, and year/paycheck estimates contain no historical activity or real pay dates.
+**Tradeoff.** Demo users share one saved plan in the local database. Existing records remain intact during startup; the app cannot safely infer whether an older local record is still an example or has been edited. The demo is not a public hosted sandbox. Salary edits recalculate the current plan, and year/paycheck estimates contain no historical activity or real pay dates.
 
 ## 7. Strict checks with a real persistence boundary
 

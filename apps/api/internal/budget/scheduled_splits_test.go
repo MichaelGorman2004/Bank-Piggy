@@ -1,6 +1,11 @@
-package budget
+package budget_test
 
-import "testing"
+import (
+	"testing"
+
+	"bankpiggy/api/internal/budget"
+	"bankpiggy/api/internal/testbudget"
+)
 
 func TestScheduledSplitsKeepZeroSharesAndRepeatedMonthlyCents(t *testing.T) {
 	tests := []struct {
@@ -14,13 +19,13 @@ func TestScheduledSplitsKeepZeroSharesAndRepeatedMonthlyCents(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			plan := Sample()
-			plan.Expenses = []Expense{{
+			plan := testbudget.Sample()
+			plan.Expenses = []budget.Expense{{
 				ID: "payment", Name: "Payment", Category: "Bills", OwnerID: "shared",
 				MonthlyAmountCents: 101, StartMonth: "2026-11", EndMonth: "2026-12",
-				Split: Split{Method: test.method, CustomFirstShareBps: test.basis},
+				Split: budget.Split{Method: test.method, CustomFirstShareBps: test.basis},
 			}}
-			result := Response(plan, testMonth(t, "2026-11"))
+			result := budget.Response(plan, testMonth(t, "2026-11"))
 			share := result.Summary.ExpenseShares[0]
 			if share.FirstMemberCents != test.first || share.SecondMemberCents != 101-test.first {
 				t.Fatal("schedule changed the exact monthly split")
@@ -29,7 +34,7 @@ func TestScheduledSplitsKeepZeroSharesAndRepeatedMonthlyCents(t *testing.T) {
 			if yearly.FirstMemberCents != test.first*2 || yearly.SecondMemberCents != (101-test.first)*2 {
 				t.Fatal("projection rounded a combined total instead of repeating monthly cents")
 			}
-			ended := Response(plan, testMonth(t, "2027-01"))
+			ended := budget.Response(plan, testMonth(t, "2027-01"))
 			if ended.Summary.Household.MonthlyExpensesCents != 0 || len(ended.Household.Expenses) != 1 {
 				t.Fatal("ended payments must stop contributing without losing their records")
 			}

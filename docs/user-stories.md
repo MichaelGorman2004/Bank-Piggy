@@ -4,15 +4,15 @@ These stories describe the implemented first version. Acceptance criteria state 
 
 ## 1. Open the local household plan
 
-**As a local evaluator, I want to open the household plan so I can inspect the application with its reference data.**
+**As a local evaluator, I want to open an empty household plan so I can try the application with my own inputs.**
 
 - Explicit demo mode starts only with a loopback listener and browser origin.
-- The entry action is **Open household plan** and creates a session for the first reference member.
+- The entry action is **Open household plan** and creates a session for the first local member.
 - The interface shows **Our household**, the saved member names, **Household member**, and **Household plan**.
 - Edits persist in PostgreSQL and remain after reload or sign-out.
-- All demo sessions use that same local sample household. Private mode uses a different household and rejects demo-session creation.
+- A new local household has no financial records. All demo sessions use that same saved local household. Private mode uses a different household and rejects demo-session creation.
 
-**Evidence boundary:** this local fixture contains fictional financial data. Household labels do not establish live sign-in or bank access.
+**Evidence boundary:** local mode does not establish Google identity or bank access. Automated tests use isolated populated fixtures. Startup preserves existing plans in both modes.
 
 ## 2. Sign in as an invited household member
 
@@ -25,7 +25,7 @@ These stories describe the implemented first version. Acceptance criteria state 
 - Expired sessions and sessions inconsistent with the configured invitations cannot read or edit the plan.
 - Both invited members can read and edit the complete household plan.
 
-**Evidence boundary:** signed local identity-provider tests and real PostgreSQL tests cover this flow. Live Google sign-in has not been verified.
+**Evidence boundary:** signed local identity-provider tests and real PostgreSQL tests cover this flow. One invited Google account has passed live sign-in, sign-out, and repeat sign-in. The second invited login and live rejection of an uninvited account remain unverified.
 
 ## 3. Create the first useful monthly plan
 
