@@ -1,0 +1,601 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "Split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "customFirstShareBps"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["equal", "salary", "custom"]
+        },
+        "customFirstShareBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000,
+          "description": "First member share in basis points (10000 = 100%). Ignored for equal and salary splits."
+        }
+      }
+    },
+    "Member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "annualBaseSalaryCents",
+        "monthlyTakeHomeCents",
+        "debtCents",
+        "payFrequency",
+        "accounts"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": ["member-1", "member-2"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "annualBaseSalaryCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "monthlyTakeHomeCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "debtCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "payFrequency": {
+          "type": "string",
+          "enum": ["weekly", "biweekly", "semimonthly", "monthly", "irregular"]
+        },
+        "accounts": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/AccountBalance"
+          },
+          "description": "Stable account IDs are unique within this member. Each savings or investment group total must not exceed 100000000000 cents."
+        }
+      }
+    },
+    "Expense": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "category",
+        "monthlyAmountCents",
+        "ownerId",
+        "paidByMemberId",
+        "split"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]{1,64}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "monthlyAmountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "ownerId": {
+          "type": "string",
+          "enum": ["shared", "member-1", "member-2"]
+        },
+        "paidByMemberId": {
+          "type": "string",
+          "enum": ["", "member-1", "member-2"]
+        },
+        "split": {
+          "$ref": "#/$defs/Split"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["subscription", "bill", "loan"]
+        },
+        "providerId": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]{1,64}$"
+        },
+        "startMonth": {
+          "type": "string",
+          "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$",
+          "description": "Calendar month in YYYY-MM format, year 0001 through 9999."
+        },
+        "endMonth": {
+          "type": "string",
+          "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$",
+          "description": "Last active calendar month, inclusive. Omit for an ongoing payment."
+        }
+      }
+    },
+    "Goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "monthlyAmountCents", "ownerId"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]{1,64}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "monthlyAmountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "ownerId": {
+          "type": "string",
+          "enum": ["shared", "member-1", "member-2"]
+        },
+        "trip": {
+          "$ref": "#/$defs/TripBudget"
+        },
+        "purchase": {
+          "$ref": "#/$defs/PurchaseTarget"
+        },
+        "savingsTarget": {
+          "$ref": "#/$defs/SavingsTarget"
+        }
+      },
+      "not": {
+        "anyOf": [
+          {
+            "required": ["trip", "purchase"]
+          },
+          {
+            "required": ["trip", "savingsTarget"]
+          },
+          {
+            "required": ["purchase", "savingsTarget"]
+          }
+        ]
+      },
+      "description": "A monthly allocation with optional ordinary savings, trip, or purchase progress. These progress details are mutually exclusive."
+    },
+    "Household": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "members", "expenses", "goals", "defaultSplitMethod"],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "members": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/Member"
+          }
+        },
+        "expenses": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/Expense"
+          }
+        },
+        "goals": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "$ref": "#/$defs/Goal"
+          }
+        },
+        "defaultSplitMethod": {
+          "type": "string",
+          "enum": ["equal", "salary", "custom"]
+        }
+      },
+      "description": "Two members in fixed member-1, member-2 order. All amounts are monthly planned cents. Revision is an optimistic concurrency token."
+    },
+    "Summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "monthlyTakeHomeCents",
+        "monthlyExpensesCents",
+        "monthlyGoalsCents",
+        "monthlyAvailableCents",
+        "monthlyRemainingCents",
+        "savingsCents",
+        "investmentsCents",
+        "debtCents"
+      ],
+      "properties": {
+        "monthlyTakeHomeCents": {
+          "type": "integer"
+        },
+        "monthlyExpensesCents": {
+          "type": "integer"
+        },
+        "monthlyGoalsCents": {
+          "type": "integer"
+        },
+        "monthlyAvailableCents": {
+          "type": "integer"
+        },
+        "monthlyRemainingCents": {
+          "type": "integer"
+        },
+        "savingsCents": {
+          "type": "integer"
+        },
+        "investmentsCents": {
+          "type": "integer"
+        },
+        "debtCents": {
+          "type": "integer"
+        }
+      }
+    },
+    "ExpenseShare": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expenseId", "firstMemberCents", "secondMemberCents"],
+      "properties": {
+        "expenseId": {
+          "type": "string"
+        },
+        "firstMemberCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1200000000000
+        },
+        "secondMemberCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1200000000000
+        }
+      }
+    },
+    "BudgetSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["household", "members", "expenseShares", "goalShares"],
+      "properties": {
+        "household": {
+          "$ref": "#/$defs/Summary"
+        },
+        "members": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Summary"
+          }
+        },
+        "expenseShares": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExpenseShare"
+          }
+        },
+        "goalShares": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GoalShare"
+          }
+        }
+      }
+    },
+    "HouseholdResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "household",
+        "summary",
+        "planningMonth",
+        "yearlySummary",
+        "tripProjections",
+        "purchaseProjections"
+      ],
+      "properties": {
+        "household": {
+          "$ref": "#/$defs/Household"
+        },
+        "summary": {
+          "$ref": "#/$defs/BudgetSummary",
+          "description": "Selected planning-month totals and exact member shares."
+        },
+        "planningMonth": {
+          "type": "string",
+          "pattern": "^(?!0000|9999)[0-9]{4}-(0[1-9]|1[0-2])$",
+          "description": "Planning calendar month in YYYY-MM format, year 0001 through 9998."
+        },
+        "yearlySummary": {
+          "$ref": "#/$defs/BudgetSummary",
+          "description": "Exact sum of twelve monthly projections from planningMonth, including payment schedule boundaries. Monthly-named flow fields contain the twelve-month totals here; savings, investments and debt remain unscaled balance snapshots."
+        },
+        "tripProjections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GoalProjection"
+          }
+        },
+        "purchaseProjections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GoalProjection"
+          }
+        }
+      }
+    },
+    "Viewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "Session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authenticated", "mode", "googleConfigured", "viewer", "csrfToken"],
+      "properties": {
+        "authenticated": {
+          "type": "boolean"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["demo", "private"]
+        },
+        "googleConfigured": {
+          "type": "boolean"
+        },
+        "viewer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Viewer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csrfToken": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error", "code"],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    },
+    "GoalShare": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["goalId", "firstMemberCents", "secondMemberCents"],
+      "properties": {
+        "goalId": {
+          "type": "string"
+        },
+        "firstMemberCents": {
+          "type": "integer",
+          "maximum": 1200000000000
+        },
+        "secondMemberCents": {
+          "type": "integer",
+          "maximum": 1200000000000
+        }
+      }
+    },
+    "TripCost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "amountCents"],
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": ["flights", "lodging", "food", "transport", "activities", "other"]
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        }
+      }
+    },
+    "TripBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["savedAmountCents", "targetMonth", "costs"],
+      "properties": {
+        "savedAmountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "targetMonth": {
+          "type": "string",
+          "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$",
+          "description": "Calendar month in YYYY-MM format, year 0001 through 9999."
+        },
+        "costs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/TripCost"
+          }
+        }
+      },
+      "description": "Manual vacation target derived from distinct category costs. Saved amount is a progress input, not another account balance or monthly allocation."
+    },
+    "PurchaseTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetAmountCents", "savedAmountCents", "targetMonth"],
+      "properties": {
+        "targetAmountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "savedAmountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "targetMonth": {
+          "type": "string",
+          "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$",
+          "description": "Calendar month in YYYY-MM format, year 0001 through 9999."
+        }
+      },
+      "description": "Manual savings target for a purchase. Saved amount records progress, not another account balance. Only the goal monthly contribution is deducted from the budget."
+    },
+    "GoalProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goalId",
+        "targetAmountCents",
+        "remainingAmountCents",
+        "monthsRemaining",
+        "suggestedMonthlyCents",
+        "status"
+      ],
+      "properties": {
+        "goalId": {
+          "type": "string"
+        },
+        "targetAmountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "remainingAmountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "monthsRemaining": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "suggestedMonthlyCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "status": {
+          "type": "string",
+          "enum": ["saving", "funded", "overdue"]
+        }
+      },
+      "description": "Whole monthly saving periods include the planning month and deadline month. Suggested amount rounds up to the next cent. Past deadlines have zero periods and zero suggestion; the remaining amount stays visible."
+    },
+    "AccountType": {
+      "type": "string",
+      "enum": [
+        "traditional_401k",
+        "roth_401k",
+        "traditional_ira",
+        "roth_ira",
+        "brokerage",
+        "high_yield_savings",
+        "savings",
+        "other_investment"
+      ]
+    },
+    "AccountBalance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "type", "balanceCents"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]{1,64}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "type": {
+          "$ref": "#/$defs/AccountType"
+        },
+        "balanceCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        }
+      },
+      "description": "A manually entered account snapshot owned by one member. Savings and high-yield savings count as savings; the other account types count as investments."
+    },
+    "SavingsTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetAmountCents", "savedAmountCents"],
+      "properties": {
+        "targetAmountCents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000000000
+        },
+        "savedAmountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        }
+      },
+      "description": "Optional manual progress for an ordinary goal. Saved amount can exceed the target. Progress does not change monthly allocations or account balances."
+    }
+  }
+}

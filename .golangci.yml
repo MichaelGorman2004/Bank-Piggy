@@ -1,0 +1,50 @@
+version: '2'
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - cyclop
+    - errcheck
+    - funlen
+    - gocognit
+    - gosec
+    - govet
+    - ineffassign
+    - nestif
+    - nolintlint
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - unused
+  settings:
+    cyclop:
+      max-complexity: 10
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      disable-default-exclusions: true
+    funlen:
+      lines: 50
+      statements: -1
+      ignore-comments: true
+    gocognit:
+      min-complexity: 16
+    nestif:
+      min-complexity: 5
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    generated: strict
+    presets: []
+    warn-unused: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

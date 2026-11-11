@@ -1,0 +1,14 @@
+{
+  "name": "@bank-piggy/contracts",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./schema.json": "./schema.json"
+  },
+  "scripts": {
+    "generate": "python3 generate.py"
+  }
+}
