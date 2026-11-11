@@ -1,0 +1,66 @@
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--walnut-soft);
+  font-size: 12px;
+}
+.labelText {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.details summary {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--glass-light);
+  color: var(--walnut);
+}
+.details {
+  position: relative;
+  flex-shrink: 0;
+}
+.details summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  list-style: none;
+}
+.details summary::-webkit-details-marker {
+  display: none;
+}
+.details p {
+  position: absolute;
+  z-index: 25;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(310px, calc(100vw - 48px));
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 8px 24px var(--shadow);
+  color: var(--walnut);
+  line-height: 1.6;
+}
+@media (max-width: 800px) {
+  .bar {
+    margin-bottom: 8px;
+  }
+}
+@media (max-height: 650px) and (min-width: 800px) {
+  .bar {
+    margin-bottom: 0;
+  }
+}

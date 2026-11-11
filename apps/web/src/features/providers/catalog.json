@@ -1,0 +1,602 @@
+[
+  {
+    "id": "amazon-prime",
+    "name": "Amazon Prime",
+    "category": "Shopping",
+    "icon": "amazon"
+  },
+  {
+    "id": "netflix",
+    "name": "Netflix",
+    "category": "Entertainment",
+    "icon": "siNetflix"
+  },
+  {
+    "id": "amazon-prime-video",
+    "name": "Amazon Prime Video",
+    "category": "Entertainment",
+    "icon": "amazon"
+  },
+  {
+    "id": "spotify",
+    "name": "Spotify",
+    "category": "Entertainment",
+    "icon": "siSpotify"
+  },
+  {
+    "id": "youtube-premium",
+    "name": "YouTube Premium",
+    "category": "Entertainment",
+    "icon": "siYoutube"
+  },
+  {
+    "id": "youtube-music",
+    "name": "YouTube Music",
+    "category": "Entertainment",
+    "icon": "siYoutubemusic"
+  },
+  {
+    "id": "youtube-tv",
+    "name": "YouTube TV",
+    "category": "Entertainment",
+    "icon": "siYoutubetv"
+  },
+  {
+    "id": "apple-music",
+    "name": "Apple Music",
+    "category": "Entertainment",
+    "icon": "siApplemusic"
+  },
+  {
+    "id": "apple-tv",
+    "name": "Apple TV+",
+    "category": "Entertainment",
+    "icon": "siAppletv"
+  },
+  {
+    "id": "hbo-max",
+    "name": "HBO Max",
+    "category": "Entertainment",
+    "icon": "siHbomax"
+  },
+  {
+    "id": "paramount",
+    "name": "Paramount+",
+    "category": "Entertainment",
+    "icon": "siParamountplus"
+  },
+  {
+    "id": "crunchyroll",
+    "name": "Crunchyroll",
+    "category": "Entertainment",
+    "icon": "siCrunchyroll"
+  },
+  {
+    "id": "twitch-turbo",
+    "name": "Twitch Turbo",
+    "category": "Entertainment",
+    "icon": "siTwitch"
+  },
+  {
+    "id": "audible",
+    "name": "Audible",
+    "category": "Entertainment",
+    "icon": "siAudible"
+  },
+  {
+    "id": "kindle-unlimited",
+    "name": "Kindle Unlimited",
+    "category": "Entertainment",
+    "icon": "amazon"
+  },
+  {
+    "id": "tidal",
+    "name": "Tidal",
+    "category": "Entertainment",
+    "icon": "siTidal"
+  },
+  {
+    "id": "pandora-plus",
+    "name": "Pandora Plus",
+    "category": "Entertainment",
+    "icon": "siPandora"
+  },
+  {
+    "id": "deezer",
+    "name": "Deezer",
+    "category": "Entertainment",
+    "icon": "siDeezer"
+  },
+  {
+    "id": "soundcloud-go",
+    "name": "SoundCloud Go+",
+    "category": "Entertainment",
+    "icon": "siSoundcloud"
+  },
+  {
+    "id": "plex-pass",
+    "name": "Plex Pass",
+    "category": "Entertainment",
+    "icon": "siPlex"
+  },
+  {
+    "id": "mubi",
+    "name": "MUBI",
+    "category": "Entertainment",
+    "icon": "siMubi"
+  },
+  {
+    "id": "nebula",
+    "name": "Nebula",
+    "category": "Entertainment",
+    "icon": "siNebula"
+  },
+  {
+    "id": "apple-icloud",
+    "name": "Apple iCloud+",
+    "category": "Software",
+    "icon": "siIcloud"
+  },
+  {
+    "id": "google-one",
+    "name": "Google One",
+    "category": "Software",
+    "icon": "siGoogle"
+  },
+  {
+    "id": "google-workspace",
+    "name": "Google Workspace",
+    "category": "Software",
+    "icon": "siGoogle"
+  },
+  {
+    "id": "dropbox",
+    "name": "Dropbox",
+    "category": "Software",
+    "icon": "siDropbox"
+  },
+  {
+    "id": "microsoft-365",
+    "name": "Microsoft 365",
+    "category": "Software",
+    "icon": "microsoft"
+  },
+  {
+    "id": "adobe-creative-cloud",
+    "name": "Adobe Creative Cloud",
+    "category": "Software",
+    "icon": "adobe"
+  },
+  {
+    "id": "notion",
+    "name": "Notion",
+    "category": "Software",
+    "icon": "siNotion"
+  },
+  {
+    "id": "evernote",
+    "name": "Evernote",
+    "category": "Software",
+    "icon": "siEvernote"
+  },
+  {
+    "id": "todoist",
+    "name": "Todoist",
+    "category": "Software",
+    "icon": "siTodoist"
+  },
+  {
+    "id": "trello",
+    "name": "Trello",
+    "category": "Software",
+    "icon": "siTrello"
+  },
+  {
+    "id": "asana",
+    "name": "Asana",
+    "category": "Software",
+    "icon": "siAsana"
+  },
+  {
+    "id": "slack",
+    "name": "Slack",
+    "category": "Software",
+    "icon": "slack"
+  },
+  {
+    "id": "zoom",
+    "name": "Zoom",
+    "category": "Software",
+    "icon": "siZoom"
+  },
+  {
+    "id": "figma",
+    "name": "Figma",
+    "category": "Software",
+    "icon": "siFigma"
+  },
+  {
+    "id": "miro",
+    "name": "Miro",
+    "category": "Software",
+    "icon": "siMiro"
+  },
+  {
+    "id": "grammarly",
+    "name": "Grammarly",
+    "category": "Software",
+    "icon": "siGrammarly"
+  },
+  {
+    "id": "1password",
+    "name": "1Password",
+    "category": "Software",
+    "icon": "si1password"
+  },
+  {
+    "id": "bitwarden",
+    "name": "Bitwarden",
+    "category": "Software",
+    "icon": "siBitwarden"
+  },
+  {
+    "id": "dashlane",
+    "name": "Dashlane",
+    "category": "Software",
+    "icon": "siDashlane"
+  },
+  {
+    "id": "lastpass",
+    "name": "LastPass",
+    "category": "Software",
+    "icon": "siLastpass"
+  },
+  {
+    "id": "nordvpn",
+    "name": "NordVPN",
+    "category": "Software",
+    "icon": "siNordvpn"
+  },
+  {
+    "id": "proton-mail",
+    "name": "Proton Mail",
+    "category": "Software",
+    "icon": "siProton"
+  },
+  {
+    "id": "proton-vpn",
+    "name": "Proton VPN",
+    "category": "Software",
+    "icon": "siProton"
+  },
+  {
+    "id": "expressvpn",
+    "name": "ExpressVPN",
+    "category": "Software",
+    "icon": "siExpressvpn"
+  },
+  {
+    "id": "surfshark",
+    "name": "Surfshark",
+    "category": "Software",
+    "icon": "siSurfshark"
+  },
+  {
+    "id": "mullvad",
+    "name": "Mullvad",
+    "category": "Software",
+    "icon": "siMullvad"
+  },
+  {
+    "id": "private-internet-access",
+    "name": "Private Internet Access",
+    "category": "Software",
+    "icon": "siPrivateinternetaccess"
+  },
+  {
+    "id": "duolingo-super",
+    "name": "Duolingo Super",
+    "category": "Learning",
+    "icon": "siDuolingo"
+  },
+  {
+    "id": "coursera-plus",
+    "name": "Coursera Plus",
+    "category": "Learning",
+    "icon": "siCoursera"
+  },
+  {
+    "id": "skillshare",
+    "name": "Skillshare",
+    "category": "Learning",
+    "icon": "siSkillshare"
+  },
+  {
+    "id": "udemy",
+    "name": "Udemy",
+    "category": "Learning",
+    "icon": "siUdemy"
+  },
+  {
+    "id": "codecademy-pro",
+    "name": "Codecademy Pro",
+    "category": "Learning",
+    "icon": "siCodecademy"
+  },
+  {
+    "id": "datacamp",
+    "name": "DataCamp",
+    "category": "Learning",
+    "icon": "siDatacamp"
+  },
+  {
+    "id": "leetcode-premium",
+    "name": "LeetCode Premium",
+    "category": "Learning",
+    "icon": "siLeetcode"
+  },
+  {
+    "id": "chess-com",
+    "name": "Chess.com",
+    "category": "Learning",
+    "icon": "siChessdotcom"
+  },
+  {
+    "id": "strava",
+    "name": "Strava",
+    "category": "Fitness",
+    "icon": "siStrava"
+  },
+  {
+    "id": "fitbit-premium",
+    "name": "Fitbit Premium",
+    "category": "Fitness",
+    "icon": "siFitbit"
+  },
+  {
+    "id": "garmin-connect",
+    "name": "Garmin Connect+",
+    "category": "Fitness",
+    "icon": "siGarmin"
+  },
+  {
+    "id": "peloton",
+    "name": "Peloton",
+    "category": "Fitness",
+    "icon": "siPeloton"
+  },
+  {
+    "id": "headspace",
+    "name": "Headspace",
+    "category": "Fitness",
+    "icon": "siHeadspace"
+  },
+  {
+    "id": "alltrails",
+    "name": "AllTrails+",
+    "category": "Fitness",
+    "icon": "siAlltrails"
+  },
+  {
+    "id": "instacart",
+    "name": "Instacart+",
+    "category": "Shopping",
+    "icon": "siInstacart"
+  },
+  {
+    "id": "doordash-dashpass",
+    "name": "DoorDash DashPass",
+    "category": "Shopping",
+    "icon": "siDoordash"
+  },
+  {
+    "id": "uber-one",
+    "name": "Uber One",
+    "category": "Shopping",
+    "icon": "siUber"
+  },
+  {
+    "id": "lyft-pink",
+    "name": "Lyft Pink",
+    "category": "Shopping",
+    "icon": "siLyft"
+  },
+  {
+    "id": "hellofresh",
+    "name": "HelloFresh",
+    "category": "Shopping",
+    "icon": "siHellofresh"
+  },
+  {
+    "id": "target-circle-360",
+    "name": "Target Circle 360",
+    "category": "Shopping",
+    "icon": "siTarget"
+  },
+  {
+    "id": "sam-s-club",
+    "name": "Sam’s Club",
+    "category": "Shopping",
+    "icon": "siSamsclub"
+  },
+  {
+    "id": "patreon",
+    "name": "Patreon",
+    "category": "News",
+    "icon": "siPatreon"
+  },
+  {
+    "id": "substack",
+    "name": "Substack",
+    "category": "News",
+    "icon": "siSubstack"
+  },
+  {
+    "id": "medium",
+    "name": "Medium",
+    "category": "News",
+    "icon": "siMedium"
+  },
+  {
+    "id": "new-york-times",
+    "name": "New York Times",
+    "category": "News",
+    "icon": "siNewyorktimes"
+  },
+  {
+    "id": "the-guardian",
+    "name": "The Guardian",
+    "category": "News",
+    "icon": "siTheguardian"
+  },
+  {
+    "id": "the-washington-post",
+    "name": "The Washington Post",
+    "category": "News",
+    "icon": "siThewashingtonpost"
+  },
+  {
+    "id": "playstation-plus",
+    "name": "PlayStation Plus",
+    "category": "Gaming",
+    "icon": "siPlaystation"
+  },
+  {
+    "id": "ea-play",
+    "name": "EA Play",
+    "category": "Gaming",
+    "icon": "siEa"
+  },
+  {
+    "id": "ubisoft",
+    "name": "Ubisoft+",
+    "category": "Gaming",
+    "icon": "siUbisoft"
+  },
+  {
+    "id": "roblox-premium",
+    "name": "Roblox Premium",
+    "category": "Gaming",
+    "icon": "siRoblox"
+  },
+  {
+    "id": "fortnite-crew",
+    "name": "Fortnite Crew",
+    "category": "Gaming",
+    "icon": "siFortnite"
+  },
+  {
+    "id": "github-copilot",
+    "name": "GitHub Copilot",
+    "category": "Software",
+    "icon": "siGithub"
+  },
+  {
+    "id": "gitlab",
+    "name": "GitLab",
+    "category": "Software",
+    "icon": "siGitlab"
+  },
+  {
+    "id": "cloudflare",
+    "name": "Cloudflare",
+    "category": "Software",
+    "icon": "siCloudflare"
+  },
+  {
+    "id": "vercel",
+    "name": "Vercel",
+    "category": "Software",
+    "icon": "siVercel"
+  },
+  {
+    "id": "netlify",
+    "name": "Netlify",
+    "category": "Software",
+    "icon": "siNetlify"
+  },
+  {
+    "id": "digitalocean",
+    "name": "DigitalOcean",
+    "category": "Software",
+    "icon": "siDigitalocean"
+  },
+  {
+    "id": "railway",
+    "name": "Railway",
+    "category": "Software",
+    "icon": "siRailway"
+  },
+  {
+    "id": "replit",
+    "name": "Replit",
+    "category": "Software",
+    "icon": "siReplit"
+  },
+  {
+    "id": "linear",
+    "name": "Linear",
+    "category": "Software",
+    "icon": "siLinear"
+  },
+  {
+    "id": "obsidian-sync",
+    "name": "Obsidian Sync",
+    "category": "Software",
+    "icon": "siObsidian"
+  },
+  {
+    "id": "feedly",
+    "name": "Feedly",
+    "category": "News",
+    "icon": "siFeedly"
+  },
+  {
+    "id": "kagi",
+    "name": "Kagi",
+    "category": "Software",
+    "icon": "siKagi"
+  },
+  {
+    "id": "perplexity-pro",
+    "name": "Perplexity Pro",
+    "category": "Software",
+    "icon": "siPerplexity"
+  },
+  {
+    "id": "claude-pro",
+    "name": "Claude Pro",
+    "category": "Software",
+    "icon": "siClaude"
+  },
+  {
+    "id": "jetbrains",
+    "name": "JetBrains",
+    "category": "Software",
+    "icon": "siJetbrains"
+  },
+  {
+    "id": "sentry",
+    "name": "Sentry",
+    "category": "Software",
+    "icon": "siSentry"
+  },
+  {
+    "id": "docker-pro",
+    "name": "Docker Pro",
+    "category": "Software",
+    "icon": "siDocker"
+  },
+  {
+    "id": "postman",
+    "name": "Postman",
+    "category": "Software",
+    "icon": "siPostman"
+  },
+  {
+    "id": "airtable",
+    "name": "Airtable",
+    "category": "Software",
+    "icon": "siAirtable"
+  }
+]

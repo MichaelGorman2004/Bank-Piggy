@@ -1,0 +1,205 @@
+.page {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  gap: 20px;
+  padding: 40px;
+  background:
+    linear-gradient(var(--scrim), var(--scrim)),
+    url('/assets/warm-interior.webp') center / cover fixed;
+}
+.card {
+  width: min(1000px, calc(100vw - 80px));
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  border-radius: 32px;
+  overflow: hidden;
+  border: 1px solid var(--line-light);
+  box-shadow: 0 25px 90px var(--scrim);
+}
+.story {
+  position: relative;
+  min-height: 610px;
+  background: var(--glass-deep);
+  color: var(--cream);
+  padding: 34px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.brand {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 650;
+}
+.brand span {
+  display: block;
+  font: 12px var(--font-body);
+  opacity: 0.65;
+  margin-top: 2px;
+}
+.pig {
+  width: 230px;
+  height: 230px;
+  object-fit: contain;
+  align-self: center;
+  margin: -5px 0 -10px;
+}
+.story h1 {
+  font-size: 39px;
+  line-height: 1.12;
+  margin-bottom: 15px;
+}
+.story p {
+  max-width: 34ch;
+  opacity: 0.75;
+  font-size: 15px;
+}
+.entry {
+  background: var(--glass);
+  backdrop-filter: blur(24px);
+  padding: 65px 42px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.entry h2 {
+  font-size: 30px;
+  letter-spacing: -0.8px;
+  line-height: 1.13;
+  max-width: 15ch;
+  margin: 22px 0 14px;
+}
+.entry > p {
+  color: var(--walnut-soft);
+  max-width: 33ch;
+}
+.lock {
+  height: 47px;
+  width: 47px;
+  border-radius: 16px;
+  background: var(--orange-wash);
+  display: grid;
+  place-content: center;
+  color: var(--orange-dark);
+}
+.google,
+.demo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 650;
+  padding: 13px 14px;
+}
+.google {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  margin-top: 30px;
+}
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.googleLetter {
+  font: 700 18px var(--font-body);
+}
+.demo {
+  background: var(--walnut);
+  color: var(--paper);
+  justify-content: space-between;
+  font-size: 13px;
+}
+.note {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--walnut-soft);
+  text-align: center;
+  margin-top: 10px !important;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--walnut-soft);
+  margin: 25px 0;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+.error {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--danger-wash);
+  color: var(--danger);
+  font-size: 12px;
+}
+.error button {
+  background: var(--clear);
+  text-decoration: underline;
+  padding: 6px 0 0;
+}
+.status {
+  padding-top: 30px;
+}
+@media (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
+  .page {
+    padding: max(22px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right))
+      max(22px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
+  }
+  .card {
+    width: min(
+      500px,
+      calc(100vw - max(22px, env(safe-area-inset-left)) - max(22px, env(safe-area-inset-right)))
+    );
+    grid-template-columns: 1fr;
+  }
+  .story {
+    padding: 26px;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px;
+    gap: 28px 12px;
+    align-items: center;
+  }
+  .story > :last-child {
+    grid-column: 1 / -1;
+  }
+  .pig {
+    width: 72px;
+    height: 72px;
+    margin: 0;
+    justify-self: end;
+  }
+  .story h1 {
+    font-size: 31px;
+    margin-top: 0;
+    max-width: none;
+  }
+  .story p {
+    font-size: 13px;
+    max-width: 26ch;
+  }
+
+  .entry {
+    padding: 30px 27px;
+  }
+  .entry h2 {
+    max-width: 22ch;
+    font-size: 27px;
+    margin-top: 14px;
+  }
+  .lock {
+    display: none;
+  }
+}

@@ -1,0 +1,29 @@
+:root {
+  --walnut: #49362b;
+  --walnut-deep: #32251f;
+  --walnut-soft: #746256;
+  --cream: #f6f1e8;
+  --paper: #fffaf1;
+  --orange: #d96a32;
+  --orange-dark: #a84b20;
+  --orange-wash: #f3ddca;
+  --pink: #e9b8b4;
+  --sage: #82927b;
+  --sage-dark: #52654d;
+  --sage-wash: #e1e7dc;
+  --gold: #c59d5b;
+  --taupe: #bba898;
+  --danger: #a33931;
+  --danger-wash: #fae5de;
+  --white: #ffffff;
+  --clear: transparent;
+  --glass: #fffaf1b8;
+  --glass-light: #fffaf16b;
+  --glass-deep: #49362bc7;
+  --line: #49362b1c;
+  --line-light: #fffaf140;
+  --shadow: #24150e17;
+  --scrim: #24150e66;
+  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+}

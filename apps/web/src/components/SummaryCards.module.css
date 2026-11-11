@@ -1,0 +1,52 @@
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.metric {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 13px;
+  border: 1px solid var(--line-light);
+  background: var(--glass-light);
+  backdrop-filter: blur(20px);
+}
+.metricTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--walnut-soft);
+  font-size: 11px;
+}
+.metricTitle svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.metric strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font: 600 24px/1.2 var(--font-display);
+  letter-spacing: -0.7px;
+  margin: 6px 0 3px;
+}
+.metric small {
+  font-size: 9px;
+  color: var(--walnut-soft);
+}
+.metricAccent {
+  color: var(--paper);
+  background: var(--walnut);
+  border-color: var(--line-light);
+}
+.metricAccent .metricTitle,
+.metricAccent small {
+  color: var(--cream);
+  opacity: 0.7;
+}
+@media (max-width: 700px) {
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
