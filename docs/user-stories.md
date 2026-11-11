@@ -33,7 +33,7 @@ These stories describe the implemented first version. Acceptance criteria state 
 
 - A household with zero income and no expenses or goals opens plan setup.
 - Three steps collect income, expenses, and goals with balances.
-- Each member can enter monthly take-home pay, pay frequency, annual base salary, savings, investments, and debt.
+- Each member can enter monthly take-home pay, pay frequency, annual base salary, typed account balances, and debt.
 - Salary is used for salary-based splits; no tax estimate is deducted from entered take-home pay.
 - The saved result shows take-home pay minus living expenses, then subtracts planned goal contributions.
 - Missing income or an empty expense list shows a visible completeness notice.
@@ -44,7 +44,7 @@ These stories describe the implemented first version. Acceptance criteria state 
 **As a member, I want one view of the household plan so I can see where our combined income goes.**
 
 - The default scope is the combined household.
-- Money flow contains the Sankey. The default Overview shows summary cards, plan inputs, and balances from the same server-calculated amounts.
+- Money flow contains the Sankey. The default Overview shows Plan totals, At a glance, and Balances. At a glance compares both members in compact income and balance tables.
 - Expenses are grouped by category in the flow. Goals and money left to plan are separate destinations.
 - The chart measures available height and keeps the largest categories visible. Smaller categories combine into `Other costs (N)` without losing cents. Expenses retains all detailed records.
 - A shared expense appears once in the household total.
@@ -93,7 +93,8 @@ These stories describe the implemented first version. Acceptance criteria state 
 - Goals can be added, edited, removed, and assigned to a member or the household.
 - Monthly contributions subtract from the amount available after living expenses.
 - The interface shows whether all goal contributions fit within income.
-- Goals contains ordinary contributions. Trips & purchases contains target goals. Their allocation bars show each contribution's share of that view's contribution total.
+- Goals contains ordinary contributions, with optional manually recorded target progress. Trips & purchases contains dated target goals.
+- An untargeted row shows its planned contribution. A targeted row shows saved amount of target, a bounded progress bar, and the contribution separately.
 - Entered savings, investment, and debt balances remain separate from contributions.
 - A planned contribution does not claim a completed transfer or progress against a historical target.
 
@@ -197,12 +198,36 @@ These stories describe the implemented first version. Acceptance criteria state 
 
 **As a member, I want one clear task per view so I can find the right records and use the available screen space.**
 
-- Overview is the default and shows bounded cards for Plan totals, Plan inputs, and Balances. Narrow or short layouts use three section buttons to show one card at a time.
+- Overview is the default and shows Plan totals, At a glance, and Balances. At a glance fits both members' core facts in two compact tables. Narrow or short layouts use three section buttons to show one section at a time.
 - Money flow shows only the Sankey below the shared controls and notices.
 - Expenses shows bills, subscriptions, regular costs, and loans in one filtered list.
 - Goals shows ordinary goals. Trips & purchases shows trips and purchases, including funded, overdue, and zero-contribution targets.
 - Scope, period, and planning month stay consistent when switching views.
 - Switching views filters presentation without deleting, rewriting, or changing the ownership of saved records.
+
+## 17. Track typed account balances
+
+**As a member, I want named account balances by type so I can understand our savings and investments without changing our monthly plan.**
+
+- Plan setup can add, edit, and remove up to 20 accounts per member. Each account has a stable ID, name, type, and whole-cent balance.
+- Types include Traditional and Roth 401(k), Traditional and Roth IRA, Brokerage, High-yield savings, Savings, and Other investment.
+- Savings and high-yield savings contribute to savings; the other types contribute to investments. Personal and household totals count each record once and remain unchanged across period estimates.
+- IDs must be unique within the member. Invalid accounts and excessive account or group balances reject the save and retain the draft.
+- Account balances stay separate from income, debt, contributions, and saved-goal progress.
+- Upgrading legacy totals preserves their amounts in generic Savings and Other investments accounts. It keeps already typed accounts and order. A repeated startup makes no additional change.
+- An affected plan's revision advances once. A stale editor must reload; a failed migration leaves saved plans unchanged.
+
+## 18. Record ordinary goal progress
+
+**As a member, I want to record an amount saved toward a goal so I can see progress independently of its planned monthly contribution.**
+
+- Ordinary goals offer Monthly contribution only or Saved amount and target.
+- A target must be positive. The saved amount can be zero or exceed the target.
+- A tracked goal shows saved amount of target and a native progress bar capped at the target. Overfunded text retains the actual saved amount.
+- An untracked goal has no progress bar. Turning tracking off saves only the chosen contribution and other ordinary goal fields.
+- Ordinary progress has no deadline or monthly suggestion and cannot coexist with trip or purchase details.
+- A tracked goal can have a zero contribution. Editing saved progress leaves account balances, income, and monthly allocations unchanged.
+- Shared progress describes the whole goal, while the personal view shows the member's contribution separately.
 
 ## Future stories
 

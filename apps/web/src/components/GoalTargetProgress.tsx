@@ -70,11 +70,6 @@ export function GoalTargetProgress(props: GoalTargetProgressProps) {
         {money(details.savedAmountCents)} saved of {money(target)} ·{' '}
         {money(projection.remainingAmountCents)} left
       </p>
-      <progress
-        aria-label={`${goal.name} saved toward target`}
-        max={Math.max(target, 1)}
-        value={target === 0 ? 1 : Math.min(details.savedAmountCents, target)}
-      />
       <p>{savingSuggestion(projection)}</p>
       {goal.trip && <TripCostBreakdown trip={goal.trip} />}
     </div>

@@ -60,7 +60,7 @@ function ExpenseRow({
   const amount = expenseAmount(expense, data, scope);
   return (
     <div className={ownStyles.expenseRow}>
-      <div className={ownStyles.categoryIcon}>
+      <div className={ownStyles.categoryIcon} data-kind={expense.kind ?? 'bill'}>
         {expense.providerId || expense.kind ? (
           <ProviderIcon providerId={expense.providerId} kind={expense.kind} size={17} />
         ) : (

@@ -83,17 +83,31 @@
   font-weight: 600;
 }
 .goalTrack {
-  height: 4px;
+  display: block;
+  appearance: none;
+  width: calc(100% - 15px);
+  height: 6px;
+  border: 0;
   border-radius: 3px;
   background: var(--line);
   margin: 10px 0 0 15px;
   overflow: hidden;
 }
-.goalFill {
-  height: 100%;
+.goalTrack::-webkit-progress-bar {
+  background: var(--line);
+}
+.goalTrack::-webkit-progress-value {
   background: var(--sage);
-  width: var(--goal-width);
   border-radius: 3px;
+}
+.goalTrack::-moz-progress-bar {
+  background: var(--sage);
+  border-radius: 3px;
+}
+.contribution {
+  margin: 5px 0 0 15px;
+  color: var(--walnut-soft);
+  font-size: 10px;
 }
 @media (max-width: 700px) {
   .goalIntro {

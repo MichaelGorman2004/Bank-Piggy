@@ -18,11 +18,6 @@
   color: var(--walnut);
   font-weight: 600;
 }
-.target progress {
-  width: 100%;
-  height: 8px;
-  accent-color: var(--orange);
-}
 .target details {
   margin-top: 7px;
 }

@@ -22,7 +22,7 @@ export interface GoalDraft {
   readonly saved: string;
   readonly targetAmount: string;
   readonly targetMonth: string;
-  readonly savingsTarget?: Goal['savingsTarget'];
+  readonly trackTarget: boolean;
   readonly costs: Readonly<Record<TripCost['category'], string>>;
 }
 type GoalResult =
@@ -55,7 +55,7 @@ export function goalDraft(goal?: Goal, initialKind: GoalKind = 'goal'): GoalDraf
     amount: goal ? moneyInput(goal.monthlyAmountCents) : '',
     ownerId: value.ownerId ?? 'shared',
     kind: goal ? (goal.trip ? 'trip' : goal.purchase ? 'purchase' : 'goal') : initialKind,
-    savingsTarget: value.savingsTarget,
+    trackTarget: Boolean(value.savingsTarget),
     ...targetDraft(value),
     costs: tripCostDraft(value.trip),
   };
@@ -64,14 +64,16 @@ export function goalDraft(goal?: Goal, initialKind: GoalKind = 'goal'): GoalDraf
 /**
  * Copies saved progress from either target type into editable field text.
  * @param goal Saved optional target details.
- * @returns Editable saved amount, purchase amount, and target month.
+ * @returns Editable saved amount, optional target amount, and deadline month.
  */
-function targetDraft(goal: Pick<Goal, 'trip' | 'purchase'>) {
-  const target = goal.trip ?? goal.purchase;
+function targetDraft(goal: Pick<Goal, 'trip' | 'purchase' | 'savingsTarget'>) {
+  const dated = goal.trip ?? goal.purchase;
+  const target = dated ?? goal.savingsTarget;
+  const amount = goal.purchase ?? goal.savingsTarget;
   return {
     saved: moneyInput(target?.savedAmountCents ?? 0),
-    targetAmount: moneyInput(goal.purchase?.targetAmountCents ?? 0),
-    targetMonth: target?.targetMonth ?? '',
+    targetAmount: moneyInput(amount?.targetAmountCents ?? 0),
+    targetMonth: dated?.targetMonth ?? '',
   };
 }
 
@@ -135,11 +137,10 @@ function tripCosts(draft: GoalDraft): TripCostResult {
 /**
  * Selects exactly one target type and keeps target progress out of budget totals.
  * @param draft Editable target inputs.
- * @returns Canonical trip or purchase details, or an actionable error.
+ * @returns The selected target details, or an actionable error.
  */
 function targetValue(draft: GoalDraft): TargetResult {
-  if (draft.kind === 'goal')
-    return { details: draft.savingsTarget ? { savingsTarget: draft.savingsTarget } : {} };
+  if (draft.kind === 'goal') return savingsTargetValue(draft);
   const { progress, error } = targetProgress(draft);
   if (!progress) return { error };
   if (draft.kind === 'purchase') {
@@ -154,6 +155,22 @@ function targetValue(draft: GoalDraft): TargetResult {
 }
 
 /**
+ * Records an optional ordinary savings target independently of the monthly contribution.
+ * @param draft Editable target and saved amount, retained across type changes.
+ * @returns Canonical progress or an actionable field error.
+ */
+function savingsTargetValue(draft: GoalDraft): TargetResult {
+  if (!draft.trackTarget) return { details: {} };
+  const targetAmountCents = parseMoney(draft.targetAmount);
+  const savedAmountCents = parseMoney(draft.saved);
+  if (targetAmountCents === null || targetAmountCents <= 0 || targetAmountCents > MAX_MONEY_CENTS)
+    return { error: 'Enter a savings target greater than zero, with up to two decimal places.' };
+  if (savedAmountCents === null || savedAmountCents > MAX_MONEY_CENTS)
+    return { error: 'Enter a valid amount already saved.' };
+  return { details: { savingsTarget: { targetAmountCents, savedAmountCents } } };
+}
+
+/**
  * Produces one goal record; its entered allocation remains the only monthly deduction.
  * @param draft Editable monthly contribution and optional target inputs.
  * @param id Stable identifier for this goal.
@@ -164,10 +181,11 @@ export function goalValue(draft: GoalDraft, id: string): GoalResult {
   if (
     monthlyAmountCents === null ||
     monthlyAmountCents > MAX_MONEY_CENTS ||
-    (draft.kind === 'goal' && !draft.savingsTarget && monthlyAmountCents === 0)
+    (draft.kind === 'goal' && !draft.trackTarget && monthlyAmountCents === 0)
   )
     return {
-      error: 'Enter a valid monthly contribution. Trip and purchase allocations can be zero.',
+      error:
+        'Enter a valid monthly contribution. Goals with a target can have a zero contribution.',
     };
   if (!draft.name.trim()) return { error: 'Enter a goal name.' };
   const target = targetValue(draft);
