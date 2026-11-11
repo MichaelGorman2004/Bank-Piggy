@@ -34,7 +34,7 @@ Each navigation view has one task. The household scope, period, and planning mon
 
 The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance compares both members in compact income and balance tables. Narrow or short layouts show one section at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
 
-This version uses manual plans and fictional demo data. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Both invited members can read and edit the complete household plan. Bank connections, transaction history, service cancellation, loan repayment, and investment advice are outside this version.
+New households start with empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Both invited members can read and edit the complete household plan. Bank connections, transaction history, service cancellation, loan repayment, and investment advice are outside this version.
 
 [Mobile Overview](docs/system-design/images/mobile.png) · [Money flow](docs/system-design/images/money-flow.png) · [Mobile Money flow](docs/system-design/images/mobile-money-flow.png) · [Expenses](docs/system-design/images/expenses.png) · [Mobile Expenses](docs/system-design/images/mobile-expenses.png) · [Goals](docs/system-design/images/goals.png) · [Mobile Goals](docs/system-design/images/mobile-goals.png)
 
@@ -54,9 +54,9 @@ Open **http://127.0.0.1:5173** and select **Open household plan**. Use `127.0.0.
 
 The development script reads `.env`, starts the Go API on port 8080, and starts Vite on port 5173. Vite proxies API and sign-in requests to Go. Closing the development process stops both servers. The Compose database listens only on loopback.
 
-Demo sessions use the same persisted sample household. Changes survive sign-out and server restarts. Demo mode has a separate household from private mode. It does not isolate data by visitor or reset the sample on each visit.
+Local demo sessions use one persisted household that starts empty. Changes survive sign-out and server restarts. Demo mode has a separate household from private mode. It does not isolate data by visitor or reset an existing plan.
 
-The interface uses household names and labels in both modes. Local reference data remains fictional, and the server still requires explicit demo mode and loopback access.
+The interface uses saved household names and labels in both modes. Populated examples exist only in test fixtures and the documentation screenshots. The server still requires explicit demo mode and loopback access for local sessions.
 
 ### Private sign-in
 
@@ -81,7 +81,7 @@ npm run build
 WEB_DIST_DIR=apps/web/dist ./dist/bank-piggy
 ```
 
-The binary does not read `.env` itself. `npm run dev` does. The default frontend path, `../web/dist`, fits the development API working directory; the root-level binary command needs the override shown above. Hosting, HTTPS termination, backups, and a live Google login have not been verified in a deployed environment.
+The binary does not read `.env` itself. `npm run dev` does. The default frontend path, `../web/dist`, fits the development API working directory; the root-level binary command needs the override shown above. Private Railway hosting and one invited Google login have been verified. The second invited login and database backup restore remain unverified. See the [deployment guide](docs/system-design/deployment.md).
 
 Startup upgrades older saved balance totals to generic Savings and Other investments accounts in one database transaction. Existing typed accounts keep their values and order. The upgrade advances affected plan revisions once, so an editor opened before the upgrade must reload. See [data upgrades](docs/system-design/data-model.md#account-upgrade).
 
@@ -112,7 +112,7 @@ The audit command checks npm advisories and runs the pinned official Go vulnerab
 | PostgreSQL integration tests   | Real persistence, identity binding, expiry, and competing revisions.                                                                          |
 | Local signed identity provider | Signature and claim verification, nonce, PKCE, and callback replay checks. This simulates Google.                                             |
 | Browser review                 | Local sample data and manual plans. See the current verification note in [system design](docs/system-design/README.md#verification-boundary). |
-| Live services                  | No deployment, live Google sign-in, or connected bank account is claimed.                                                                     |
+| Live services                  | Private Railway deployment, HTTPS, PostgreSQL health, and one invited Google login. No connected bank account or verified backup restore.     |
 
 ## Read the design
 

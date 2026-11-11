@@ -26,7 +26,7 @@ Prioritize iPhone use. Keep controls readable at narrow widths, use comfortable 
 
 Payment icon colors follow the payment type and stay consistent after filtering or sorting.
 
-Use household labels consistently: Our household, the current member names, Household member, and Household plan. The local entry action is Open household plan. These labels do not change runtime access rules or turn seeded reference data into live financial data.
+Use household labels consistently: Our household, the current member names, Household member, and Household plan. The local entry action is Open household plan. New households start empty. Populated examples belong in tests and documentation, outside the running application. These labels do not change runtime access rules.
 
 ## Onboarding and the first monthly plan
 
@@ -100,7 +100,7 @@ Later, an optional assistant could answer “Where could I cut spending?” The 
 
 ## Stack and deployment
 
-Keep the Go backend and TypeScript frontend in one monorepo. The first implementation uses React, Vite, ECharts, and PostgreSQL. Hosting remains a proposal.
+Keep the Go backend and TypeScript frontend in one monorepo. The first implementation uses React, Vite, ECharts, and PostgreSQL. The private application and PostgreSQL are hosted on Railway.
 
 - **Backend.** Use one Go application with PostgreSQL. Go owns sign-in, permissions, finance calculations, and synchronization. Plaid maintains an official Go client. [Plaid client libraries](https://plaid.com/docs/api/libraries/)
 - **Frontend.** Use React and TypeScript with Vite, which builds the browser app. Use Apache ECharts for the Sankey, bar, and line charts. React suits the shared period filters, onboarding steps, and multiple dashboard views. Go can serve the frontend build and the application API from the same domain. [Vite React and TypeScript support](https://vite.dev/guide/) · [Apache ECharts Sankey](https://github.com/apache/echarts-doc/blob/master/en/option/series/sankey.md) · [Go embed package](https://pkg.go.dev/embed)
@@ -122,4 +122,4 @@ Both members can access the combined household view. Attribute personal records 
 ## Open decisions
 
 1. How should ownership of joint account balances appear in the personal views? Expense splits are defined separately.
-2. Choose the hosting environment and configure live Google sign-in before a private hosted release. Railway remains the suggested target.
+2. Verify the second invited Google login and select a backup method with a tested restore. Private Railway hosting and the first invited login have passed.

@@ -40,7 +40,7 @@ The SQL schema is in [schema.sql](../../apps/api/internal/store/schema.sql). Pla
 
 The application currently chooses one fixed household ID per mode: `demo-household` or `private-household`. This supports one private two-person household, not general household creation or tenant administration. Initial seeding uses `ON CONFLICT DO NOTHING`, so restarting the server preserves saved plans.
 
-The interface uses the saved member names and household labels in both modes. That display choice does not alter the seeded reference data, household IDs, or server authorization.
+The interface uses the saved member names and household labels in both modes. New households start with two members, zero income and debt, and empty account, expense, and goal lists. Populated fixtures are imported only by tests. Startup does not remove or replace saved records, including records entered in local mode. Household labels do not alter household IDs or server authorization.
 
 ### Plan document
 

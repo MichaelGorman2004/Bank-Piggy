@@ -112,7 +112,7 @@ Read generations ignore results from older requests or an unmounted component. S
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `GET /healthz`                     | Database health check; `503` when PostgreSQL is unavailable.                                                       |
 | `GET /api/session`                 | Current session metadata, or an unauthenticated response.                                                          |
-| `POST /api/demo/session`           | Exact-origin, demo-only sample session.                                                                            |
+| `POST /api/demo/session`           | Exact-origin, loopback-only local session. New plans start empty.                                                  |
 | `GET /api/household?month=YYYY-MM` | Valid session and supported month; saved plan, period summaries, and trip and purchase projections.                |
 | `PUT /api/household?month=YYYY-MM` | Valid session, exact origin, CSRF token, valid plan, and current revision; returns projections for the same month. |
 | `POST /api/logout`                 | Same mutation checks; revoke session and clear cookie.                                                             |
@@ -153,6 +153,7 @@ The repository checks cover these contracts:
 | Check                                                                                                                                                                                                     | Covered behavior                                                                                                                             |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | [PostgreSQL store tests](../../apps/api/internal/store/store_test.go) and [HTTP tests](../../apps/api/internal/server/purchases_test.go)                                                                  | Saved revisions, competing writes, session expiry, identity binding, and complete schedule/target JSON round-trips.                          |
+| [Startup tests](../../apps/api/internal/server/startup_test.go)                                                                                                                                           | Empty local startup and complete preservation of saved local and private plans across repeated startup.                                      |
 | [Budget tests](../../apps/api/internal/budget/calculate_test.go), [schedule tests](../../apps/api/internal/budget/schedule_test.go), and [target tests](../../apps/api/internal/budget/purchases_test.go) | Exact cents, inclusive payment dates, repeated monthly shares, target periods, and separation from balances.                                 |
 | [Signed local identity provider](../../apps/api/internal/server/google_token_test.go)                                                                                                                     | Signature, audience, issuer, expiry, nonce, verified email, and subject checks. This simulates Google.                                       |
 | [Selector tests](../../apps/web/src/features/plan/viewRecords.test.mjs) and [category tests](../../apps/web/src/components/moneyFlowCategories.test.mjs)                                                  | Canonical expense sorting, type filtering, ownership, stable ties, and cent-preserving chart grouping.                                       |
@@ -169,7 +170,7 @@ The final browser pass checked all five views at 320×568, 390×844, 844×390, 1
 
 Browser review uses the compiled Go app at `http://127.0.0.1:5173`, serving the API and static frontend without Vite hot module replacement. The native context uses `viewport: null`; all five views fit its measured 1512×857 window after reload. Health returned `200`, and no Vite client or browser errors were present. Human review of the compiled preview reported “No blink now.” The earlier idle blink was not reproduced in headless checks, and its cause remains unproven.
 
-Application browser evidence uses local reference data; CI is verified separately above. Application deployment, live Google sign-in, bank connections, physical iOS, and WebKit remain unverified.
+Populated application browser evidence uses isolated local reference data. Private Railway deployment, HTTPS, PostgreSQL health, one invited Google sign-in, and saved-name persistence through restart and redeployment have also passed. Native Safari review covered the deployed interface. The second invited login, live rejection of an uninvited account, physical iOS, connected banks, and backup restore remain unverified. CI evidence is separate from live service checks.
 
 ## Browser verification procedure
 

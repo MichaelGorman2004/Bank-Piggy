@@ -38,10 +38,10 @@ function WelcomeStory() {
 }
 
 /**
- * Separates private sign-in from the fictional sample session.
+ * Separates private sign-in from the loopback-only local session.
  * @param props Component values and event handlers.
  * @param props.session Current cookie-backed session.
- * @param props.onDemo Opens the sample household.
+ * @param props.onDemo Opens the saved local household.
  * @returns Rendered interface.
  */
 function EntryActions(props: { readonly session: Session; readonly onDemo: () => void }) {
@@ -67,10 +67,10 @@ function EntryActions(props: { readonly session: Session; readonly onDemo: () =>
 }
 
 /**
- * Opens the sample only when the server has enabled demo mode.
- * @param props Sample session action.
- * @param props.onDemo Opens the sample household.
- * @returns Sample entry controls.
+ * Opens the local household only when the server has enabled demo mode.
+ * @param props Local session action.
+ * @param props.onDemo Opens the saved local household.
+ * @returns Local entry controls.
  */
 function DemoEntry(props: { readonly onDemo: () => void }) {
   return (
@@ -120,7 +120,7 @@ function WelcomeEntry(props: WelcomeProps) {
 }
 
 /**
- * Offers configured Google sign-in and the loopback-only sample household.
+ * Offers configured Google sign-in and the loopback-only local household.
  * @param props Component values and event handlers.
  * @returns Rendered interface.
  */

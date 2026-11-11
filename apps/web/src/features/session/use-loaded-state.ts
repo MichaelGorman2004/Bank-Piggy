@@ -71,7 +71,7 @@ export function useLoadedState() {
 
   /**
    * Replaces state only if this is still the newest read.
-   * @param enterDemo Whether to open the sample session first, default false.
+   * @param enterDemo Whether to open the local session first, default false.
    * @param month Calendar month to preview; retains the current selection when absent.
    * @returns Whether the newest state loaded successfully.
    */

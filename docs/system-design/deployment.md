@@ -15,7 +15,7 @@ Railway's current documentation says new services cannot use `railway.toml` or `
 ## Create the services
 
 1. Use PostgreSQL 18 in Railway and CI. The Railway service uses `ghcr.io/railwayapp-templates/postgres-ssl:18`, private DNS `postgres.railway.internal`, and the attached `postgres-volume`. Public database access is disabled. Keep the initialized volume on PostgreSQL 18 and its network private. See [Railway PostgreSQL](https://docs.railway.com/databases/postgresql).
-2. Add the application service from the reviewed GitHub release branch. Keep the source root at the repository root. Railway must build the root `Dockerfile`. Leave custom build, start, and pre-deploy commands empty; the image supplies its entrypoint and the app performs its startup migration.
+2. Add the application service from the reviewed source. The current setup uploads a clean archive of the release commit; GitHub automatic deployment is not connected. Keep the source root at the repository root. Railway must build the root `Dockerfile`. Leave custom build, start, and pre-deploy commands empty; the image supplies its entrypoint and the app performs its startup migration.
 3. Set one application replica. Add an HTTPS Railway domain with target port `8080`. Use that exact origin for `APP_BASE_URL` and Google sign-in.
 4. Configure a Google OAuth client of type **Web application**. Add `https://YOUR-DOMAIN/auth/google/callback` as an authorized redirect URI. The server requests only OpenID Connect, email, and profile scopes. Google permits these basic identity scopes without requiring the account to be a Testing test user. Bank Piggy's two server-side invitations enforce access; Google's test-user list is not the security boundary. Add both invited accounts as test users for setup clarity. See [Google's audience rules](https://support.google.com/cloud/answer/15549945) and [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect).
 5. Set the application variables below. In the database reference, replace `Postgres` with the exact PostgreSQL service name. Store the Google secret and database connection as private service variables.
@@ -63,6 +63,14 @@ After deployment, record the Railway deployment ID and source commit. Confirm th
 Local tests with a signed provider simulate Google. A successful image build does not prove live sign-in, deployed persistence, or backups. Bank feeds are outside this release.
 
 Pending operational followups: configure external request limits for public routes, with specific limits for sign-in and callback requests. Add continuous uptime checks and alerts for `/healthz`, plus database capacity alerts. Railway's deployment health check alone does not provide these controls.
+
+## Release credentials
+
+Use credentials limited to the intended project for repeatable deployments. Keep credentials outside source files, release archives, screenshots, and logs. A general Railway CLI login can request workspace administration and persistent access beyond one deployment.
+
+After a one-time release, revoke the temporary CLI authorization in **Account → Apps → Railway CLI → Revoke Access**. Railway states that this invalidates the app's tokens. Then run `railway logout` to clear the stored local login. Verify that the authorized-app entry is absent and an authenticated CLI command fails. Logging out alone clears local credentials; it does not prove that the server authorization was revoked. See [authorized apps](https://docs.railway.com/integrations/oauth/authorized-apps), [CLI logout](https://docs.railway.com/cli/logout), and [CLI authentication](https://docs.railway.com/cli#authentication).
+
+Review the workspace audit log for unexpected billing, membership, SSH-key, workspace, and unrelated project changes. Record the period reviewed and its limits. Revoking the deployment CLI must leave Google sign-in, runtime variables, the database, and application services intact.
 
 ## Data safety and recovery
 
