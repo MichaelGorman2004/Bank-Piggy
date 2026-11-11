@@ -14,7 +14,7 @@ Railway's current documentation says new services cannot use `railway.toml` or `
 
 ## Create the services
 
-1. Add PostgreSQL to the Railway project. PostgreSQL 17 matches the CI quality gate. Keep its network private and confirm the attached database volume. Do not create public database access for the application. See [Railway PostgreSQL](https://docs.railway.com/databases/postgresql).
+1. Use PostgreSQL 18 in Railway and CI. The Railway service uses `ghcr.io/railwayapp-templates/postgres-ssl:18`, private DNS `postgres.railway.internal`, and the attached `postgres-volume`. Public database access is disabled. Keep the initialized volume on PostgreSQL 18 and its network private. See [Railway PostgreSQL](https://docs.railway.com/databases/postgresql).
 2. Add the application service from the reviewed GitHub release branch. Keep the source root at the repository root. Railway must build the root `Dockerfile`. Leave custom build, start, and pre-deploy commands empty; the image supplies its entrypoint and the app performs its startup migration.
 3. Set one application replica. Add an HTTPS Railway domain with target port `8080`. Use that exact origin for `APP_BASE_URL` and Google sign-in.
 4. Configure a Google OAuth client of type **Web application**. Add `https://YOUR-DOMAIN/auth/google/callback` as an authorized redirect URI. The server requests only OpenID Connect, email, and profile scopes. Google permits these basic identity scopes without requiring the account to be a Testing test user. Bank Piggy's two server-side invitations enforce access; Google's test-user list is not the security boundary. Add both invited accounts as test users for setup clarity. See [Google's audience rules](https://support.google.com/cloud/answer/15549945) and [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect).
@@ -43,7 +43,7 @@ The Go process handles `SIGTERM` and gives requests up to 10 seconds to finish. 
 
 ## Verify a private release
 
-Run the full quality gate against a separate, disposable PostgreSQL database before release:
+Run the full quality gate against a separate, disposable PostgreSQL 18 database before release. CI uses `postgres:18-alpine` to match the Railway major version. The earlier local full quality gate and application-container smoke check used PostgreSQL 14.15. Record separate Go race and integration test results from a fresh PostgreSQL 18 database.
 
 ```sh
 TEST_DATABASE_URL='postgresql://bankpiggy:bankpiggy@127.0.0.1:5432/bankpiggy_test?sslmode=disable' npm run check
@@ -66,7 +66,7 @@ Pending operational followups: configure external request limits for public rout
 
 ## Data safety and recovery
 
-Enable scheduled PostgreSQL backups and confirm retention before entering real financial data. Test a restore into a separate database. Record the backup time, application deployment ID, and source commit together. PostgreSQL volume storage alone is not a backup. [Railway backups](https://docs.railway.com/volumes/backups)
+The current Railway Hobby project has no backups. Its Backups page requires Pro to create new backups, set schedules, or enable point-in-time recovery. Native backup creation and restore verification remain pending. Before entering real financial data, use an approved Pro plan or an independent backup solution and verify a restore into a separate database. Record the backup time, application deployment ID, and source commit together. PostgreSQL volume storage alone is not a backup. [Railway backups](https://docs.railway.com/volumes/backups)
 
 The app applies schema and account upgrades in one PostgreSQL transaction at startup. It does not replace an existing plan. Back up the database before a release that changes stored data. Do not run destructive migration or reset commands on the private household.
 
