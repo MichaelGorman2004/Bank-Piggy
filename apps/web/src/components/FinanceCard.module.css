@@ -55,6 +55,16 @@
 .body:focus-visible {
   outline: 2px solid var(--orange-dark);
 }
+@supports selector(::-webkit-scrollbar) {
+  .body {
+    /* Let the shared WebKit track and thumb styles replace native scrollbars. */
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+  .body::-webkit-scrollbar {
+    background: var(--clear);
+  }
+}
 .footer {
   flex-shrink: 0;
   padding-top: 12px;
