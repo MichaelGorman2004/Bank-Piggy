@@ -68,7 +68,15 @@
         "typescript/no-unsafe-return": "error",
         "typescript/no-unsafe-unary-minus": "error",
         "no-unused-expressions": "error",
-        "no-unused-vars": "error",
+        "no-unused-vars": [
+          "error",
+          {
+            "args": "after-used",
+            "caughtErrors": "all",
+            "reportVarsOnlyUsedAsTypes": true,
+            "vars": "all"
+          }
+        ],
         "no-useless-constructor": "error",
         "typescript/no-useless-default-assignment": "error",
         "typescript/no-wrapper-object-types": "error",

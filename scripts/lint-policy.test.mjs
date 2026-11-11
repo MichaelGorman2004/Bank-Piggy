@@ -105,6 +105,18 @@ test('native TypeScript lint accepts safe types and rejects semantic failures', 
   ]);
 });
 
+const UNUSED_VALUES = [
+  ['underscore parameter', 'export function unused(_value: number) { return 0; }'],
+  ['value used only as a type', 'const value = 1;\nexport type Value = typeof value;'],
+];
+
+for (const [name, source] of UNUSED_VALUES) {
+  test(`native unused variable lint rejects ${name}`, async (context) => {
+    const paths = await fixtures(context, { 'unused.ts': source });
+    rejectsRules(lint('oxlint', Object.values(paths)), ['eslint(no-unused-vars)']);
+  });
+}
+
 test('ESLint rejects every forbidden TypeScript assertion form', async (context) => {
   const paths = await fixtures(context, {
     'assertions.ts': [
