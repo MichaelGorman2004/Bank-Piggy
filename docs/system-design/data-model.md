@@ -8,6 +8,8 @@ PostgreSQL stores one current plan per household. Go derives the totals on each 
 erDiagram
     HOUSEHOLDS ||--o{ HOUSEHOLD_USERS : "has invited identities"
     HOUSEHOLDS ||--o{ SESSIONS : "scopes access"
+    HOUSEHOLDS ||--o| HOUSEHOLD_INVITATIONS : "has pending partner link"
+    HOUSEHOLDS ||--o{ TODO_COMPLETIONS : "records acknowledgments"
     HOUSEHOLDS {
         text id PK
         bigint revision
@@ -19,6 +21,7 @@ erDiagram
         text member_id PK
         text email "unique per household"
         text google_subject "unique per household"
+        boolean invitation_accepted
     }
     SESSIONS {
         text token_hash PK
@@ -32,21 +35,36 @@ erDiagram
         text state
         text nonce
         text verifier
+        text invitation_hash
         timestamptz expires_at
+    }
+    HOUSEHOLD_INVITATIONS {
+        text household_id PK,FK
+        text token_hash
+        timestamptz expires_at
+    }
+    TODO_COMPLETIONS {
+        text household_id PK,FK
+        text member_id PK
+        text task_id PK
+        boolean completed
+        text task_signature
     }
 ```
 
 The SQL schema is in [schema.sql](../../apps/api/internal/store/schema.sql). Plan members are embedded in JSON, so `sessions.member_id` is an application-checked identifier rather than a foreign key to a member table. Sign-in attempts are independent, short-lived records; they do not require an authenticated user.
 
-The application currently chooses one fixed household ID per mode: `demo-household` or `private-household`. This supports one private two-person household, not general household creation or tenant administration. Initial seeding uses `ON CONFLICT DO NOTHING`, so restarting the server preserves saved plans.
+The application currently chooses one fixed household ID per mode: `demo-household` or `private-household`. This supports one private household with one or two people, not general household creation or tenant administration. Initial seeding uses `ON CONFLICT DO NOTHING`, so restarting the server preserves saved plans.
 
-The interface uses the saved member names and household labels in both modes. New households start with two members, zero income and debt, and empty account, expense, and goal lists. Populated fixtures are imported only by tests. Startup does not remove or replace saved records, including records entered in local mode. Household labels do not alter household IDs or server authorization.
+The interface uses the saved member names and household labels in both modes. New households start with one member, zero income and debt, and empty account, expense, and goal lists. Setup can append the second member without changing existing records. Populated fixtures are imported only by tests. Startup does not remove or replace saved records, including a second profile with no income. Household labels do not alter household IDs or server authorization.
+
+One pending invitation can target the second member. Acceptance binds the verified Google identity and consumes the link in the same household-locked transaction. It appends a missing profile and advances the revision, or preserves an existing profile. Accepted-link identities retain access through persisted membership. Bootstrap identities still require their configured invitation. See [sharing and task transactions](sharing-payroll-todos.md).
 
 ### Plan document
 
 | Record    | Main fields and meaning                                                                        |
 | --------- | ---------------------------------------------------------------------------------------------- |
-| Household | Revision, two ordered members, expenses, goals, default expense split method.                  |
+| Household | Revision, one or two ordered members, expenses, goals, default expense split method.           |
 | Member    | Fixed ID, name, salary, monthly take-home pay, debt, pay frequency, required accounts array.   |
 | Expense   | Stable ID, name, category, monthly cents, owner, payer, saved split method, custom percentage. |
 | Goal      | Stable ID, name, monthly contribution in cents, personal or shared owner.                      |
@@ -101,7 +119,11 @@ Each affected household advances both its row revision and JSON revision once. R
 
 All stored and calculated money uses integer cents. A decimal input such as `19.99` becomes `1999`; extra fractional digits are rejected. An entered zero is different from an omitted required field. Go validates required fields before decoding can turn a missing value into zero.
 
-The server requires exactly two ordered members, `member-1` and `member-2`. Each amount must be nonnegative and at most `100,000,000,000` cents. Plans allow at most 100 expenses and 30 goals. IDs must be valid and unique within their record type. Owners and payers must refer to the known members or the permitted shared/empty value.
+The server requires `member-1` and permits an optional `member-2` in that fixed order. The API and browser schema require one or two members. Each amount must be nonnegative and at most `100,000,000,000` cents. Plans allow at most 100 expenses and 30 goals. IDs must be valid and unique within their record type. Owners and payers must refer to saved members or the permitted shared/empty value. A reference to an absent `member-2` is invalid.
+
+The first profile can append the second profile through a normal revision-checked save. The row-locked transaction rejects a decrease in member count, so concurrent additions cannot remove or replace a newer profile. There is no profile removal operation. Existing member IDs, order, and financial records remain intact.
+
+A one-person plan assigns the full expense or goal to `member-1`; the second allocation slot is zero. The allocation response keeps its two named share fields. Newly created solo records default to personal ownership, so adding a partner does not change their allocation. Shared records remain shared and use the two-person split after a partner is added.
 
 For every expense included in the selected month:
 
@@ -124,6 +146,10 @@ For example, an equal split of $1.01 is $0.51 and $0.50. With salaries of $100,0
 
 Shared goals use an equal split, including the same odd-cent rule. Personal goals belong entirely to their owner. Goals do not inherit the expense split method.
 
+Optional payroll rules derive separate Traditional, Roth, and employer estimates. They do not change take-home pay or account balances. A pay schedule anchors expected calendar dates. Optional payment mode and due day control reminders. An annual IRA goal adds a personal contribution year to ordinary target progress. These fields live with their owning member, expense, or goal.
+
+To-do completion is stored outside the plan. Checkbox writes lock the household, check the current revision, regenerate the source task, and compare its expected completion. A task signature covers identity, amount, and dates. Changing those fields makes the task incomplete; a name change or unrelated plan edit preserves it. The checkbox transaction does not advance the plan revision.
+
 Source: [validation](../../apps/api/internal/budget/validate.go), [calculations](../../apps/api/internal/budget/calculate.go), and [boundary tests](../../apps/api/internal/server/split_roundtrip_test.go).
 
 ## Plan totals
@@ -135,7 +161,7 @@ available for goals = monthly take-home pay − allocated living expenses
 left to plan       = available for goals − allocated goal contributions
 ```
 
-The household totals add both members' results. This counts each shared expense or goal once because its personal shares already reconcile. Minimum debt payments belong in expenses. Extra debt payments can be goals. Savings, investment, and debt balances are separate snapshots and do not change cash flow.
+The household totals add the saved members' results. This counts each shared expense or goal once because its personal shares already reconcile. Minimum debt payments belong in expenses. Extra debt payments can be goals. Savings, investment, and debt balances are separate snapshots and do not change cash flow.
 
 The Sankey uses these same summary values and allocated expense shares. When available height limits category rows, the chart combines smaller expense categories into `Other costs (N)` without changing their sum. When allocations exceed income, it adds a labeled **Plan shortfall** source so the graph remains balanced. That source represents a funding gap, not new income or an inferred loan.
 

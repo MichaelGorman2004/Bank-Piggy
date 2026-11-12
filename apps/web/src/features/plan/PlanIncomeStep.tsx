@@ -1,14 +1,19 @@
-import type { Dispatch } from 'react';
+import { useState, type Dispatch } from 'react';
+import { Plus } from 'lucide-react';
 import { PAY_FREQUENCIES } from './format';
 import type { MemberDraft } from './planDraft';
 import type { PlanAction } from './planReducer';
 import { PlanMoneyField } from './PlanFields';
+import { PayrollFields } from './PayrollFields';
+import { PayScheduleFields } from './PayScheduleFields';
+import { MAX_HOUSEHOLD_MEMBERS } from './householdMembers';
 import styles from './Editors.module.css';
 
 interface MemberIncomeProps {
   readonly draft: MemberDraft;
   readonly index: number;
   readonly dispatch: Dispatch<PlanAction>;
+  readonly autoFocus: boolean;
 }
 interface MemberStepProps {
   readonly members: MemberDraft[];
@@ -29,7 +34,7 @@ function MemberIncome(props: MemberIncomeProps) {
         <label>
           Name
           <input
-            autoFocus={index === 0}
+            autoFocus={props.autoFocus}
             required
             maxLength={60}
             value={draft.name}
@@ -39,43 +44,59 @@ function MemberIncome(props: MemberIncomeProps) {
           />
         </label>
         <PlanPayFrequency {...props} />
-        <PlanMoneyField
-          label="Monthly take-home ($)"
-          required
-          pattern="[0-9]+(\.[0-9]{1,2})?"
-          value={draft.takeHome}
-          onChange={(takeHome) => {
-            dispatch({ type: 'member', index, update: { takeHome } });
-          }}
-          help="After taxes and payroll deductions. For biweekly pay, multiply a paycheck by 26 ÷ 12."
-        />
-        <PlanMoneyField
-          label="Annual base salary ($)"
-          required
-          pattern="[0-9]+(\.[0-9]{1,2})?"
-          value={draft.salary}
-          onChange={(salary) => {
-            dispatch({ type: 'member', index, update: { salary } });
-          }}
-          help="Used only for salary splits. Enter 0 if you will not use them."
-        />
+        <IncomeMoneyFields {...props} />
       </div>
+      <PayScheduleFields
+        frequency={draft.frequency}
+        draft={draft.paySchedule}
+        onChange={(paySchedule) => {
+          dispatch({ type: 'member', index, update: { paySchedule } });
+        }}
+      />
+      <PayrollFields
+        draft={draft.payroll}
+        onChange={(payroll) => {
+          dispatch({ type: 'member', index, update: { payroll } });
+        }}
+      />
     </section>
   );
 }
 
 /**
- * Shows both household members' income drafts.
+ * Starts with the saved people and lets the user add one partner.
  * @param props Member drafts and draft dispatch.
  * @returns Income setup step.
  */
 export function PlanIncomeStep(props: MemberStepProps) {
   const { members, dispatch } = props;
+  const [focusNewMember, setFocusNewMember] = useState(false);
   return (
-    <div>
-      {members.map((draft, index) => (
-        <MemberIncome key={draft.member.id} draft={draft} index={index} dispatch={dispatch} />
-      ))}
+    <div className={styles.section}>
+      <div>
+        {members.map((draft, index) => (
+          <MemberIncome
+            key={draft.member.id}
+            draft={draft}
+            index={index}
+            dispatch={dispatch}
+            autoFocus={index === 0 || focusNewMember}
+          />
+        ))}
+      </div>
+      {members.length < MAX_HOUSEHOLD_MEMBERS && (
+        <button
+          type="button"
+          className={styles.add}
+          onClick={() => {
+            setFocusNewMember(true);
+            dispatch({ type: 'addMember' });
+          }}
+        >
+          <Plus size={15} aria-hidden="true" />
+          Add person
+        </button>
+      )}
     </div>
   );
 }
@@ -106,5 +127,38 @@ function PlanPayFrequency(props: MemberIncomeProps) {
         ))}
       </select>
     </label>
+  );
+}
+
+/**
+ * Keeps net pay distinct from the base salary used for splits and payroll estimates.
+ * @param props Member draft and draft update action.
+ * @returns Monthly take-home and annual salary fields.
+ */
+function IncomeMoneyFields(props: MemberIncomeProps) {
+  const { draft, index, dispatch } = props;
+  return (
+    <>
+      <PlanMoneyField
+        label="Monthly take-home after tax & automatic investments ($)"
+        required
+        pattern="[0-9]+(\.[0-9]{1,2})?"
+        value={draft.takeHome}
+        onChange={(takeHome) => {
+          dispatch({ type: 'member', index, update: { takeHome } });
+        }}
+        help="Use the pay that reaches your bank after tax, 401(k), and other automatic payroll deductions. For biweekly pay, multiply a paycheck by 26 ÷ 12."
+      />
+      <PlanMoneyField
+        label="Annual base salary ($)"
+        required
+        pattern="[0-9]+(\.[0-9]{1,2})?"
+        value={draft.salary}
+        onChange={(salary) => {
+          dispatch({ type: 'member', index, update: { salary } });
+        }}
+        help="Used for salary splits and payroll investment estimates. Enter 0 if you will not use them."
+      />
+    </>
   );
 }

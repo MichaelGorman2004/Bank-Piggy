@@ -5,6 +5,8 @@ import { termEndMonth, validMonth } from './month.ts';
 import { goalDraft, goalValue } from './goalDraft.ts';
 import { expenseDraft, validateExpense } from './expenseDraft.ts';
 
+const HOUSEHOLD = { members: [{ id: 'member-1' }, { id: 'member-2' }] };
+
 /** Creates a legacy cost without schedule metadata. */
 function legacyExpense() {
   return {
@@ -22,7 +24,10 @@ function legacyExpense() {
 function householdFixture() {
   return {
     defaultSplitMethod: 'equal',
-    members: [{ annualBaseSalaryCents: 0 }, { annualBaseSalaryCents: 0 }],
+    members: [
+      { id: 'member-1', annualBaseSalaryCents: 0 },
+      { id: 'member-2', annualBaseSalaryCents: 0 },
+    ],
   };
 }
 
@@ -85,7 +90,7 @@ test('invalid payment terms and reversed end dates produce errors without mutati
 
 test('a travel goal keeps saved progress and costs separate from the chosen monthly allocation', () => {
   const draft = {
-    ...goalDraft(),
+    ...goalDraft(HOUSEHOLD),
     name: 'Lisbon',
     amount: '0',
     kind: 'trip',
@@ -100,7 +105,7 @@ test('a travel goal keeps saved progress and costs separate from the chosen mont
       other: '0',
     },
   };
-  const result = goalValue(draft, 'trip');
+  const result = goalValue(draft, 'trip', HOUSEHOLD);
   assert.equal(result.error, undefined);
   assert.equal(result.goal.monthlyAmountCents, 0);
   assert.equal(result.goal.trip.savedAmountCents, 30001);
@@ -109,7 +114,7 @@ test('a travel goal keeps saved progress and costs separate from the chosen mont
     159501,
   );
   assert.equal('targetAmountCents' in result.goal.trip, false);
-  assert.deepEqual(goalDraft(result.goal), {
+  assert.deepEqual(goalDraft(HOUSEHOLD, result.goal), {
     ...draft,
     amount: '0.00',
     costs: {
@@ -124,14 +129,19 @@ test('a travel goal keeps saved progress and costs separate from the chosen mont
 });
 
 test('ordinary goals omit trip data and reject malformed trip amounts or dates', () => {
-  const ordinary = { ...goalDraft(), name: 'Savings', amount: '20' };
-  assert.equal('trip' in goalValue(ordinary, 'save').goal, false);
+  const ordinary = { ...goalDraft(HOUSEHOLD), name: 'Savings', amount: '20' };
+  assert.equal('trip' in goalValue(ordinary, 'save', HOUSEHOLD).goal, false);
   const trip = { ...ordinary, kind: 'trip', targetMonth: '2027-04' };
-  assert.ok(goalValue({ ...trip, targetMonth: '2027-13' }, 'trip').error);
-  assert.ok(goalValue({ ...trip, saved: '-1' }, 'trip').error);
-  assert.ok(goalValue({ ...trip, costs: { ...trip.costs, flights: '2.001' } }, 'trip').error);
+  assert.ok(goalValue({ ...trip, targetMonth: '2027-13' }, 'trip', HOUSEHOLD).error);
+  assert.ok(goalValue({ ...trip, saved: '-1' }, 'trip', HOUSEHOLD).error);
   assert.ok(
-    goalValue({ ...trip, costs: { ...trip.costs, flights: '1000000000', lodging: '0.01' } }, 'trip')
-      .error,
+    goalValue({ ...trip, costs: { ...trip.costs, flights: '2.001' } }, 'trip', HOUSEHOLD).error,
+  );
+  assert.ok(
+    goalValue(
+      { ...trip, costs: { ...trip.costs, flights: '1000000000', lodging: '0.01' } },
+      'trip',
+      HOUSEHOLD,
+    ).error,
   );
 });

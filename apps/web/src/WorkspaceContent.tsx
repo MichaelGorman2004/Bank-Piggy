@@ -1,5 +1,7 @@
 import type { HouseholdResponse, Member, Summary } from '@bank-piggy/contracts';
 import { useMemo } from 'react';
+import { TodoPanel } from './features/todos/TodoPanel';
+import { TodoDateControl } from './features/todos/TodoDateControl';
 import { Dashboard } from './components/Dashboard';
 import { DashboardHeader } from './components/DashboardHeader';
 import { PlanningMonth } from './components/PlanningMonth';
@@ -46,13 +48,15 @@ export function WorkspaceContent({ app, ui }: WorkspaceContentProps) {
     <main id="main" className={styles.main} tabIndex={-1}>
       <WorkspaceFilters app={app} ui={ui} period={period} />
       <ReloadNotice conflict={app.conflict} error={app.error} onReload={app.onReload} />
-      <PlanCompleteness
-        incomeCents={app.data.summary.household.monthlyTakeHomeCents}
-        expenseCount={app.data.household.expenses.length}
-        onEdit={() => {
-          ui.open({ type: 'plan' });
-        }}
-      />
+      {ui.view !== 'todos' && (
+        <PlanCompleteness
+          incomeCents={app.data.summary.household.monthlyTakeHomeCents}
+          expenseCount={app.data.household.expenses.length}
+          onEdit={() => {
+            ui.open({ type: 'plan' });
+          }}
+        />
+      )}
       <WorkspaceView app={app} ui={ui} data={data} summary={summary} factor={factor} />
     </main>
   );
@@ -70,34 +74,65 @@ function WorkspaceView(
     readonly factor: number;
   },
 ) {
-  const { ui, data, summary, factor } = props;
   return (
     <section
-      key={ui.view}
+      key={props.ui.view}
       className={styles.view}
-      aria-label={`${VIEW_DETAILS[ui.view].label} content`}
+      aria-label={`${VIEW_DETAILS[props.ui.view].label} content`}
     >
-      <Dashboard
-        data={data}
-        summary={summary}
-        scope={ui.scope}
-        factor={factor}
-        view={ui.view}
-        onPlan={() => {
-          ui.open({ type: 'plan' });
-        }}
-        onExpense={(expense, initialKind) => {
-          ui.open({
-            type: 'expense',
-            expense,
-            initialKind: initialKind ?? 'bill',
-          });
-        }}
-        onGoal={(goal) => {
-          ui.open({ type: 'goal', goal, initialKind: ui.view === 'targets' ? 'trip' : 'goal' });
-        }}
-      />
+      <WorkspaceTask {...props} />
     </section>
+  );
+}
+
+/**
+ * Chooses pay-period tasks or the shared financial dashboard.
+ * @param props Selected view, canonical totals, and editor actions.
+ * @returns The bounded task content.
+ */
+function WorkspaceTask(
+  props: WorkspaceContentProps & {
+    readonly data: HouseholdResponse;
+    readonly summary: Summary;
+    readonly factor: number;
+  },
+) {
+  const { ui, data, summary, factor } = props;
+  return ui.view === 'todos' ? (
+    <TodoPanel
+      household={data.household}
+      scope={ui.scope}
+      date={ui.todoDate}
+      csrfToken={props.app.session.csrfToken ?? ''}
+      onPlan={() => {
+        ui.open({ type: 'plan' });
+      }}
+      onExpenses={() => {
+        ui.changeScope(HOUSEHOLD_SCOPE);
+        ui.setView('expenses');
+      }}
+    />
+  ) : (
+    <Dashboard
+      data={data}
+      summary={summary}
+      scope={ui.scope}
+      factor={factor}
+      view={ui.view}
+      onPlan={() => {
+        ui.open({ type: 'plan' });
+      }}
+      onExpense={(expense, initialKind) => {
+        ui.open({
+          type: 'expense',
+          expense,
+          initialKind: initialKind ?? 'bill',
+        });
+      }}
+      onGoal={(goal) => {
+        ui.open({ type: 'goal', goal, initialKind: ui.view === 'targets' ? 'trip' : 'goal' });
+      }}
+    />
   );
 }
 
@@ -125,13 +160,17 @@ function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Peri
         />
       </div>
       <div className={styles.monthArea}>
-        <PlanningMonth
-          month={app.data.planningMonth}
-          period={period}
-          disabled={app.saving}
-          loading={app.loading}
-          onMonth={app.onMonth}
-        />
+        {ui.view === 'todos' ? (
+          <TodoDateControl date={ui.todoDate} onDate={ui.setTodoDate} />
+        ) : (
+          <PlanningMonth
+            month={app.data.planningMonth}
+            period={period}
+            disabled={app.saving}
+            loading={app.loading}
+            onMonth={app.onMonth}
+          />
+        )}
       </div>
     </div>
   );
@@ -143,7 +182,7 @@ function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Peri
  * @returns A draft dialog with the appropriate new-record defaults.
  */
 function newRecordDialog(view: View): ActiveDialog {
-  if (view === 'overview' || view === 'flow') return { type: 'plan' };
+  if (view === 'overview' || view === 'flow' || view === 'todos') return { type: 'plan' };
   if (view === 'goals' || view === 'targets')
     return { type: 'goal', initialKind: view === 'targets' ? 'trip' : 'goal' };
   return { type: 'expense', initialKind: 'bill' };

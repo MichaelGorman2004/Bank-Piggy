@@ -39,6 +39,7 @@ export function PlanMoneyField(props: MoneyFieldProps) {
 
 interface PlanItemRowProps {
   readonly kind: 'Expense' | 'Goal';
+  readonly personalOnly?: boolean;
   readonly item: Pick<Expense, 'name' | 'ownerId'>;
   readonly amount: string;
   readonly members: MemberDraft[];
@@ -80,6 +81,7 @@ export function PlanItemRow(props: PlanItemRowProps) {
       />
       <PlanOwnerField
         ownerId={ownerId}
+        personalOnly={props.personalOnly}
         members={members}
         onChange={(value) => {
           onChange({ ownerId: value });
@@ -98,12 +100,13 @@ export function PlanItemRow(props: PlanItemRowProps) {
 }
 
 interface PlanOwnerFieldProps {
+  readonly personalOnly?: boolean;
   readonly ownerId: Expense['ownerId'];
   readonly members: MemberDraft[];
   readonly onChange: (ownerId: Expense['ownerId']) => void;
 }
 /**
- * Lists the shared household and both canonical member identifiers.
+ * Lists household ownership and each person who is present in the draft.
  * @param props Selected owner and current member names.
  * @returns Owner selection field.
  */
@@ -122,7 +125,9 @@ function PlanOwnerField(props: PlanOwnerFieldProps) {
           if (ownerId) onChange(ownerId);
         }}
       >
-        <option value="shared">Both of us</option>
+        <option value="shared" disabled={props.personalOnly}>
+          {members.length === 1 ? 'Household' : 'Both of us'}
+        </option>
         {members.map((member) => (
           <option key={member.member.id} value={member.member.id}>
             {member.name}

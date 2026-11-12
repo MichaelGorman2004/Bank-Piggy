@@ -46,6 +46,7 @@
   min-width: 0;
   overflow: auto;
   overscroll-behavior: contain;
+  scroll-padding-block: 8px;
   scrollbar-gutter: stable;
   border-top: 1px solid var(--line);
   outline-offset: -2px;

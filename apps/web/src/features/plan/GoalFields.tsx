@@ -1,5 +1,6 @@
 import type { Household } from '@bank-piggy/contracts';
 import type { GoalDraft } from './goalDraft';
+import { retirementGoalChange } from './retirementGoal';
 import { GoalTargetFields } from './GoalTargetFields';
 
 interface GoalFieldsProps {
@@ -43,7 +44,12 @@ export function GoalFields(props: GoalFieldsProps) {
         />
       </label>
       <GoalOwner {...props} />
-      <GoalTargetFields draft={draft} onChange={onChange} />
+      <GoalTargetFields
+        draft={draft}
+        onChange={(change) => {
+          onChange(retirementGoalChange(draft, change, props.household));
+        }}
+      />
     </>
   );
 }
@@ -68,7 +74,9 @@ function GoalOwner(props: GoalFieldsProps) {
           if (ownerId) onChange({ ownerId });
         }}
       >
-        <option value="shared">Both of us (50 / 50)</option>
+        <option value="shared" disabled={draft.kind === 'roth_ira'}>
+          {props.household.members.length === 1 ? 'Household' : 'Both of us (50 / 50)'}
+        </option>
         {props.household.members.map((member) => (
           <option key={member.id} value={member.id}>
             {member.name}

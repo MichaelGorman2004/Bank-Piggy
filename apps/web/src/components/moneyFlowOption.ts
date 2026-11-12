@@ -46,7 +46,7 @@ function incomeHub(props: MoneyFlowProps, graph: FlowGraph, color: ColorReader):
     : props.summary.monthlyTakeHomeCents;
   const label = shortfall
     ? 'Plan total'
-    : props.scope === HOUSEHOLD_SCOPE
+    : props.scope === HOUSEHOLD_SCOPE && props.data.household.members.length > 1
       ? 'Combined income'
       : 'Income';
   const node = flowNode({ id: HUB, label }, amount, props.factor, color('taupe'));

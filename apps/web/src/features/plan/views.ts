@@ -2,6 +2,7 @@
 export const VIEW_DETAILS = {
   overview: { label: 'Overview', title: 'Your household plan.', actionLabel: 'Edit plan' },
   flow: { label: 'Money flow', title: 'Money flow', actionLabel: 'Adjust plan' },
+  todos: { label: 'To-do', title: 'Your pay-period To-do.', actionLabel: 'Edit pay plan' },
   expenses: { label: 'Expenses', title: 'Your expenses.', actionLabel: 'Add expense' },
   goals: { label: 'Goals', title: 'Your savings & goals.', actionLabel: 'Add goal' },
   targets: {

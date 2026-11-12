@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Household, Summary } from '@bank-piggy/contracts';
+import type { Household, Summary, PayrollSummary } from '@bank-piggy/contracts';
 import { BalancePanel } from './BalancePanel';
 import { FinanceCard } from './FinanceCard';
 import { PlanDetails } from './PlanDetails';
@@ -8,6 +8,7 @@ import styles from './HouseholdOverview.module.css';
 
 interface HouseholdOverviewProps {
   readonly household: Household;
+  readonly payrollSummaries: readonly PayrollSummary[];
   readonly summary: Summary;
   readonly factor: number;
   readonly scope: string;
@@ -52,7 +53,7 @@ export function HouseholdOverview(props: HouseholdOverviewProps) {
           </FinanceCard>
         </div>
         <div className={styles.details} data-active={active === 'details'}>
-          <PlanDetails household={props.household} />
+          <PlanDetails household={props.household} payrollSummaries={props.payrollSummaries} />
         </div>
         <div className={styles.balances} data-active={active === 'balances'}>
           <BalancePanel

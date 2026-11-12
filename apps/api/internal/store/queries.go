@@ -1,6 +1,7 @@
 package store
 
 const (
+	queryLockPlan             = `SELECT plan FROM households WHERE id=$1 FOR UPDATE`
 	queryPruneExpiredSessions = `
  DELETE FROM sessions WHERE token_hash IN (
   SELECT token_hash FROM sessions WHERE expires_at <= now()
@@ -46,24 +47,29 @@ const (
  WHERE household_users.google_subject=EXCLUDED.google_subject AND household_users.email=EXCLUDED.email
  `
 	queryCreateOIDCAttempt = `
- INSERT INTO oidc_attempts (token_hash,state,nonce,verifier,expires_at)
- VALUES ($1,$2,$3,$4,$5)
+ INSERT INTO oidc_attempts (token_hash,state,nonce,verifier,expires_at,invitation_hash)
+ VALUES ($1,$2,$3,$4,$5,$6)
  `
 	queryConsumeOIDCAttempt = `
  DELETE
  FROM oidc_attempts
  WHERE token_hash=$1 AND expires_at>now()
- RETURNING state,nonce,verifier,expires_at
+ RETURNING state,nonce,verifier,expires_at,invitation_hash
  `
 	queryLockHousehold = `
- SELECT revision
+ SELECT revision,jsonb_array_length(plan->'members')
  FROM households
  WHERE id=$1 FOR UPDATE
  `
 	queryReadSession = `
- SELECT s.household_id,s.member_id,s.csrf_token,s.expires_at,COALESCE(u.email,'')
+ SELECT s.household_id,s.member_id,s.csrf_token,s.expires_at,COALESCE(u.email,''),COALESCE(u.invitation_accepted,false)
  FROM sessions s
+ JOIN households h ON h.id=s.household_id
  LEFT JOIN household_users u ON u.household_id=s.household_id AND u.member_id=s.member_id
  WHERE s.token_hash=$1 AND s.expires_at>now()
+ AND EXISTS (
+  SELECT 1 FROM jsonb_array_elements(h.plan->'members') AS member
+  WHERE member->>'id'=s.member_id
+ )
  `
 )

@@ -1,4 +1,6 @@
 import type { Household, HouseholdResponse, Session } from '@bank-piggy/contracts';
+import { SharingDialog } from './features/sharing/SharingDialog';
+import { useWorkspaceSharing } from './useWorkspaceSharing';
 import { Sidebar } from './components/Sidebar';
 import { PlanDialogs } from './features/plan/PlanDialogs';
 import { WorkspaceBar } from './WorkspaceChrome';
@@ -27,15 +29,12 @@ export interface WorkspaceProps {
  * @returns Rendered interface.
  */
 export function Workspace(props: WorkspaceProps) {
-  const blank =
-    props.data.summary.household.monthlyTakeHomeCents === 0 &&
-    props.data.household.expenses.length === 0 &&
-    props.data.household.goals.length === 0;
   const ui = useWorkspace({
     conflict: props.conflict || props.loading,
     onClearError: props.onClearError,
-    blank,
+    blank: isBlankPlan(props.data),
   });
+  const sharing = useWorkspaceSharing(props, ui);
   return (
     <div className={styles.app}>
       <a href="#main" className={styles.skip}>
@@ -49,6 +48,9 @@ export function Workspace(props: WorkspaceProps) {
         onView={ui.setView}
         onClose={ui.closeMobile}
         onSignout={props.onSignout}
+        onShare={() => {
+          void sharing.show();
+        }}
       />
       <div className={styles.workspace}>
         <WorkspaceBar
@@ -69,8 +71,22 @@ export function Workspace(props: WorkspaceProps) {
         onClose={() => {
           ui.setActive(null);
         }}
-        onSave={props.onSave}
+        onSave={sharing.save}
       />
+      <SharingDialog state={sharing} />
     </div>
+  );
+}
+
+/**
+ * Opens setup automatically only while a household has no entered plan.
+ * @param data Authorized saved household and calculated income.
+ * @returns Whether the financial plan is still empty.
+ */
+function isBlankPlan(data: HouseholdResponse): boolean {
+  return (
+    data.summary.household.monthlyTakeHomeCents === 0 &&
+    data.household.expenses.length === 0 &&
+    data.household.goals.length === 0
   );
 }

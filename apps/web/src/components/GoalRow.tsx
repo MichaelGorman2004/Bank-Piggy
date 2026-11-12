@@ -8,6 +8,7 @@ import ownStyles from './GoalPanel.module.css';
 
 interface GoalRowProps {
   readonly goal: Goal;
+  readonly memberCount: number;
   readonly amount: number;
   readonly factor: number;
   readonly projection?: GoalProjection;
@@ -52,6 +53,9 @@ function GoalRowHeading(props: GoalRowProps) {
  */
 export function GoalRow(props: GoalRowProps) {
   const progress = goalProgress(props.goal, props.projection);
+  const progressLabel = props.goal.contributionYear
+    ? `contributed for ${String(props.goal.contributionYear)}`
+    : 'saved';
   return (
     <div className={ownStyles.goalRow}>
       <GoalRowHeading {...props} />
@@ -59,18 +63,23 @@ export function GoalRow(props: GoalRowProps) {
         {progress
           ? `${money(props.amount, props.factor)} planned contribution`
           : 'Planned contribution'}
-        {progress && props.goal.ownerId === 'shared' && ' · Shared target'}
+        {props.goal.contributionYear && ` · ${String(props.goal.contributionYear)} Roth IRA`}
+        {progress && props.memberCount > 1 && props.goal.ownerId === 'shared' && ' · Shared target'}
       </p>
       {progress && (
         <progress
           className={ownStyles.goalTrack}
-          aria-label={`${props.goal.name} saved toward target`}
-          aria-valuetext={`${money(progress.savedAmountCents)} of ${money(progress.targetAmountCents)} saved`}
+          aria-label={`${props.goal.name} ${progressLabel} toward target`}
+          aria-valuetext={`${money(progress.savedAmountCents)} of ${money(progress.targetAmountCents)} ${progressLabel}`}
           max={progress.max}
           value={progress.value}
         />
       )}
-      <GoalTargetProgress goal={props.goal} projection={props.projection} />
+      <GoalTargetProgress
+        goal={props.goal}
+        memberCount={props.memberCount}
+        projection={props.projection}
+      />
     </div>
   );
 }

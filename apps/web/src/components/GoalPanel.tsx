@@ -149,6 +149,7 @@ export function GoalPanel({ data, summary, scope, factor, view, onEdit, onAdd }:
           <GoalRow
             key={goal.id}
             goal={goal}
+            memberCount={data.household.members.length}
             projection={(goal.purchase ? data.purchaseProjections : data.tripProjections).find(
               (item) => item.goalId === goal.id,
             )}

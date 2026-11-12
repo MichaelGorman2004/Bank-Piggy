@@ -19,7 +19,7 @@ func TestNewLocalHouseholdStartsEmpty(t *testing.T) {
 	client := &testClient{app: app}
 	client.signIn(t)
 	plan := readPlan(t, client)
-	if !reflect.DeepEqual(plan, budget.Blank("Member 1", "Member 2")) {
+	if !reflect.DeepEqual(plan, budget.Blank("Member 1")) {
 		t.Fatal("new household contains prefilled financial data")
 	}
 }

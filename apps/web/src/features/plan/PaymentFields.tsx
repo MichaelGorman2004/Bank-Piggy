@@ -1,3 +1,4 @@
+import { PaymentTodoFields } from './PaymentTodoFields';
 import { ProviderField } from '../providers/ProviderField';
 import { MonthPicker } from '../../components/MonthPicker';
 import type { ExpenseDraft } from './expenseDraft';
@@ -24,7 +25,8 @@ function PaymentIdentity(props: PaymentFieldsProps) {
           value={draft.kind}
           onChange={(event) => {
             const kind = event.target.value;
-            if (kind === 'bill' || kind === 'subscription' || kind === 'loan') onChange({ kind });
+            if (kind === 'bill' || kind === 'subscription' || kind === 'loan')
+              onChange({ kind, paymentMode: kind === 'subscription' ? 'automatic' : 'manual' });
           }}
         >
           <option value="bill">Bill or regular expense</option>
@@ -93,6 +95,7 @@ export function PaymentFields(props: PaymentFieldsProps) {
   return (
     <>
       <PaymentIdentity {...props} />
+      <PaymentTodoFields {...props} />
       <MonthPicker
         className={styles.wide}
         label="First payment month (optional for ongoing costs)"

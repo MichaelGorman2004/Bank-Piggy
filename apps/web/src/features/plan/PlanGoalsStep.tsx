@@ -22,13 +22,14 @@ export function PlanGoalsStep(props: GoalsStepProps) {
     <div className={styles.section}>
       <h3>Make room for what matters</h3>
       <p className={styles.help}>
-        Goals are optional. Shared goals split evenly. Add only contributions paid from take-home
-        pay.
+        Goals are optional. {state.members.length > 1 && 'Shared goals split evenly. '}Add only
+        contributions paid from take-home pay.
       </p>
       {state.goals.map((draft, index) => (
         <PlanItemRow
           key={draft.goal.id}
           kind="Goal"
+          personalOnly={draft.goal.contributionYear !== undefined}
           item={draft.goal}
           amount={draft.amount}
           members={state.members}

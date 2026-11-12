@@ -2,12 +2,14 @@ import type { Expense, Household } from '@bank-piggy/contracts';
 import { moneyInput } from './format.ts';
 import { memberDraft, type MemberDraft, type PlanDraft } from './planDraft.ts';
 import { accountRows, type PlanAccountAction } from './planAccountRows.ts';
+import { defaultOwner, HOUSEHOLD_MEMBER_IDS, validMemberOrder } from './householdMembers.ts';
 
 export type PlanRowUpdate = Partial<Pick<Expense, 'name' | 'ownerId'> & { amount: string }>;
 const EQUAL_SHARE_BPS = 5000;
 type MemberUpdate = Partial<Omit<MemberDraft, 'member' | 'accounts'>>;
 export type PlanAction =
   | { type: 'member'; index: number; update: MemberUpdate }
+  | { type: 'addMember' }
   | PlanAccountAction
   | { type: 'expense'; index: number; update: PlanRowUpdate }
   | { type: 'goal'; index: number; update: PlanRowUpdate }
@@ -66,14 +68,12 @@ function goalRows(state: PlanDraft, action: Extract<PlanAction, { type: 'goal' }
 
 /**
  * Creates an empty expense with the selected split default.
- * @param method Split method for this new row.
+ * @param state Current people and the split default for a new row.
  * @param id Identifier created by the add event.
  * @returns New expense draft.
  */
-function newExpense(
-  method: Household['defaultSplitMethod'],
-  id: string,
-): PlanDraft['expenses'][number] {
+function newExpense(state: PlanDraft, id: string): PlanDraft['expenses'][number] {
+  const method = state.defaultSplit;
   const split =
     method === 'custom'
       ? { method, customFirstShareBps: EQUAL_SHARE_BPS }
@@ -84,12 +84,33 @@ function newExpense(
       name: '',
       category: 'Other',
       monthlyAmountCents: 0,
-      ownerId: 'shared',
+      ownerId: defaultOwner(state.members.map((draft) => draft.member)),
       paidByMemberId: '',
       split,
     },
     amount: '',
   };
+}
+
+/**
+ * Adds one partner without replacing existing records or incomplete field text.
+ * @param state Current editable plan.
+ * @returns The same draft at the limit, or a draft with one new person.
+ */
+function addMember(state: PlanDraft): PlanDraft {
+  const members = state.members.map((draft) => draft.member);
+  const id = HOUSEHOLD_MEMBER_IDS.at(members.length);
+  if (members.length !== 1 || !validMemberOrder(members) || !id) return state;
+  const member = memberDraft({
+    id,
+    name: '',
+    annualBaseSalaryCents: 0,
+    monthlyTakeHomeCents: 0,
+    payFrequency: 'monthly',
+    accounts: [],
+    debtCents: 0,
+  });
+  return { ...state, members: [...state.members, member] };
 }
 
 /**
@@ -99,7 +120,6 @@ function newExpense(
  * @returns Next editable plan.
  */
 export function planReducer(state: PlanDraft, action: PlanAction): PlanDraft {
-  if ('memberIndex' in action) return { ...state, members: accountRows(state.members, action) };
   switch (action.type) {
     case 'member':
       return {
@@ -108,6 +128,8 @@ export function planReducer(state: PlanDraft, action: PlanAction): PlanDraft {
           index === action.index ? { ...member, ...action.update } : member,
         ),
       };
+    case 'addMember':
+      return addMember(state);
     case 'expense':
       return { ...state, expenses: expenseRows(state, action) };
     case 'goal':
@@ -115,14 +137,19 @@ export function planReducer(state: PlanDraft, action: PlanAction): PlanDraft {
     case 'split':
       return { ...state, defaultSplit: action.method };
     case 'addExpense':
-      return { ...state, expenses: [...state.expenses, newExpense(state.defaultSplit, action.id)] };
+      return { ...state, expenses: [...state.expenses, newExpense(state, action.id)] };
     case 'addGoal':
       return {
         ...state,
         goals: [
           ...state.goals,
           {
-            goal: { id: action.id, name: '', monthlyAmountCents: 0, ownerId: 'shared' },
+            goal: {
+              id: action.id,
+              name: '',
+              monthlyAmountCents: 0,
+              ownerId: defaultOwner(state.members.map((draft) => draft.member)),
+            },
             amount: '',
           },
         ],
@@ -131,5 +158,7 @@ export function planReducer(state: PlanDraft, action: PlanAction): PlanDraft {
       return { ...state, expenses: state.expenses.filter((_, index) => index !== action.index) };
     case 'removeGoal':
       return { ...state, goals: state.goals.filter((_, index) => index !== action.index) };
+    default:
+      return { ...state, members: accountRows(state.members, action) };
   }
 }

@@ -24,10 +24,11 @@ import (
 
 // Server owns routes, authentication configuration, and its persistence boundary.
 type Server struct {
-	config   Config
-	store    *store.Store
-	oauth    oauth2.Config
-	verifier *oidc.IDTokenVerifier
+	config     Config
+	store      *store.Store
+	oauth      oauth2.Config
+	verifier   *oidc.IDTokenVerifier
+	publicAuth publicAuthLimiter
 }
 
 // New initializes the Google verifier only in explicitly configured private mode.
@@ -51,12 +52,11 @@ func New(ctx context.Context, c Config, s *store.Store) (*Server, error) {
 			Scopes:       []string{oidc.ScopeOpenID, "email", "profile"},
 		}
 	}
-	h := budget.Blank("Member 1", "Member 2")
+	name := "Member 1"
 	if c.Mode == "private" {
-		names := []string{strings.Split(c.Invites[0], "@")[0], strings.Split(c.Invites[1], "@")[0]}
-		h = budget.Blank(names[0], names[1])
+		name = strings.Split(c.Invites[0], "@")[0]
 	}
-	if err := s.Seed(ctx, app.householdID(), h); err != nil {
+	if err := s.Seed(ctx, app.householdID(), budget.Blank(name)); err != nil {
 		return nil, err
 	}
 	return app, nil
@@ -73,12 +73,18 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/logout", s.logout)
 	mux.HandleFunc("GET /api/household", s.getHousehold)
 	mux.HandleFunc("PUT /api/household", s.putHousehold)
+	mux.HandleFunc("GET /api/household/invitation", s.invitationStatus)
+	mux.HandleFunc("POST /api/household/invitation", s.createInvitation)
+	mux.HandleFunc("DELETE /api/household/invitation", s.revokeInvitation)
+	mux.HandleFunc("POST /api/household/invitation/prepare", s.prepareInvitation)
+	mux.HandleFunc("GET /api/todos", s.getTodos)
+	mux.HandleFunc("PUT /api/todos/{id}", s.putTodo)
 	mux.HandleFunc("GET /auth/google", s.googleStart)
 	mux.HandleFunc("GET /auth/google/callback", s.googleCallback)
 	mux.HandleFunc("/", s.frontend)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("Referrer-Policy", "same-origin")
+		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Cache-Control", "no-store")
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
@@ -172,7 +178,10 @@ func (s *Server) putHousehold(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, "revision_conflict", err.Error())
 		return
 	}
-
+	if errors.Is(err, store.ErrMemberRemoval) {
+		fail(w, 400, "member_removal_unsupported", err.Error())
+		return
+	}
 	if err != nil {
 		internal(w, err)
 		return

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"reflect"
@@ -10,7 +11,7 @@ import (
 // requireFields enforces generated required JSON tags before zero-value decoding.
 // This preserves the difference between an entered zero salary and a missing salary.
 func requireFields(data json.RawMessage, kind reflect.Type) error {
-	if string(data) == "null" {
+	if bytes.Equal(bytes.TrimSpace(data), []byte("null")) {
 		return errors.New("required values cannot be null")
 	}
 	switch kind.Kind() {

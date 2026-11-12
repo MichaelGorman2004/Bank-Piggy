@@ -18,7 +18,7 @@ function WelcomeStory() {
   return (
     <div className={styles.story}>
       <div className={styles.brand}>
-        Bank Piggy<span>Your money, together.</span>
+        Bank Piggy<span>Your money, in one place.</span>
       </div>
       <img
         className={styles.pig}
@@ -31,7 +31,7 @@ function WelcomeStory() {
           <br />
           in one place.
         </h1>
-        <p>See where your money goes. Make a plan that works for both of you.</p>
+        <p>See where your money goes. Make a plan that works for you.</p>
       </div>
     </div>
   );

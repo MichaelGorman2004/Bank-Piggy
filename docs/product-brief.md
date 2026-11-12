@@ -1,14 +1,14 @@
 # Bank Piggy Product Brief
 
-Bank Piggy is a private finance tracker for Michael and his girlfriend. Each person signs in, answers a short set of questions, and gets a monthly view of where the household's money goes. Each member can switch from the combined household view to their own personal view. The dashboard puts spending, budgeting, savings, investments, and debt in one place. The longer-term product connects to banks and brokerages for automatic updates.
+Bank Piggy is a private finance tracker for Michael and his girlfriend. A new household starts with one person and can add a second profile during setup or later. Each invited person with a saved profile signs in and gets a monthly view of where the household's money goes. Each member can switch from the household view to their own personal view. The dashboard puts spending, budgeting, savings, investments, and debt in one place. The longer-term product connects to banks and brokerages for automatic updates.
 
 ## Dashboard and money flow
 
-The signed-in app has five focused views behind a left navigation bar. Overview opens by default with summary cards, recorded plan inputs, and balance snapshots. Money flow contains the Sankey. Expenses combines bills, subscriptions, regular costs, and loans. Goals contains ordinary savings, investment, and debt contributions. Trips & purchases contains manual target plans.
+The signed-in app has six focused views behind a left navigation bar. Overview opens by default with summary cards, recorded plan inputs, and balance snapshots. Money flow contains the Sankey. Expenses combines bills, subscriptions, regular costs, and loans. Goals contains ordinary savings, investment, debt, and annual Roth IRA contributions. Trips & purchases contains manual target plans. To-do contains pay-period contribution and manual payment reminders.
 
-Each Sankey stream's width shows its amount. The default scope combines the household. The person selector switches to the signed-in member's allocated share. Keep scope, period, and planning month consistent across views. Month is the default. The yearly projection covers the selected month and following eleven months, including scheduled payment changes. The paycheck view shows an average for regular pay schedules. Actual spending history and real pay dates belong to a later phase.
+Each Sankey stream's width shows its amount. The default scope combines the household. The person selector switches to the signed-in member's allocated share. Keep scope, period, and planning month consistent across financial views. Month is the default. The yearly projection covers the selected month and following eleven months, including scheduled payment changes. The paycheck view shows an average for regular pay schedules. To-do uses an explicit As-of date and an entered payday anchor. Actual spending history and provider-confirmed payroll activity belong to a later phase.
 
-Keep the app frame within the visible viewport. Scroll only card bodies; keep their headers, actions, filters, and footers fixed. The document and outer workspace stay still, including on short screens. Overview has Plan totals, At a glance, and Balances sections. At a glance uses two compact income and balance tables for both members instead of a long member list. On narrow or short screens, three native section buttons show one section at a time. Use thin taupe scrollbars with transparent tracks.
+Keep the app frame within the visible viewport. Scroll only card bodies; keep their headers, actions, filters, and footers fixed. The document and outer workspace stay still, including on short screens. Overview has Plan totals, At a glance, and Balances sections. At a glance uses two compact income and balance tables for the saved members instead of a long member list. On narrow or short screens, three native section buttons show one section at a time. Use thin taupe scrollbars with transparent tracks.
 
 Measure the Money flow chart's available height and let its body scroll. Projection assumptions are available through the month control's native disclosure. Keep the largest expense categories visible and combine smaller categories into an explicit `Other costs (N)` row when needed. Preserve every cent. Detailed records remain in Expenses.
 
@@ -30,6 +30,7 @@ Use household labels consistently: Our household, the current member names, Hous
 
 ## Onboarding and the first monthly plan
 
+- Start with one person. Place a plus-icon **Add person** button below the profile. It adds the optional second profile, focuses its name field, and preserves the current draft. Existing saved profiles remain intact, including a second person with no income. Profile removal is outside this version. A successful save after adding a person offers an invitation link. Only verified acceptance grants Google sign-in access.
 - Ask each member for take-home pay and pay frequency, plus housing costs, groceries, other regular expenses, and minimum debt payments. Collect annual base salary when members choose salary-based expense splits or want to show gross salary in the money flow. Convert recurring amounts to a monthly estimate. Let the user revise estimates as they learn more. Ask for actual paycheck deductions when the user wants to expand the money flow to show them.
 - Let each member enter named, typed account balances and outstanding debt when they want to track balances. Keep saved-goal progress as a separate manual input.
 - Ask for state when a feature uses it. Take-home pay already accounts for payroll withholding, so the first cash-flow calculation can work without state. If Bank Piggy later estimates taxes from gross pay, define that as a separate feature with its own inputs and assumptions.
@@ -38,7 +39,9 @@ The first useful result is estimated monthly take-home pay minus living expenses
 
 ## Shared expenses
 
-Support three split methods for shared expenses.
+For a one-person household, assign the full amount to that person and hide split controls. New expenses and goals belong to that person by default. Adding a second profile keeps their ownership, so existing personal costs do not become shared. Existing shared records remain shared.
+
+For a two-person household, support three split methods for shared expenses.
 
 - **Even split.** Each of the two members pays half.
 - **Custom split.** The members choose a percentage for the first member and the other member receives the remainder. Fixed-dollar custom entry remains a future option.
@@ -49,6 +52,28 @@ Propose a household default with an override for each shared expense. Record who
 Calculate shares from the full salary ratio and round the resulting money amounts to cents. Assign any remaining cent consistently so the personal shares always add up to the full expense. If the combined base salary is zero or a salary is missing, ask the members to choose an even or custom split. Salary-based splitting is available once both nonnegative base salaries are supplied and their total is positive.
 
 Propose keeping each recorded expense's split when a salary or household default changes. Apply new rules to future expenses and let members explicitly recalculate earlier expenses when needed. Joint account ownership is a separate decision from expense splitting.
+
+## Sharing a household
+
+The first member can copy a one-use link for the second person. No email delivery is required. The recipient sees a limited preview, continues with Google, and joins the same saved household. Future sign-ins use that pinned membership. If no second financial profile exists, acceptance appends an empty one without replacing the first person's plan.
+
+Links expire after seven days. Creating a new link replaces the previous pending link. The first member can revoke it. Store only a hash of the secret, remove the URL fragment on entry, and bind the invitation to the one-use Google sign-in attempt. Consume it with identity binding under the household row lock. Existing two-person identities cannot be replaced by a link. Explain that anyone with the link can accept it and access the household plan.
+
+## Payroll and retirement contributions
+
+Label monthly take-home as cash after taxes and automatic payroll investments. Record separate Traditional and Roth 401(k) percentages. Record employer matching as ordered contribution tiers or an entered monthly amount for an unusual rule. Show estimated employee and employer contributions separately from spendable income. Never subtract them from entered take-home again or add them to an account balance automatically.
+
+An annual Roth IRA goal has a personal owner, contribution year, entered allowed target, and entered contributions so far. The user chooses its monthly cash allocation. It uses ordinary goal progress and cannot also be a trip or purchase. Do not infer legal eligibility or a maximum from salary alone.
+
+## Pay-period To-do
+
+Record one actual payday and the existing pay frequency. Weekly and biweekly advance by seven or fourteen calendar days. Monthly pay keeps the day number, with an explicit last-day-of-month option. Semimonthly pay has two explicit days that stay distinct in short months. Expected dates do not adjust for holidays or employer changes. Irregular pay has no inferred dates.
+
+To-do has its own As-of date and keeps the household/person scope. Generate the current pay period for each configured member. Divide monthly goal allocations across that month's actual paydays with exact cent reconciliation. Show the contribution amount and a due date before the next payday. Annual IRA reminders apply only in their contribution year and do not exceed the entered remaining target.
+
+Manual bills need an explicit due day. Subscriptions default to automatic payment and create no tasks unless changed to manual. A recorded payer receives the full payment reminder; otherwise, shared bills use each person's share. Show missing due days as setup work instead of assuming a due date.
+
+Use native checkboxes and cross out completed tasks. Persist completions by household, member, source, and period. A completion acknowledges the task's amount and dates; changes to those fields make it incomplete again. Checkbox writes check the current plan revision and task state. They do not move money, update goal progress, or alter plan revisions. Prior periods can be selected by date; this is not an immutable payment ledger or an automatic carryover list.
 
 ## Several goals can share one budget
 

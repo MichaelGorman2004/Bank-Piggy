@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { HOUSEHOLD_SCOPE, type Period } from './features/plan/format';
+import { localDate } from './features/plan/payScheduleDraft';
 import type { View } from './features/plan/views';
 import type { ActiveDialog } from './features/plan/PlanDialogs';
 
@@ -16,6 +17,7 @@ interface WorkspaceStateOptions {
  */
 export function useWorkspace(options: WorkspaceStateOptions) {
   const [view, setView] = useState<View>('overview');
+  const [todoDate, setTodoDate] = useState(() => localDate(new Date()));
   const [scope, setScope] = useState(HOUSEHOLD_SCOPE);
   const [period, setPeriod] = useState<Period>('monthly');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -42,6 +44,8 @@ export function useWorkspace(options: WorkspaceStateOptions) {
       setPeriod((current) => (current === 'paycheck' ? 'monthly' : current));
   }
   return {
+    todoDate,
+    setTodoDate,
     view,
     setView,
     scope,

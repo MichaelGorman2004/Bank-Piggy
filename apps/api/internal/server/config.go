@@ -1,4 +1,4 @@
-// Package server provides authenticated HTTP access to a two-person monthly plan.
+// Package server provides authenticated HTTP access to a monthly household plan.
 package server
 
 import (
@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"bankpiggy/api/internal/budget"
 )
 
 // Config is validated before any listener or authentication endpoint starts.
@@ -75,14 +77,24 @@ func (c Config) validatePrivate(base *url.URL) error {
 	if c.GoogleClientID == "" || c.GoogleClientSecret == "" {
 		return errors.New("private mode requires Google credentials")
 	}
-	if len(c.Invites) != 2 || c.Invites[0] == c.Invites[1] {
-		return errors.New("HOUSEHOLD_INVITES must contain exactly two different email addresses")
+	return validateInvites(c.Invites)
+}
+
+func validateInvites(invites []string) error {
+	if len(invites) < 1 || len(invites) > budget.MaxMembers {
+		return errors.New("HOUSEHOLD_INVITES must contain one or two different email addresses")
 	}
-	for _, email := range c.Invites {
+	seen := map[string]bool{}
+	for _, email := range invites {
 		parsed, err := mail.ParseAddress(email)
 		if err != nil || parsed.Address != email {
 			return errors.New("invalid invited email address")
 		}
+		key := strings.ToLower(email)
+		if seen[key] {
+			return errors.New("HOUSEHOLD_INVITES must contain different email addresses")
+		}
+		seen[key] = true
 	}
 	return nil
 }

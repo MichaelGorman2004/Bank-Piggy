@@ -1,7 +1,8 @@
 import { Users } from 'lucide-react';
-import type { Household, Member } from '@bank-piggy/contracts';
+import type { Household, Member, PayrollSummary } from '@bank-piggy/contracts';
 import { accountTotals } from '../features/accounts/accountTypes';
 import { money } from '../features/plan/format';
+import { PayrollOverview } from './PayrollOverview';
 import { FinanceCard } from './FinanceCard';
 import styles from './PlanDetails.module.css';
 
@@ -56,9 +57,9 @@ function FactValue(props: { readonly fact: PlanFact; readonly member: Member }) 
 }
 
 /**
- * Compares both members in three compact rows with native row and column headings.
+ * Shows the saved people in three compact rows with native row and column headings.
  * @param props Members, fact readers, and the accessible table name.
- * @param props.members Both saved household members.
+ * @param props.members Saved household people.
  * @param props.facts Three related facts to compare.
  * @param props.label Accessible table name and first-column heading.
  * @returns An income or balance table that fits a short card.
@@ -97,12 +98,16 @@ function FactTable(props: {
 }
 
 /**
- * Fits both members' core facts in one view; detailed account management stays in Balances.
+ * Fits the household's core facts in one view; detailed accounts stay in Balances.
  * @param props The saved household and its agreed default expense split.
  * @param props.household Canonical household with member account snapshots.
+ * @param props.payrollSummaries Server-calculated monthly payroll estimates.
  * @returns Compact income and balance comparisons without a scrolling member list.
  */
-export function PlanDetails(props: { readonly household: Household }) {
+export function PlanDetails(props: {
+  readonly household: Household;
+  readonly payrollSummaries: readonly PayrollSummary[];
+}) {
   const split = { salary: 'Base salary', equal: 'Equal shares', custom: 'Custom percentage' };
   return (
     <FinanceCard
@@ -110,16 +115,19 @@ export function PlanDetails(props: { readonly household: Household }) {
       description="Recorded income and balances."
       actions={null}
       footer={
-        <p className={styles.split}>
-          <Users size={13} />
-          Shared split · {split[props.household.defaultSplitMethod]}
-        </p>
+        props.household.members.length > 1 ? (
+          <p className={styles.split}>
+            <Users size={13} />
+            Shared split · {split[props.household.defaultSplitMethod]}
+          </p>
+        ) : null
       }
     >
       <div className={styles.tables}>
         <FactTable members={props.household.members} facts={INCOME_FACTS} label="Income" />
         <FactTable members={props.household.members} facts={BALANCE_FACTS} label="Balances" />
       </div>
+      <PayrollOverview members={props.household.members} summaries={props.payrollSummaries} />
     </FinanceCard>
   );
 }

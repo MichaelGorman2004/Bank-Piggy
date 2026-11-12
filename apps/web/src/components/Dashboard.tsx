@@ -96,6 +96,7 @@ export function Dashboard(props: DashboardProps) {
   return (
     <HouseholdOverview
       household={data.household}
+      payrollSummaries={data.payrollSummaries}
       scope={scope}
       summary={summary}
       factor={factor}

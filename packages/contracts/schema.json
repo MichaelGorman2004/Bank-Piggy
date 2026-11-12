@@ -48,7 +48,8 @@
         "monthlyTakeHomeCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 100000000000
+          "maximum": 100000000000,
+          "description": "Monthly cash received after taxes, payroll retirement contributions, and other automatic payroll investments. Separate payroll estimates do not reduce this amount again."
         },
         "debtCents": {
           "type": "integer",
@@ -66,6 +67,12 @@
             "$ref": "#/$defs/AccountBalance"
           },
           "description": "Stable account IDs are unique within this member. Each savings or investment group total must not exceed 100000000000 cents."
+        },
+        "payroll": {
+          "$ref": "#/$defs/Payroll"
+        },
+        "paySchedule": {
+          "$ref": "#/$defs/PaySchedule"
         }
       }
     },
@@ -131,6 +138,14 @@
           "type": "string",
           "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$",
           "description": "Last active calendar month, inclusive. Omit for an ongoing payment."
+        },
+        "paymentMode": {
+          "type": "string",
+          "enum": ["automatic", "manual"],
+          "description": "Absent defaults to automatic for subscriptions and manual for other costs. Only manual costs create payment reminders."
+        },
+        "dueDay": {
+          "$ref": "#/$defs/DayOfMonth"
         }
       }
     },
@@ -167,6 +182,9 @@
         },
         "savingsTarget": {
           "$ref": "#/$defs/SavingsTarget"
+        },
+        "contributionYear": {
+          "$ref": "#/$defs/ContributionYear"
         }
       },
       "not": {
@@ -182,7 +200,7 @@
           }
         ]
       },
-      "description": "A monthly allocation with optional ordinary savings, trip, or purchase progress. These progress details are mutually exclusive."
+      "description": "A monthly allocation with optional ordinary savings, trip, or purchase progress. These progress details are mutually exclusive. A contributionYear identifies a personal Roth IRA annual goal and requires an ordinary savingsTarget. Its annual target is entered by the user; it is not an eligibility or contribution-limit calculation."
     },
     "Household": {
       "type": "object",
@@ -195,7 +213,7 @@
         },
         "members": {
           "type": "array",
-          "minItems": 2,
+          "minItems": 1,
           "maxItems": 2,
           "items": {
             "$ref": "#/$defs/Member"
@@ -220,7 +238,7 @@
           "enum": ["equal", "salary", "custom"]
         }
       },
-      "description": "Two members in fixed member-1, member-2 order. All amounts are monthly planned cents. Revision is an optimistic concurrency token."
+      "description": "One member-1 profile, with an optional member-2 profile added explicitly. Existing profiles keep their fixed order and identities. All amounts are monthly planned cents. Revision is an optimistic concurrency token."
     },
     "Summary": {
       "type": "object",
@@ -319,7 +337,8 @@
         "planningMonth",
         "yearlySummary",
         "tripProjections",
-        "purchaseProjections"
+        "purchaseProjections",
+        "payrollSummaries"
       ],
       "properties": {
         "household": {
@@ -349,6 +368,13 @@
           "items": {
             "$ref": "#/$defs/GoalProjection"
           }
+        },
+        "payrollSummaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PayrollSummary"
+          },
+          "maxItems": 2
         }
       }
     },
@@ -596,6 +622,334 @@
         }
       },
       "description": "Optional manual progress for an ordinary goal. Saved amount can exceed the target. Progress does not change monthly allocations or account balances."
+    },
+    "CalendarDate": {
+      "type": "string",
+      "pattern": "^(20[0-9]{2}|2100)-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+      "description": "A valid calendar date from 2000 through 2100, without a time zone."
+    },
+    "DayOfMonth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 31
+    },
+    "ContributionYear": {
+      "type": "integer",
+      "minimum": 2000,
+      "maximum": 2100
+    },
+    "MatchTier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["upToContributionBps", "matchRateBps"],
+      "properties": {
+        "upToContributionBps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "matchRateBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        }
+      },
+      "description": "Cumulative employee contribution threshold as a percent of salary, and employer match rate on the slice since the prior threshold. 100 basis points is 1 percent."
+    },
+    "Payroll": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "traditional401kBps",
+        "roth401kBps",
+        "matchMethod",
+        "matchTiers",
+        "employerMonthlyCents"
+      ],
+      "properties": {
+        "traditional401kBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "roth401kBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "matchMethod": {
+          "type": "string",
+          "enum": ["none", "tiers", "fixed"]
+        },
+        "matchTiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MatchTier"
+          },
+          "maxItems": 5
+        },
+        "employerMonthlyCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        }
+      },
+      "description": "Optional payroll estimates. Employee rates together cannot exceed 100 percent. Tiers must have increasing thresholds. None and fixed methods have no tiers; only fixed uses employerMonthlyCents. Never deduct these figures from entered take-home pay again."
+    },
+    "PaySchedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anchorDate", "semiMonthlyDays"],
+      "properties": {
+        "anchorDate": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "semiMonthlyDays": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DayOfMonth"
+          },
+          "maxItems": 2
+        },
+        "monthEnd": {
+          "type": "boolean",
+          "description": "Monthly pay only. True means the last calendar day of each month, and the entered anchor must itself be a month-end date. False or absent keeps the anchor day number."
+        }
+      },
+      "description": "An actual payday anchors weekly, biweekly, or monthly cadence. Semimonthly requires two ordered distinct days that never clamp to the same date. Other frequencies require an empty days array. Irregular pay cannot have an inferred schedule."
+    },
+    "PayrollSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "memberId",
+        "traditional401kMonthlyCents",
+        "roth401kMonthlyCents",
+        "employerMonthlyCents"
+      ],
+      "properties": {
+        "memberId": {
+          "type": "string",
+          "enum": ["member-1", "member-2"]
+        },
+        "traditional401kMonthlyCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "roth401kMonthlyCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "employerMonthlyCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        }
+      },
+      "description": "Monthly estimates from entered salary and contribution rules. These do not change spendable cash or account balances."
+    },
+    "PayPeriod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["memberId", "memberName", "startDate", "nextPayDate", "dueDate"],
+      "properties": {
+        "memberId": {
+          "type": "string",
+          "enum": ["member-1", "member-2"]
+        },
+        "memberName": {
+          "type": "string"
+        },
+        "startDate": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "nextPayDate": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "dueDate": {
+          "$ref": "#/$defs/CalendarDate"
+        }
+      }
+    },
+    "TodoItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "memberId",
+        "sourceId",
+        "kind",
+        "name",
+        "amountCents",
+        "periodStart",
+        "dueDate",
+        "completed"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "memberId": {
+          "type": "string",
+          "enum": ["member-1", "member-2"]
+        },
+        "sourceId": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["goal", "expense"]
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000000
+        },
+        "periodStart": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "dueDate": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "completed": {
+          "type": "boolean"
+        }
+      },
+      "description": "One manual acknowledgment for a generated pay-period task. Checking it does not transfer money or update a goal balance."
+    },
+    "TodoList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date", "planRevision", "periods", "tasks", "unscheduledExpenseIds"],
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "planRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "periods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PayPeriod"
+          },
+          "maxItems": 2
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TodoItem"
+          },
+          "maxItems": 460
+        },
+        "unscheduledExpenseIds": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "description": "Active manual bills without a due day. They need a due day before payment reminders can be scheduled."
+        }
+      }
+    },
+    "TodoUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date", "planRevision", "expectedCompleted", "completed"],
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "planRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "expectedCompleted": {
+          "type": "boolean"
+        },
+        "completed": {
+          "type": "boolean"
+        }
+      },
+      "description": "Checks the current plan revision and expected completion state before an idempotent checkbox update."
+    },
+    "InvitationStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canInvite", "linked", "pending"],
+      "properties": {
+        "canInvite": {
+          "type": "boolean"
+        },
+        "linked": {
+          "type": "boolean"
+        },
+        "pending": {
+          "type": "boolean"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "memberName": {
+          "type": "string"
+        }
+      }
+    },
+    "InvitationCreated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "expiresAt"],
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        }
+      },
+      "description": "The invitation secret is returned only once. Only its hash is stored."
+    },
+    "InvitationPrepareRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["token"],
+      "properties": {
+        "token": {
+          "type": "string",
+          "minLength": 43,
+          "maxLength": 43,
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        }
+      }
+    },
+    "InvitationPreview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["householdName", "memberName", "expiresAt"],
+      "properties": {
+        "householdName": {
+          "type": "string"
+        },
+        "memberName": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        }
+      },
+      "description": "A limited invitation preview without financial data. Preparing does not consume the invitation or create membership."
     }
   }
 }

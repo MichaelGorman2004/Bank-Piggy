@@ -1,6 +1,7 @@
 import type { Expense, Household, Split } from '@bank-piggy/contracts';
 import { moneyInput, parseMoney } from './format.ts';
 import { paymentDraft, paymentValue, type PaymentDraft } from './paymentDraft.ts';
+import { defaultOwner, validMemberOrder, validOwner, validPayer } from './householdMembers.ts';
 
 export interface ExpenseDraft extends PaymentDraft {
   readonly id: string;
@@ -34,12 +35,13 @@ export function expenseDraft(
       name: '',
       amount: '',
       category: initialKind === 'subscription' ? 'Other' : 'Housing',
-      ownerId: 'shared',
+      ownerId: defaultOwner(household.members),
       method: household.defaultSplitMethod,
       share: '50',
       paidBy: '',
       ...paymentDraft(),
       kind: initialKind,
+      paymentMode: initialKind === 'subscription' ? 'automatic' : 'manual',
     };
   return {
     id: expense.id,
@@ -64,6 +66,7 @@ function splitError(draft: ExpenseDraft, household: Household): string | null {
   if (draft.ownerId !== 'shared') return null;
   if (
     draft.method === 'salary' &&
+    household.members.length > 1 &&
     household.members.every((member) => member.annualBaseSalaryCents === 0)
   )
     return 'Add annual base salaries to your plan before using a salary split.';
@@ -74,12 +77,30 @@ function splitError(draft: ExpenseDraft, household: Household): string | null {
 }
 
 /**
+ * Rejects stale ownership and payer choices before producing a request.
+ * @param draft Current owner and payer selections.
+ * @param household Saved household people.
+ * @returns An actionable membership error, or null when all selections exist.
+ */
+function membershipError(draft: ExpenseDraft, household: Household): string | null {
+  if (
+    !validMemberOrder(household.members) ||
+    !validOwner(draft.ownerId, household.members) ||
+    !validPayer(draft.paidBy, household.members)
+  )
+    return 'Choose an available household owner and payer for this expense.';
+  return null;
+}
+
+/**
  * Validates entered amounts and produces the canonical expense request.
  * @param draft Current editable field values.
  * @param household Saved household plan.
  * @returns The computed result.
  */
 export function validateExpense(draft: ExpenseDraft, household: Household): ExpenseResult {
+  const membership = membershipError(draft, household);
+  if (membership) return { error: membership };
   const amount = parseMoney(draft.amount);
   if (amount === null || amount === 0)
     return { error: 'Enter a monthly amount greater than zero, with up to two decimal places.' };

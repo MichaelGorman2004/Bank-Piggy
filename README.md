@@ -1,6 +1,6 @@
 # Bank Piggy
 
-**A shared monthly money plan for a two-person household.** Bank Piggy shows where take-home pay goes, how shared costs divide, and what remains for savings, investments, and extra debt payments.
+**A monthly money plan for one person or a couple.** Bank Piggy shows where take-home pay goes, how shared costs divide, and what remains for savings, investments, and extra debt payments.
 
 ![Bank Piggy default Overview with fictional household data](docs/system-design/images/overview.png)
 
@@ -9,6 +9,9 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 ## What works today
 
 - Build a monthly plan with income, regular expenses, goals, and manually entered balances.
+- Start with one person. Use **Add person** in setup to add a second profile without losing entered details.
+- Share a one-use household invitation link. The recipient joins through Google and keeps access on later sign-ins.
+- Record Traditional and Roth 401(k) percentages, tiered employer matching, or an entered employer contribution. Show these estimates separately from take-home pay.
 - Track named savings, retirement, and investment accounts by type. Derive savings and investment totals from those snapshots.
 - Switch between the household view and the signed-in member's allocated share.
 - Divide shared expenses evenly, by custom percentage, or by annual base salary. Record the payer separately.
@@ -17,12 +20,14 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Choose from 100 service names and local logos, or keep a custom expense name.
 - Build trip budgets from six cost categories or enter a purchase target. Record the amount already saved and calculate a monthly saving suggestion.
 - Optionally record saved progress toward an ordinary goal. Goals without a target show their planned contribution.
+- Create a personal Roth IRA goal with an entered annual target, contribution year, and progress.
+- Anchor a pay schedule to an actual payday. Use To-do for goal contributions and manual bills, with persisted checkboxes and due dates.
 - Read a Sankey money flow, summary totals, goal allocations, and balance cards from the same server calculation.
 - Change the planning month to update the forecast automatically. View its next 12 months with payment schedules or an average paycheck estimate for a member with regular pay frequency.
 - Save plans in PostgreSQL. Detect concurrent edits instead of overwriting another window's changes.
-- Run an explicit loopback-only demo, or configure private access for exactly two invited Google accounts.
+- Run an explicit loopback-only demo, or configure private access for one or two invited Google accounts.
 
-Each navigation view has one task. The household scope, period, and planning month stay consistent across them.
+Each navigation view has one task. Financial views share the household scope, period, and planning month. To-do uses the same household scope and its own As-of date.
 
 | View               | Content                                                            |
 | ------------------ | ------------------------------------------------------------------ |
@@ -31,10 +36,15 @@ Each navigation view has one task. The household scope, period, and planning mon
 | Expenses           | Bills, subscriptions, regular costs, and loans with type filters.  |
 | Goals              | Ordinary savings, investment, and debt contributions.              |
 | Trips & purchases  | Manual targets, saved progress, deadlines, and saving suggestions. |
+| To-do              | Pay-period goal contributions and manual bills with due dates.     |
 
-The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance compares both members in compact income and balance tables. Narrow or short layouts show one section at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
+The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance shows the saved members in compact income and balance tables. Narrow or short layouts show one section at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
 
-New households start with empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Both invited members can read and edit the complete household plan. Bank connections, transaction history, service cancellation, loan repayment, and investment advice are outside this version.
+New households start with one person and empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Invited members can read and edit the complete household plan. Adding a profile offers a link after the plan is saved; a verified Google sign-in must accept the link before access is granted. Bank connections, transaction history, service cancellation, loan repayment, and investment advice are outside this version.
+
+Take-home pay is entered after taxes and automatic payroll investments. Payroll estimates do not reduce it again. To-do checkboxes record acknowledgments; they do not move money or change balances. Manual bills need a due day. Automatic subscriptions stay out of the checklist by default. See the [sharing, payroll, and To-do design](docs/system-design/sharing-payroll-todos.md) for transaction boundaries and calculation examples.
+
+[To-do on desktop](docs/system-design/images/todo.jpg) · [To-do on mobile](docs/system-design/images/mobile-todo.jpg)
 
 [Mobile Overview](docs/system-design/images/mobile.png) · [Money flow](docs/system-design/images/money-flow.png) · [Mobile Money flow](docs/system-design/images/mobile-money-flow.png) · [Expenses](docs/system-design/images/expenses.png) · [Mobile Expenses](docs/system-design/images/mobile-expenses.png) · [Goals](docs/system-design/images/goals.png) · [Mobile Goals](docs/system-design/images/mobile-goals.png)
 
@@ -68,11 +78,11 @@ Set the following values in `.env` for development, or supply them as environmen
 | `DATABASE_URL`                             | PostgreSQL connection string.                                                               |
 | `APP_BASE_URL`                             | Exact browser origin. HTTPS is required outside loopback.                                   |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credentials for the configured Google application.                                          |
-| `HOUSEHOLD_INVITES`                        | Exactly two different email addresses, separated by a comma.                                |
+| `HOUSEHOLD_INVITES`                        | One or two different email addresses, separated by a comma.                                 |
 | `LISTEN_ADDR`                              | Go listener, such as `127.0.0.1:8080` behind a local HTTPS proxy.                           |
 | `WEB_DIST_DIR`                             | Built frontend path, relative to the process working directory.                             |
 
-The callback path is `/auth/google/callback` on `APP_BASE_URL`. The first successful sign-in binds each invitation to a verified Google subject. A new private household starts with an empty plan. The frontend opens the plan setup when income is zero and no expenses or goals exist.
+The callback path is `/auth/google/callback` on `APP_BASE_URL`. The first successful sign-in binds each bootstrap invitation to a verified Google subject. Bootstrap order maps to `member-1` and optional `member-2`; keep that order stable. A new private household starts with one person and an empty plan. The frontend opens plan setup when income is zero and no expenses or goals exist. A second bootstrap account requires its saved profile. A household link can append that profile during verified acceptance and does not require an email change in deployment variables.
 
 To serve the frontend and API from the built Go server, run the following from the repository root after exporting the private environment variables above:
 

@@ -17,6 +17,9 @@ const MaxExpenses = 100
 // MaxGoals bounds active monthly allocations.
 const MaxGoals = 30
 
+// MaxMembers limits a plan to the first person and one optional partner.
+const MaxMembers = 2
+
 var validProvider = regexp.MustCompile(`^[a-z0-9-]{1,64}$`)
 
 var validID = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`)
@@ -29,7 +32,7 @@ func validMethod(value string) bool {
 	return value == "equal" || value == "salary" || value == "custom"
 }
 func validOwner(value string, h Household) bool {
-	return value == "shared" || value == h.Members[0].ID || value == h.Members[1].ID
+	return value == "shared" || HasMember(h, value)
 }
 
 func validateMember(member Member, index int) error {
@@ -44,21 +47,31 @@ func validateMember(member Member, index int) error {
 	}
 	switch member.PayFrequency {
 	case "weekly", "biweekly", "semimonthly", "monthly", "irregular":
-		return validateAccounts(member.Accounts)
+		return validateMemberDetails(member)
 	default:
 		return errors.New("invalid pay frequency")
 	}
+}
+
+func validateMemberDetails(member Member) error {
+	if err := validateAccounts(member.Accounts); err != nil {
+		return err
+	}
+	if err := validatePayroll(member.Payroll); err != nil {
+		return err
+	}
+	return validatePaySchedule(member)
 }
 
 func validateSplit(h Household, expense Expense) error {
 	if !validMethod(expense.Split.Method) || expense.Split.CustomFirstShareBps < 0 || expense.Split.CustomFirstShareBps > 10000 {
 		return errors.New("invalid expense split")
 	}
-	if expense.OwnerID == "shared" && expense.Split.Method == "salary" && h.Members[0].AnnualBaseSalaryCents+h.Members[1].AnnualBaseSalaryCents == 0 {
+	if len(h.Members) == MaxMembers && expense.OwnerID == "shared" && expense.Split.Method == "salary" && h.Members[0].AnnualBaseSalaryCents+h.Members[1].AnnualBaseSalaryCents == 0 {
 		return errors.New("salary split needs a positive combined base salary")
 	}
 	payer := expense.PaidByMemberID
-	if payer != "" && payer != h.Members[0].ID && payer != h.Members[1].ID {
+	if payer != "" && !HasMember(h, payer) {
 		return errors.New("invalid expense payer")
 	}
 	return nil
@@ -105,7 +118,7 @@ func validateGoals(h Household) error {
 }
 
 func validateShape(h Household) error {
-	if h.Revision < 1 || len(h.Members) != 2 {
+	if h.Revision < 1 || len(h.Members) < 1 || len(h.Members) > MaxMembers {
 		return errors.New("invalid revision or member count")
 	}
 	if len(h.Expenses) > MaxExpenses || len(h.Goals) > MaxGoals {

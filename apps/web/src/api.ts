@@ -9,6 +9,16 @@ const isHouseholdResponse = validator.compile<HouseholdResponse>({
   $ref: 'bank-piggy#/$defs/HouseholdResponse',
 });
 
+/**
+ * Compiles one response validator from the generated canonical contract.
+ * @template T Canonical response type.
+ * @param definition Definition name in the generated schema.
+ * @returns A runtime type guard for that response.
+ */
+export function contractValidator<T>(definition: string) {
+  return validator.compile<T>({ $ref: `bank-piggy#/$defs/${definition}` });
+}
+
 /** Keeps HTTP status available for expired sessions and revision conflicts. */
 export class ApiError extends Error {
   /**
@@ -50,7 +60,7 @@ function responseError(body: unknown): string {
  * @returns The validated response.
  * @throws {ApiError} When the connection, status, or response schema is invalid.
  */
-async function request<T>(
+export async function request<T>(
   path: string,
   validate: (value: unknown) => value is T,
   init?: RequestInit,

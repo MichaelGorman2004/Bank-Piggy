@@ -1,0 +1,123 @@
+.dateControl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+  color: var(--walnut-soft);
+}
+.dateControl label {
+  min-width: 0;
+  font-size: 11px;
+}
+.dateControl input {
+  padding: 8px 10px;
+  min-height: 40px;
+  margin-top: 3px;
+}
+.dateControl button {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--glass);
+  padding: 9px 13px;
+  min-height: 40px;
+}
+.dateControl p {
+  flex: 1 1 200px;
+  font-size: 11px;
+  align-self: center;
+}
+.group {
+  padding-top: 15px;
+}
+.group + .group {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.period {
+  padding-bottom: 8px;
+}
+.period h3 {
+  font-size: 15px;
+}
+.period p,
+.period small {
+  font-size: 11px;
+  color: var(--walnut-soft);
+}
+.task {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 8px;
+  border-bottom: 1px solid var(--line);
+  min-height: 55px;
+  cursor: pointer;
+}
+.task input[type='checkbox'] {
+  min-height: 20px;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--walnut);
+}
+.taskText {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.taskText strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 550;
+}
+.taskText small,
+.note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--walnut-soft);
+}
+.amount {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.task[data-busy='true'],
+.task[data-busy='true'] input {
+  cursor: progress;
+}
+.task[data-completed='true'] .taskText strong,
+.task[data-completed='true'] .amount {
+  text-decoration: line-through;
+  color: var(--walnut-soft);
+}
+.message {
+  padding: 14px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--walnut-soft);
+}
+.message button {
+  margin-top: 6px;
+}
+.error {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--danger);
+  background: var(--danger-wash);
+}
+.error button {
+  margin-top: 8px;
+}
+@media (max-width: 600px) {
+  .dateControl p {
+    flex-basis: 100%;
+  }
+  .task {
+    gap: 9px;
+  }
+}

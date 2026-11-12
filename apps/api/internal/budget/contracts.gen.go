@@ -16,32 +16,37 @@ type Member struct {
 	DebtCents             int64            `json:"debtCents"`
 	PayFrequency          string           `json:"payFrequency"`
 	Accounts              []AccountBalance `json:"accounts"`
+	Payroll               *Payroll         `json:"payroll,omitempty"`
+	PaySchedule           *PaySchedule     `json:"paySchedule,omitempty"`
 }
 
 // Expense is defined in the canonical OpenAPI contract.
 type Expense struct {
-	ID                 string `json:"id"`
-	Name               string `json:"name"`
-	Category           string `json:"category"`
-	MonthlyAmountCents int64  `json:"monthlyAmountCents"`
-	OwnerID            string `json:"ownerId"`
-	PaidByMemberID     string `json:"paidByMemberId"`
-	Split              Split  `json:"split"`
-	Kind               string `json:"kind,omitempty"`
-	ProviderID         string `json:"providerId,omitempty"`
-	StartMonth         string `json:"startMonth,omitempty"`
-	EndMonth           string `json:"endMonth,omitempty"`
+	ID                 string      `json:"id"`
+	Name               string      `json:"name"`
+	Category           string      `json:"category"`
+	MonthlyAmountCents int64       `json:"monthlyAmountCents"`
+	OwnerID            string      `json:"ownerId"`
+	PaidByMemberID     string      `json:"paidByMemberId"`
+	Split              Split       `json:"split"`
+	Kind               string      `json:"kind,omitempty"`
+	ProviderID         string      `json:"providerId,omitempty"`
+	StartMonth         string      `json:"startMonth,omitempty"`
+	EndMonth           string      `json:"endMonth,omitempty"`
+	PaymentMode        string      `json:"paymentMode,omitempty"`
+	DueDay             *DayOfMonth `json:"dueDay,omitempty"`
 }
 
 // Goal is defined in the canonical OpenAPI contract.
 type Goal struct {
-	ID                 string          `json:"id"`
-	Name               string          `json:"name"`
-	MonthlyAmountCents int64           `json:"monthlyAmountCents"`
-	OwnerID            string          `json:"ownerId"`
-	Trip               *TripBudget     `json:"trip,omitempty"`
-	Purchase           *PurchaseTarget `json:"purchase,omitempty"`
-	SavingsTarget      *SavingsTarget  `json:"savingsTarget,omitempty"`
+	ID                 string            `json:"id"`
+	Name               string            `json:"name"`
+	MonthlyAmountCents int64             `json:"monthlyAmountCents"`
+	OwnerID            string            `json:"ownerId"`
+	Trip               *TripBudget       `json:"trip,omitempty"`
+	Purchase           *PurchaseTarget   `json:"purchase,omitempty"`
+	SavingsTarget      *SavingsTarget    `json:"savingsTarget,omitempty"`
+	ContributionYear   *ContributionYear `json:"contributionYear,omitempty"`
 }
 
 // Household is defined in the canonical OpenAPI contract.
@@ -88,6 +93,7 @@ type HouseholdResponse struct {
 	YearlySummary       BudgetSummary    `json:"yearlySummary"`
 	TripProjections     []GoalProjection `json:"tripProjections"`
 	PurchaseProjections []GoalProjection `json:"purchaseProjections"`
+	PayrollSummaries    []PayrollSummary `json:"payrollSummaries"`
 }
 
 // Viewer is defined in the canonical OpenAPI contract.
@@ -163,4 +169,109 @@ type AccountBalance struct {
 type SavingsTarget struct {
 	TargetAmountCents int64 `json:"targetAmountCents"`
 	SavedAmountCents  int64 `json:"savedAmountCents"`
+}
+
+// CalendarDate is defined in the canonical OpenAPI contract.
+type CalendarDate string
+
+// DayOfMonth is defined in the canonical OpenAPI contract.
+type DayOfMonth int64
+
+// ContributionYear is defined in the canonical OpenAPI contract.
+type ContributionYear int64
+
+// MatchTier is defined in the canonical OpenAPI contract.
+type MatchTier struct {
+	UpToContributionBps int64 `json:"upToContributionBps"`
+	MatchRateBps        int64 `json:"matchRateBps"`
+}
+
+// Payroll is defined in the canonical OpenAPI contract.
+type Payroll struct {
+	Traditional401KBps   int64       `json:"traditional401kBps"`
+	Roth401KBps          int64       `json:"roth401kBps"`
+	MatchMethod          string      `json:"matchMethod"`
+	MatchTiers           []MatchTier `json:"matchTiers"`
+	EmployerMonthlyCents int64       `json:"employerMonthlyCents"`
+}
+
+// PaySchedule is defined in the canonical OpenAPI contract.
+type PaySchedule struct {
+	AnchorDate      CalendarDate `json:"anchorDate"`
+	SemiMonthlyDays []DayOfMonth `json:"semiMonthlyDays"`
+	MonthEnd        bool         `json:"monthEnd,omitempty"`
+}
+
+// PayrollSummary is defined in the canonical OpenAPI contract.
+type PayrollSummary struct {
+	MemberID                    string `json:"memberId"`
+	Traditional401KMonthlyCents int64  `json:"traditional401kMonthlyCents"`
+	Roth401KMonthlyCents        int64  `json:"roth401kMonthlyCents"`
+	EmployerMonthlyCents        int64  `json:"employerMonthlyCents"`
+}
+
+// PayPeriod is defined in the canonical OpenAPI contract.
+type PayPeriod struct {
+	MemberID    string       `json:"memberId"`
+	MemberName  string       `json:"memberName"`
+	StartDate   CalendarDate `json:"startDate"`
+	NextPayDate CalendarDate `json:"nextPayDate"`
+	DueDate     CalendarDate `json:"dueDate"`
+}
+
+// TodoItem is defined in the canonical OpenAPI contract.
+type TodoItem struct {
+	ID          string       `json:"id"`
+	MemberID    string       `json:"memberId"`
+	SourceID    string       `json:"sourceId"`
+	Kind        string       `json:"kind"`
+	Name        string       `json:"name"`
+	AmountCents int64        `json:"amountCents"`
+	PeriodStart CalendarDate `json:"periodStart"`
+	DueDate     CalendarDate `json:"dueDate"`
+	Completed   bool         `json:"completed"`
+}
+
+// TodoList is defined in the canonical OpenAPI contract.
+type TodoList struct {
+	Date                  CalendarDate `json:"date"`
+	PlanRevision          int64        `json:"planRevision"`
+	Periods               []PayPeriod  `json:"periods"`
+	Tasks                 []TodoItem   `json:"tasks"`
+	UnscheduledExpenseIds []string     `json:"unscheduledExpenseIds"`
+}
+
+// TodoUpdate is defined in the canonical OpenAPI contract.
+type TodoUpdate struct {
+	Date              CalendarDate `json:"date"`
+	PlanRevision      int64        `json:"planRevision"`
+	ExpectedCompleted bool         `json:"expectedCompleted"`
+	Completed         bool         `json:"completed"`
+}
+
+// InvitationStatus is defined in the canonical OpenAPI contract.
+type InvitationStatus struct {
+	CanInvite  bool   `json:"canInvite"`
+	Linked     bool   `json:"linked"`
+	Pending    bool   `json:"pending"`
+	ExpiresAt  string `json:"expiresAt,omitempty"`
+	MemberName string `json:"memberName,omitempty"`
+}
+
+// InvitationCreated is defined in the canonical OpenAPI contract.
+type InvitationCreated struct {
+	Url       string `json:"url"`
+	ExpiresAt string `json:"expiresAt"`
+}
+
+// InvitationPrepareRequest is defined in the canonical OpenAPI contract.
+type InvitationPrepareRequest struct {
+	Token string `json:"token"`
+}
+
+// InvitationPreview is defined in the canonical OpenAPI contract.
+type InvitationPreview struct {
+	HouseholdName string `json:"householdName"`
+	MemberName    string `json:"memberName"`
+	ExpiresAt     string `json:"expiresAt"`
 }

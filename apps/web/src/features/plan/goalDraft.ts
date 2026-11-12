@@ -1,6 +1,8 @@
-import type { Goal, PurchaseTarget, TripBudget, TripCost } from '@bank-piggy/contracts';
+import type { Goal, Household, PurchaseTarget, TripBudget, TripCost } from '@bank-piggy/contracts';
+import { retirementGoalError } from './retirementGoal.ts';
 import { moneyInput, parseMoney } from './format.ts';
 import { validMonth } from './month.ts';
+import { defaultOwner, validMemberOrder, validOwner } from './householdMembers.ts';
 
 export const TRIP_CATEGORIES: ReadonlyArray<{
   readonly category: TripCost['category'];
@@ -13,7 +15,7 @@ export const TRIP_CATEGORIES: ReadonlyArray<{
   { category: 'activities', label: 'Activities' },
   { category: 'other', label: 'Other costs' },
 ];
-export type GoalKind = 'goal' | 'trip' | 'purchase';
+export type GoalKind = 'goal' | 'trip' | 'purchase' | 'roth_ira';
 export interface GoalDraft {
   readonly name: string;
   readonly amount: string;
@@ -23,6 +25,7 @@ export interface GoalDraft {
   readonly targetAmount: string;
   readonly targetMonth: string;
   readonly trackTarget: boolean;
+  readonly contributionYear: string;
   readonly costs: Readonly<Record<TripCost['category'], string>>;
 }
 type GoalResult =
@@ -44,17 +47,23 @@ const MAX_MONEY_CENTS = 100_000_000_000;
 
 /**
  * Builds editable target fields without changing the saved goal.
+ * @param household Current household people for new-record ownership.
  * @param goal Existing goal, when editing.
  * @param initialKind Initial target type for a new goal.
  * @returns A goal draft with optional trip or purchase details.
  */
-export function goalDraft(goal?: Goal, initialKind: GoalKind = 'goal'): GoalDraft {
+export function goalDraft(
+  household: Pick<Household, 'members'>,
+  goal?: Goal,
+  initialKind: GoalKind = 'goal',
+): GoalDraft {
   const value: Partial<Goal> = goal ?? {};
   return {
     name: value.name ?? '',
     amount: goal ? moneyInput(goal.monthlyAmountCents) : '',
-    ownerId: value.ownerId ?? 'shared',
-    kind: goal ? (goal.trip ? 'trip' : goal.purchase ? 'purchase' : 'goal') : initialKind,
+    ownerId: value.ownerId ?? defaultOwner(household.members),
+    kind: goal ? savedGoalKind(goal) : initialKind,
+    contributionYear: String(goal?.contributionYear ?? new Date().getFullYear()),
     trackTarget: Boolean(value.savingsTarget),
     ...targetDraft(value),
     costs: tripCostDraft(value.trip),
@@ -140,7 +149,7 @@ function tripCosts(draft: GoalDraft): TripCostResult {
  * @returns The selected target details, or an actionable error.
  */
 function targetValue(draft: GoalDraft): TargetResult {
-  if (draft.kind === 'goal') return savingsTargetValue(draft);
+  if (draft.kind === 'goal' || draft.kind === 'roth_ira') return savingsTargetValue(draft);
   const { progress, error } = targetProgress(draft);
   if (!progress) return { error };
   if (draft.kind === 'purchase') {
@@ -160,7 +169,7 @@ function targetValue(draft: GoalDraft): TargetResult {
  * @returns Canonical progress or an actionable field error.
  */
 function savingsTargetValue(draft: GoalDraft): TargetResult {
-  if (!draft.trackTarget) return { details: {} };
+  if (!draft.trackTarget && draft.kind !== 'roth_ira') return { details: {} };
   const targetAmountCents = parseMoney(draft.targetAmount);
   const savedAmountCents = parseMoney(draft.saved);
   if (targetAmountCents === null || targetAmountCents <= 0 || targetAmountCents > MAX_MONEY_CENTS)
@@ -174,20 +183,25 @@ function savingsTargetValue(draft: GoalDraft): TargetResult {
  * Produces one goal record; its entered allocation remains the only monthly deduction.
  * @param draft Editable monthly contribution and optional target inputs.
  * @param id Stable identifier for this goal.
+ * @param household Current household people used to validate ownership.
  * @returns Validated goal or one field error.
  */
-export function goalValue(draft: GoalDraft, id: string): GoalResult {
-  const monthlyAmountCents = parseMoney(draft.amount);
-  if (
-    monthlyAmountCents === null ||
-    monthlyAmountCents > MAX_MONEY_CENTS ||
-    (draft.kind === 'goal' && !draft.trackTarget && monthlyAmountCents === 0)
-  )
+export function goalValue(
+  draft: GoalDraft,
+  id: string,
+  household: Pick<Household, 'members'>,
+): GoalResult {
+  if (!validMemberOrder(household.members) || !validOwner(draft.ownerId, household.members))
+    return { error: 'Choose an available household owner for this goal.' };
+  const monthlyAmountCents = goalMonthlyAmount(draft);
+  if (monthlyAmountCents === null)
     return {
       error:
         'Enter a valid monthly contribution. Goals with a target can have a zero contribution.',
     };
   if (!draft.name.trim()) return { error: 'Enter a goal name.' };
+  const retirement = retirementGoalError(draft);
+  if (retirement) return { error: retirement };
   const target = targetValue(draft);
   if (!target.details) return { error: target.error };
   return {
@@ -197,6 +211,30 @@ export function goalValue(draft: GoalDraft, id: string): GoalResult {
       monthlyAmountCents,
       ownerId: draft.ownerId,
       ...target.details,
+      ...(draft.kind === 'roth_ira' ? { contributionYear: Number(draft.contributionYear) } : {}),
     },
   };
+}
+
+/**
+ * Identifies the saved goal type without relying on its editable name.
+ * @param goal Canonical saved goal.
+ * @returns The matching editor type.
+ */
+function savedGoalKind(goal: Goal): GoalKind {
+  if (goal.trip) return 'trip';
+  if (goal.purchase) return 'purchase';
+  return goal.contributionYear ? 'roth_ira' : 'goal';
+}
+
+/**
+ * Validates the chosen monthly allocation independently of saved progress.
+ * @param draft Editable goal type, contribution, and target toggle.
+ * @returns Valid integer cents or null when the allocation is invalid.
+ */
+function goalMonthlyAmount(draft: GoalDraft): number | null {
+  const amount = parseMoney(draft.amount);
+  if (amount === null || amount > MAX_MONEY_CENTS) return null;
+  if (draft.kind === 'goal' && !draft.trackTarget && amount === 0) return null;
+  return amount;
 }
