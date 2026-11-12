@@ -96,10 +96,6 @@
   color: var(--walnut);
   font-weight: 650;
 }
-.navArrow {
-  margin-left: auto;
-  transform: rotate(180deg);
-}
 .user {
   margin-top: auto;
   display: flex;

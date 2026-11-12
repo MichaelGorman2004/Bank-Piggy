@@ -2,7 +2,6 @@ import { useRef } from 'react';
 import {
   ChartNoAxesCombined,
   ListChecks,
-  ChevronLeft,
   House,
   LogOut,
   Plane,
@@ -93,7 +92,6 @@ function SidebarNavigation(props: Pick<SidebarProps, 'view' | 'onView' | 'onClos
         >
           <Icon size={18} />
           {VIEW_DETAILS[id].label}
-          {props.view === id && <ChevronLeft size={13} className={styles.navArrow} />}
         </button>
       ))}
     </nav>
