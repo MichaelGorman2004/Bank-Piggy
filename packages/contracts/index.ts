@@ -13,6 +13,8 @@ export type Member = {
   debtCents: number;
   payFrequency: "weekly" | "biweekly" | "semimonthly" | "monthly" | "irregular";
   accounts: Array<AccountBalance>;
+  payroll?: Payroll;
+  paySchedule?: PaySchedule;
 };
 
 export type Expense = {
@@ -27,6 +29,8 @@ export type Expense = {
   providerId?: string;
   startMonth?: string;
   endMonth?: string;
+  paymentMode?: "automatic" | "manual";
+  dueDay?: DayOfMonth;
 };
 
 export type Goal = {
@@ -37,6 +41,7 @@ export type Goal = {
   trip?: TripBudget;
   purchase?: PurchaseTarget;
   savingsTarget?: SavingsTarget;
+  contributionYear?: ContributionYear;
 };
 
 export type Household = {
@@ -78,6 +83,7 @@ export type HouseholdResponse = {
   yearlySummary: BudgetSummary;
   tripProjections: Array<GoalProjection>;
   purchaseProjections: Array<GoalProjection>;
+  payrollSummaries: Array<PayrollSummary>;
 };
 
 export type Viewer = {
@@ -142,4 +148,94 @@ export type AccountBalance = {
 export type SavingsTarget = {
   targetAmountCents: number;
   savedAmountCents: number;
+};
+
+export type CalendarDate = string;
+
+export type DayOfMonth = number;
+
+export type ContributionYear = number;
+
+export type MatchTier = {
+  upToContributionBps: number;
+  matchRateBps: number;
+};
+
+export type Payroll = {
+  traditional401kBps: number;
+  roth401kBps: number;
+  matchMethod: "none" | "tiers" | "fixed";
+  matchTiers: Array<MatchTier>;
+  employerMonthlyCents: number;
+};
+
+export type PaySchedule = {
+  anchorDate: CalendarDate;
+  semiMonthlyDays: Array<DayOfMonth>;
+  monthEnd?: boolean;
+};
+
+export type PayrollSummary = {
+  memberId: "member-1" | "member-2";
+  traditional401kMonthlyCents: number;
+  roth401kMonthlyCents: number;
+  employerMonthlyCents: number;
+};
+
+export type PayPeriod = {
+  memberId: "member-1" | "member-2";
+  memberName: string;
+  startDate: CalendarDate;
+  nextPayDate: CalendarDate;
+  dueDate: CalendarDate;
+};
+
+export type TodoItem = {
+  id: string;
+  memberId: "member-1" | "member-2";
+  sourceId: string;
+  kind: "goal" | "expense";
+  name: string;
+  amountCents: number;
+  periodStart: CalendarDate;
+  dueDate: CalendarDate;
+  completed: boolean;
+};
+
+export type TodoList = {
+  date: CalendarDate;
+  planRevision: number;
+  periods: Array<PayPeriod>;
+  tasks: Array<TodoItem>;
+  unscheduledExpenseIds: Array<string>;
+};
+
+export type TodoUpdate = {
+  date: CalendarDate;
+  planRevision: number;
+  expectedCompleted: boolean;
+  completed: boolean;
+};
+
+export type InvitationStatus = {
+  canInvite: boolean;
+  linked: boolean;
+  pending: boolean;
+  expiresAt?: string;
+  memberName?: string;
+};
+
+export type InvitationCreated = {
+  url: string;
+  expiresAt: string;
+};
+
+export type InvitationPrepareRequest = {
+  token: string;
+};
+
+export type InvitationPreview = {
+  householdName: string;
+  memberName: string;
+  expiresAt: string;
 };

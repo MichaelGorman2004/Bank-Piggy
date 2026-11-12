@@ -22,3 +22,28 @@ func TestSecureCookies(t *testing.T) {
 		t.Fatal("HTTPS session cookie was not secure")
 	}
 }
+
+func TestPrivateConfigAllowsOneOrTwoDistinctInvites(t *testing.T) {
+	tests := []struct {
+		name    string
+		invites []string
+		valid   bool
+	}{
+		{"one", []string{"one@example.com"}, true},
+		{"two", []string{"one@example.com", "two@example.com"}, true},
+		{"none", nil, false},
+		{"empty", []string{""}, false},
+		{"three", []string{"one@example.com", "two@example.com", "three@example.com"}, false},
+		{"duplicate", []string{"one@example.com", "one@example.com"}, false},
+		{"case duplicate", []string{"ONE@example.com", "one@example.com"}, false},
+		{"invalid email", []string{"one@example.com", "invalid"}, false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			config := Config{Mode: "private", ListenAddr: "127.0.0.1:8080", BaseURL: testOrigin, DatabaseURL: "configured", GoogleClientID: "client", GoogleClientSecret: "secret", Invites: test.invites}
+			if err := config.Validate(); (err == nil) != test.valid {
+				t.Fatalf("validation error=%v, want valid=%v", err, test.valid)
+			}
+		})
+	}
+}

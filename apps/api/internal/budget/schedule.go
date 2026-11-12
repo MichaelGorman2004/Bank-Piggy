@@ -49,7 +49,7 @@ func validateSchedule(expense Expense) error {
 	if expense.StartMonth != "" && expense.EndMonth != "" && expense.EndMonth < expense.StartMonth {
 		return errors.New("payment end month must be on or after its start month")
 	}
-	return nil
+	return validatePaymentTaskFields(expense)
 }
 
 // Response calculates one month and the following twelve-month projection.
@@ -64,5 +64,6 @@ func Response(h Household, start time.Time) HouseholdResponse {
 		Household: h, PlanningMonth: month,
 		Summary: calculateMonths(h, months[:1]), YearlySummary: calculateMonths(h, months),
 		TripProjections: tripProjections(h.Goals, month), PurchaseProjections: purchaseProjections(h.Goals, month),
+		PayrollSummaries: payrollSummaries(h.Members),
 	}
 }

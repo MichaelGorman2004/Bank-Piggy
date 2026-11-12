@@ -98,6 +98,8 @@ func TestGoogleVerifierRejectsInvalidIdentityClaims(t *testing.T) {
 		{"expired identity", "exp", time.Now().Add(-time.Hour).Unix(), true},
 		{"wrong nonce", "nonce", "other-nonce", true},
 		{"unverified email", "email_verified", false, true},
+		{"missing email", "email", "", true},
+		{"invalid email", "email", "First <one@example.com>", true},
 		{"missing subject", "sub", "", true},
 	}
 	for _, test := range tests {

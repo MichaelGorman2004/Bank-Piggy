@@ -94,7 +94,7 @@ export function PlanEditor(props: PlanEditorProps) {
   return (
     <Modal
       title="Your household plan"
-      description="Start with estimates. Add known costs now, then refine your plan together."
+      description="Start with estimates. Add known costs now, then refine your plan."
       onClose={onClose}
       busy={busy}
       wide

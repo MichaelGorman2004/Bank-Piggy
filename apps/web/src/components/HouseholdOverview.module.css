@@ -13,7 +13,7 @@
   flex: 1;
   min-height: 0;
   grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-  grid-template-rows: 204px minmax(0, 1fr);
+  grid-template-rows: 228px minmax(0, 1fr);
   gap: 14px;
 }
 .panels > div {
@@ -23,7 +23,7 @@
 .totals {
   grid-column: 1 / -1;
 }
-@media (max-width: 1020px), (max-height: 700px) {
+@media (max-width: 1020px), (max-height: 800px) {
   .sections {
     display: flex;
     flex-shrink: 0;

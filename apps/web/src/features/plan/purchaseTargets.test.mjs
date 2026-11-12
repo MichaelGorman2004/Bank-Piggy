@@ -4,10 +4,12 @@ import Ajv from 'ajv';
 import schema from '@bank-piggy/contracts/schema.json' with { type: 'json' };
 import { goalDraft, goalValue } from './goalDraft.ts';
 
+const HOUSEHOLD = { members: [{ id: 'member-1' }, { id: 'member-2' }] };
+
 /** Creates editable purchase inputs with nonzero saved progress and exact cents. */
 function purchaseDraft() {
   return {
-    ...goalDraft(undefined, 'purchase'),
+    ...goalDraft(HOUSEHOLD, undefined, 'purchase'),
     name: 'Laptop',
     amount: '25.01',
     ownerId: 'member-1',
@@ -20,7 +22,7 @@ function purchaseDraft() {
 test('a purchase saves progress separately from its chosen monthly allocation', () => {
   const draft = purchaseDraft();
   const original = structuredClone(draft);
-  const result = goalValue(draft, 'laptop');
+  const result = goalValue(draft, 'laptop', HOUSEHOLD);
   assert.equal(result.error, undefined);
   assert.deepEqual(result.goal, {
     id: 'laptop',
@@ -29,7 +31,7 @@ test('a purchase saves progress separately from its chosen monthly allocation', 
     ownerId: 'member-1',
     purchase: { targetAmountCents: 120001, savedAmountCents: 30002, targetMonth: '2027-04' },
   });
-  assert.deepEqual(goalDraft(result.goal), draft);
+  assert.deepEqual(goalDraft(HOUSEHOLD, result.goal), draft);
   assert.deepEqual(draft, original);
 });
 
@@ -48,7 +50,7 @@ test('purchase inputs reject invalid cents, limits, and target months without ch
   for (const change of changes) {
     const draft = { ...purchaseDraft(), ...change };
     const original = structuredClone(draft);
-    assert.ok(goalValue(draft, 'laptop').error);
+    assert.ok(goalValue(draft, 'laptop', HOUSEHOLD).error);
     assert.deepEqual(draft, original);
   }
 });
@@ -63,44 +65,45 @@ test('purchase targets accept zero allocations, zero targets, and bounded saved 
       targetMonth: '9999-12',
     },
     'laptop',
+    HOUSEHOLD,
   );
   assert.equal(result.error, undefined);
   assert.equal(result.goal.monthlyAmountCents, 0);
   assert.equal(result.goal.purchase.targetAmountCents, 0);
   assert.equal(result.goal.purchase.savedAmountCents, 100_000_000_000);
   assert.equal(
-    goalValue({ ...purchaseDraft(), kind: 'goal', amount: '0' }, 'saving').goal,
+    goalValue({ ...purchaseDraft(), kind: 'goal', amount: '0' }, 'saving', HOUSEHOLD).goal,
     undefined,
   );
 });
 
 test('goal type changes retain editable text and save only the selected target details', () => {
   const draft = purchaseDraft();
-  const ordinary = goalValue({ ...draft, kind: 'goal' }, 'saving').goal;
+  const ordinary = goalValue({ ...draft, kind: 'goal' }, 'saving', HOUSEHOLD).goal;
   assert.equal('purchase' in ordinary, false);
   assert.equal('trip' in ordinary, false);
-  const trip = goalValue({ ...draft, kind: 'trip' }, 'vacation').goal;
+  const trip = goalValue({ ...draft, kind: 'trip' }, 'vacation', HOUSEHOLD).goal;
   assert.equal('purchase' in trip, false);
   assert.equal(trip.trip.savedAmountCents, 30002);
-  const purchase = goalValue({ ...draft, kind: 'purchase' }, 'laptop').goal;
+  const purchase = goalValue({ ...draft, kind: 'purchase' }, 'laptop', HOUSEHOLD).goal;
   assert.equal('trip' in purchase, false);
   assert.equal(purchase.purchase.targetAmountCents, 120001);
   assert.equal(draft.targetAmount, '1200.01');
-  assert.equal(goalDraft(ordinary, 'trip').kind, 'goal');
-  assert.equal(goalDraft(trip, 'purchase').kind, 'trip');
-  assert.equal(goalDraft(purchase, 'trip').kind, 'purchase');
+  assert.equal(goalDraft(HOUSEHOLD, ordinary, 'trip').kind, 'goal');
+  assert.equal(goalDraft(HOUSEHOLD, trip, 'purchase').kind, 'trip');
+  assert.equal(goalDraft(HOUSEHOLD, purchase, 'trip').kind, 'purchase');
 });
 
 test('the canonical schema accepts legacy goals and rejects incomplete or conflicting targets', () => {
   const validator = new Ajv({ allErrors: true });
   validator.addSchema(schema, 'bank-piggy');
   const validGoal = validator.compile({ $ref: 'bank-piggy#/$defs/Goal' });
-  const purchase = goalValue(purchaseDraft(), 'laptop').goal;
+  const purchase = goalValue(purchaseDraft(), 'laptop', HOUSEHOLD).goal;
   assert.equal(validGoal(purchase), true);
-  const ordinary = goalValue({ ...purchaseDraft(), kind: 'goal' }, 'saving').goal;
+  const ordinary = goalValue({ ...purchaseDraft(), kind: 'goal' }, 'saving', HOUSEHOLD).goal;
   assert.equal(validGoal(ordinary), true);
   assert.equal('purchase' in ordinary, false);
-  const trip = goalValue({ ...purchaseDraft(), kind: 'trip' }, 'vacation').goal;
+  const trip = goalValue({ ...purchaseDraft(), kind: 'trip' }, 'vacation', HOUSEHOLD).goal;
   assert.equal(validGoal(trip), true);
   assert.equal(validGoal({ ...trip, purchase: purchase.purchase }), false);
   for (const target of [null, {}, { ...purchase.purchase, targetAmountCents: 1.5 }]) {

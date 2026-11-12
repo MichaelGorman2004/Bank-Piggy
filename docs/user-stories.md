@@ -10,7 +10,7 @@ These stories describe the implemented first version. Acceptance criteria state 
 - The entry action is **Open household plan** and creates a session for the first local member.
 - The interface shows **Our household**, the saved member names, **Household member**, and **Household plan**.
 - Edits persist in PostgreSQL and remain after reload or sign-out.
-- A new local household has no financial records. All demo sessions use that same saved local household. Private mode uses a different household and rejects demo-session creation.
+- A new local household starts with one person and no financial records. All demo sessions use that same saved local household. Private mode uses a different household and rejects demo-session creation.
 
 **Evidence boundary:** local mode does not establish Google identity or bank access. Automated tests use isolated populated fixtures. Startup preserves existing plans in both modes.
 
@@ -18,12 +18,14 @@ These stories describe the implemented first version. Acceptance criteria state 
 
 **As an invited member, I want my own Google sign-in so the server can identify me and enforce household access.**
 
-- Private mode requires two distinct invited emails and complete Google configuration.
+- Private mode requires one or two distinct bootstrap emails and complete Google configuration. A partner can also accept a household link.
 - The callback requires a valid one-use sign-in attempt and a verified Google identity.
 - A verified invited email binds to a stable Google subject. A different subject cannot claim that invitation later.
-- An uninvited account cannot obtain a household session.
-- Expired sessions and sessions inconsistent with the configured invitations cannot read or edit the plan.
-- Both invited members can read and edit the complete household plan.
+- An account without a bootstrap invitation or accepted link cannot obtain a household session.
+- Expired sessions and bootstrap sessions inconsistent with their configured invitation cannot read or edit the plan. Accepted-link identities use their persisted membership.
+- Invited members with a saved profile can read and edit the complete household plan.
+- A second bootstrap account receives a clear rejection until its profile is saved. This rejection does not bind an identity or create a session. A valid link can append a missing second profile during acceptance.
+- Adding a financial profile offers a link after saving. Sessions must still match a current saved member and a pinned, authorized identity.
 
 **Evidence boundary:** signed local identity-provider tests and real PostgreSQL tests cover this flow. One invited Google account has passed live sign-in, sign-out, and repeat sign-in. The second invited login and live rejection of an uninvited account remain unverified.
 
@@ -33,6 +35,11 @@ These stories describe the implemented first version. Acceptance criteria state 
 
 - A household with zero income and no expenses or goals opens plan setup.
 - Three steps collect income, expenses, and goals with balances.
+- New households show one profile. **Add person** below it adds the optional second profile and moves keyboard focus to its name field.
+- Adding a person preserves all entered profile, account, expense, and goal fields. The button disappears at two people.
+- Saving and reopening a one-person plan preserves one person. Existing two-person plans retain both profiles, even when the second person has no income.
+- New expenses and goals in a one-person plan belong to that person. Adding a partner does not change their ownership.
+- Split controls appear only when there are two people. A one-person plan allocates the full amount to its only member.
 - Each member can enter monthly take-home pay, pay frequency, annual base salary, typed account balances, and debt.
 - Salary is used for salary-based splits; no tax estimate is deducted from entered take-home pay.
 - The saved result shows take-home pay minus living expenses, then subtracts planned goal contributions.
@@ -44,7 +51,7 @@ These stories describe the implemented first version. Acceptance criteria state 
 **As a member, I want one view of the household plan so I can see where our combined income goes.**
 
 - The default scope is the combined household.
-- Money flow contains the Sankey. The default Overview shows Plan totals, At a glance, and Balances. At a glance compares both members in compact income and balance tables.
+- Money flow contains the Sankey. The default Overview shows Plan totals, At a glance, and Balances. At a glance shows the saved members in compact income and balance tables.
 - Expenses are grouped by category in the flow. Goals and money left to plan are separate destinations.
 - The chart measures available height and keeps the largest categories visible. Smaller categories combine into `Other costs (N)` without losing cents. Expenses retains all detailed records.
 - A shared expense appears once in the household total.
@@ -59,7 +66,7 @@ These stories describe the implemented first version. Acceptance criteria state 
 - Cards, expense rows, goals, balances, and money flow follow the selected scope.
 - Personal expenses belong entirely to their owner.
 - Shared expenses use the server's reconciled shares. Shared goals divide evenly.
-- The two members' allocated totals add to the household totals.
+- The saved members' allocated totals add to the household totals. A one-person plan assigns the full total to that person.
 - Changing the visible scope does not change permissions or save a new plan.
 
 ## 6. Agree on a shared expense
@@ -198,7 +205,7 @@ These stories describe the implemented first version. Acceptance criteria state 
 
 **As a member, I want one clear task per view so I can find the right records and use the available screen space.**
 
-- Overview is the default and shows Plan totals, At a glance, and Balances. At a glance fits both members' core facts in two compact tables. Narrow or short layouts use three section buttons to show one section at a time.
+- Overview is the default and shows Plan totals, At a glance, and Balances. At a glance fits the saved members' core facts in two compact tables. Narrow or short layouts use three section buttons to show one section at a time.
 - Money flow shows only the Sankey below the shared controls and notices.
 - Expenses shows bills, subscriptions, regular costs, and loans in one filtered list.
 - Goals shows ordinary goals. Trips & purchases shows trips and purchases, including funded, overdue, and zero-contribution targets.
@@ -229,6 +236,58 @@ These stories describe the implemented first version. Acceptance criteria state 
 - A tracked goal can have a zero contribution. Editing saved progress leaves account balances, income, and monthly allocations unchanged.
 - Shared progress describes the whole goal, while the personal view shows the member's contribution separately.
 
+## 19. Share my household with a partner
+
+**As the first member, I want to copy a private link so my partner can join without an email integration.**
+
+- Overview offers household sharing. Saving a new second profile offers the link automatically.
+- Creating a link returns its secret once. The server stores only a hash. A new link replaces the previous pending link.
+- The interface explains the shared access and seven-day expiry. Copy failure leaves a manual copy option.
+- The first member can revoke a pending link. The second member cannot replace the owner's access or invite a third person.
+- The recipient's URL fragment is removed before application resources load. A limited preview contains names and expiry, with no finances.
+- A verified Google identity accepts the link once. Acceptance preserves an existing second profile or appends an empty one under the household lock.
+- Revoked, expired, replaced, and used links fail. Concurrent claims have one winner. Identity binding failure rolls back the claim.
+- Later sign-ins return to the same household without adding the recipient's email to deployment variables.
+- If link creation fails after setup saves, the plan stays saved and invitation creation can be retried separately.
+
+**Evidence boundary:** Google tests use a signed local provider. These criteria do not establish live Google acceptance or a deployed release.
+
+## 20. Track payroll contributions without counting them twice
+
+**As a member, I want to record my retirement deductions and employer match so I can see what is saved before take-home pay arrives.**
+
+- Monthly take-home is labeled after taxes and automatic payroll investments.
+- Traditional and Roth 401(k) percentages are separate. Their combined rate cannot exceed 100%.
+- Employer matching supports ordered tiers or an entered monthly amount. Invalid or mixed rules fail without discarding the draft.
+- Payroll estimates appear separately in At a glance. They do not change spendable totals or account balances.
+- A match of 100% through 3% and 50% through 5% produces a 4% salary match at a 5% employee contribution.
+- Existing plans without payroll details remain valid and unchanged.
+
+## 21. Plan an annual Roth IRA contribution
+
+**As a member, I want an annual IRA goal so I can compare entered contributions with my allowed target.**
+
+- A Roth IRA preset uses a personal owner, contribution year, annual target, and contributions so far.
+- The user enters the allowed target. The app does not infer eligibility from salary or hardcode an annual legal maximum.
+- The chosen monthly contribution is the only cash allocation. The target and prior contributions do not become new income or account balances.
+- An IRA goal cannot also contain trip or purchase details. It can have a zero monthly allocation.
+- To-do reminders apply only in the contribution year, stop at a funded entered target, and do not exceed the entered remaining amount.
+
+## 22. Work through a pay-period checklist
+
+**As a member, I want dated checkboxes so I can record the contributions and manual bills I need to handle before the next payday.**
+
+- An actual payday anchors a regular cadence. Monthly pay supports an explicit last-day option. Semimonthly pay requires two distinct valid days.
+- Expected dates handle leap years and short months. They do not infer holiday adjustments. Irregular pay has no expected schedule.
+- To-do has an As-of date, household/person scope, period dates, task amounts, and due dates. It does not multiply the list by the financial dashboard period.
+- Goal tasks divide a month's contribution across its actual paydays and preserve every cent.
+- Automatic charges create no tasks. A manual bill needs a due day. Missing days produce a visible setup notice.
+- A recorded payer gets the full bill reminder. Otherwise, members get their allocated shares. A bill appears once per due month.
+- Native checkboxes cross out completed tasks. Completion survives reload and is shared by household members.
+- A changed amount or due date makes the task incomplete. An unrelated edit or name change preserves completion.
+- A stale plan revision or unavailable source rejects a checkbox write. A failed request does not discard a newer choice.
+- Checking a task does not execute a payment or update goal savings. Earlier periods remain reachable by date; unfinished earlier tasks do not automatically carry forward.
+
 ## Future stories
 
 These are product directions, not implemented or verified features:
@@ -238,7 +297,7 @@ These are product directions, not implemented or verified features:
 | A member connects a bank or brokerage with consent.                     | Reduce manual entry.                 | Provider selection, secure token storage, live account support, reconnect and revocation flows. |
 | A member reads actual spending and debt activity.                       | Compare the plan with what happened. | Transaction model, transfers, deduplication, corrections, sync, and history.                    |
 | A member automatically tracks contributions toward a target.            | Measure real progress over time.     | Actual contribution records and historical balances.                                            |
-| A member uses actual pay dates.                                         | Plan cash between real deposits.     | Payroll or transaction identification and calendar periods.                                     |
+| A member confirms pay dates from a provider.                            | Reconcile expected and received pay. | Payroll or transaction identification and immutable deposit history.                            |
 | A member asks an optional finance assistant about authorized summaries. | Explain their own figures.           | Consent, read-only tools, data boundaries, and grounded answers.                                |
 
 See [system design](system-design/README.md#verification-boundary) for evidence limits and [design decisions](system-design/decisions.md) for the current tradeoffs.

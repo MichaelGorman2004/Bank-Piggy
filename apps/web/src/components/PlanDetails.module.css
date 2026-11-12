@@ -66,3 +66,34 @@
     padding-bottom: 4px;
   }
 }
+
+.payroll {
+  margin-top: 14px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+.payroll summary {
+  cursor: pointer;
+  font-weight: 550;
+  min-height: 28px;
+}
+.payroll > div {
+  margin: 10px 0;
+}
+.payroll dl {
+  margin: 6px 0 10px;
+}
+.payroll dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+.payroll dt,
+.payroll p {
+  color: var(--walnut-soft);
+}
+.payroll p {
+  line-height: 1.5;
+}

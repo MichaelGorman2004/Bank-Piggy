@@ -18,7 +18,21 @@ func validateGoalTarget(goal Goal) error {
 	if err := validatePurchase(goal.Purchase); err != nil {
 		return err
 	}
-	return validateSavingsTarget(goal.SavingsTarget)
+	if err := validateSavingsTarget(goal.SavingsTarget); err != nil {
+		return err
+	}
+	return validateContributionYear(goal)
+}
+
+func validateContributionYear(goal Goal) error {
+	if goal.ContributionYear == nil {
+		return nil
+	}
+	year := *goal.ContributionYear
+	if year < firstPlanningYear || year > lastPlanningYear || goal.OwnerID == "shared" || goal.SavingsTarget == nil {
+		return errors.New("a contribution year needs a personal savings target and a year from 2000 through 2100")
+	}
+	return nil
 }
 
 func validatePurchase(purchase *PurchaseTarget) error {

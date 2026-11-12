@@ -82,7 +82,9 @@ function ExpenseOwnership(props: ExpenseFieldsProps) {
             if (ownerId) onChange({ ownerId });
           }}
         >
-          <option value="shared">Both of us</option>
+          <option value="shared">
+            {household.members.length === 1 ? 'Household' : 'Both of us'}
+          </option>
           {household.members.map((member) => (
             <option key={member.id} value={member.id}>
               {member.name}
@@ -91,28 +93,42 @@ function ExpenseOwnership(props: ExpenseFieldsProps) {
         </select>
       </label>
       <ExpenseSplit {...props} />
-      <label className={styles.wide}>
-        Who usually pays?
-        <select
-          value={draft.paidBy}
-          onChange={(event) => {
-            const paidBy =
-              event.target.value === ''
-                ? ''
-                : household.members.find((member) => member.id === event.target.value)?.id;
-            if (paidBy !== undefined) onChange({ paidBy });
-          }}
-        >
-          <option value="">Not recorded</option>
-          {household.members.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.name}
-            </option>
-          ))}
-        </select>
-        <span className={styles.help}>Who pays does not change the agreed split.</span>
-      </label>
+      <ExpensePayer {...props} />
     </>
+  );
+}
+
+/**
+ * Records the payer separately from the people who share an expense.
+ * @param props Expense draft and available household people.
+ * @returns Optional payer selection.
+ */
+function ExpensePayer(props: ExpenseFieldsProps) {
+  const { draft, household, onChange } = props;
+  return (
+    <label className={styles.wide}>
+      Who usually pays?
+      <select
+        value={draft.paidBy}
+        onChange={(event) => {
+          const paidBy =
+            event.target.value === ''
+              ? ''
+              : household.members.find((member) => member.id === event.target.value)?.id;
+          if (paidBy !== undefined) onChange({ paidBy });
+        }}
+      >
+        <option value="">Not recorded</option>
+        {household.members.map((member) => (
+          <option key={member.id} value={member.id}>
+            {member.name}
+          </option>
+        ))}
+      </select>
+      {household.members.length > 1 && (
+        <span className={styles.help}>Who pays does not change the agreed split.</span>
+      )}
+    </label>
   );
 }
 
@@ -123,7 +139,7 @@ function ExpenseOwnership(props: ExpenseFieldsProps) {
  */
 function ExpenseSplit(props: ExpenseFieldsProps) {
   const { draft, household, onChange } = props;
-  if (draft.ownerId !== 'shared') return null;
+  if (draft.ownerId !== 'shared' || household.members.length === 1) return null;
   const salaryAvailable = household.members.some((member) => member.annualBaseSalaryCents > 0);
   return (
     <>

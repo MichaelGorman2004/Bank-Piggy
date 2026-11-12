@@ -12,7 +12,7 @@ func proportional(amount, numerator, denominator int64) int64 {
 
 func splitExpense(h Household, expense Expense) (int64, int64) {
 	amount := expense.MonthlyAmountCents
-	if expense.OwnerID == h.Members[0].ID {
+	if len(h.Members) == 1 || expense.OwnerID == h.Members[0].ID {
 		return amount, 0
 	}
 	if expense.OwnerID == h.Members[1].ID {
@@ -46,7 +46,7 @@ func combined(first, second Summary) Summary {
 }
 
 func memberSummaries(h Household, count int64) []Summary {
-	personal := make([]Summary, 2)
+	personal := make([]Summary, MaxMembers)
 	for index, member := range h.Members {
 		savings, investments := accountTotals(member.Accounts)
 		personal[index] = Summary{MonthlyTakeHomeCents: member.MonthlyTakeHomeCents * count, SavingsCents: savings, InvestmentsCents: investments, DebtCents: member.DebtCents}

@@ -98,6 +98,7 @@ export function expenseAmount(expense: Expense, data: HouseholdResponse, scope: 
 export function splitLabel(expense: Expense, members: ReadonlyArray<Member>): string {
   if (expense.ownerId !== 'shared')
     return members.find((member) => member.id === expense.ownerId)?.name ?? 'Personal';
+  if (members.length === 1) return 'Full amount';
   if (expense.split.method === 'salary') return 'Salary split';
   if (expense.split.method === 'custom') {
     const firstPercent = expense.split.customFirstShareBps / 100;

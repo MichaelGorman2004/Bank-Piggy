@@ -1,6 +1,7 @@
 import type { GoalDraft } from './goalDraft';
 import { MonthPicker } from '../../components/MonthPicker';
 import { TripFields } from './TripFields';
+import { RothIraFields } from './RothIraFields';
 import { SavingsTargetFields } from './SavingsTargetFields';
 import styles from './Editors.module.css';
 
@@ -22,10 +23,14 @@ function GoalType(props: GoalTargetFieldsProps) {
         value={props.draft.kind}
         onChange={(event) => {
           const kind = event.target.value;
-          if (kind === 'goal' || kind === 'trip' || kind === 'purchase') props.onChange({ kind });
+          if (kind === 'roth_ira')
+            props.onChange({ kind, name: props.draft.name || 'Roth IRA', trackTarget: true });
+          else if (kind === 'goal' || kind === 'trip' || kind === 'purchase')
+            props.onChange({ kind });
         }}
       >
         <option value="goal">Savings, investing, or debt goal</option>
+        <option value="roth_ira">Roth IRA annual contribution</option>
         <option value="trip">Trip or vacation</option>
         <option value="purchase">Purchase to save for</option>
       </select>
@@ -101,7 +106,8 @@ export function GoalTargetFields(props: GoalTargetFieldsProps) {
     <>
       <GoalType {...props} />
       {props.draft.kind === 'goal' && <SavingsTargetFields {...props} />}
-      {props.draft.kind !== 'goal' && (
+      {props.draft.kind === 'roth_ira' && <RothIraFields {...props} />}
+      {(props.draft.kind === 'trip' || props.draft.kind === 'purchase') && (
         <>
           <TargetProgressFields {...props} />
           {props.draft.kind === 'trip' ? <TripFields {...props} /> : <PurchaseFields {...props} />}

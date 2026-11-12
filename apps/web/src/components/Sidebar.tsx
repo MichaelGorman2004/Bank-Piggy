@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import {
   ChartNoAxesCombined,
+  ListChecks,
   ChevronLeft,
   House,
   LogOut,
@@ -13,6 +14,7 @@ import type { Member, Session } from '@bank-piggy/contracts';
 import { VIEW_DETAILS, type View } from '../features/plan/views';
 import { useDrawerFocus } from './useDrawerFocus';
 import styles from './Sidebar.module.css';
+import sharingStyles from '../features/sharing/Sharing.module.css';
 
 interface SidebarProps {
   readonly session: Session;
@@ -22,6 +24,7 @@ interface SidebarProps {
   readonly onView: (view: View) => void;
   readonly onClose: () => void;
   readonly onSignout: () => void;
+  readonly onShare: () => void;
 }
 const NAVIGATION: ReadonlyArray<{
   readonly id: View;
@@ -29,6 +32,7 @@ const NAVIGATION: ReadonlyArray<{
 }> = [
   { id: 'overview', icon: House },
   { id: 'flow', icon: ChartNoAxesCombined },
+  { id: 'todos', icon: ListChecks },
   { id: 'expenses', icon: Wallet },
   { id: 'goals', icon: Sprout },
   { id: 'targets', icon: Plane },
@@ -53,7 +57,7 @@ function SidebarBrand(props: Pick<SidebarProps, 'members' | 'onView' | 'onClose'
       >
         <img src="/assets/banker-piggy.png" alt="" />
         <span>
-          Bank Piggy<small>Your money, together.</small>
+          Bank Piggy<small>Your money, in one place.</small>
         </span>
       </a>
       <div className={styles.household}>
@@ -143,6 +147,15 @@ export function Sidebar(props: SidebarProps) {
         </button>
         <SidebarBrand members={props.members} onView={props.onView} onClose={props.onClose} />
         <SidebarNavigation view={props.view} onView={props.onView} onClose={props.onClose} />
+        <button
+          className={sharingStyles.shareButton}
+          onClick={() => {
+            props.onClose();
+            props.onShare();
+          }}
+        >
+          Share household
+        </button>
         <SidebarUser session={props.session} onSignout={props.onSignout} />
       </aside>
     </>

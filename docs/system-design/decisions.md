@@ -1,6 +1,6 @@
 # Design decisions
 
-The first version optimizes for a correct, reviewable plan for two people. These decisions describe the code that exists, the benefit it provides, and the cost it accepts.
+The first version optimizes for a correct, reviewable plan for one person or a couple. These decisions describe the code that exists, the benefit it provides, and the cost it accepts.
 
 ## 1. One Go application and a React frontend
 
@@ -22,7 +22,7 @@ The first version optimizes for a correct, reviewable plan for two people. These
 
 ## 3. Integer cents with one reconciled allocation
 
-**Decision.** Store money as integer cents. Calculate the first proportional share once, then assign the remainder to the second member. Use arbitrary-precision integers for the intermediate ratio multiplication.
+**Decision.** Store money as integer cents. Assign the full amount to the sole member of a one-person plan. For two people, calculate the first proportional share once, then assign the remainder to the second member. Use arbitrary-precision integers for the intermediate ratio multiplication.
 
 **Reason.** Every personal view must reconcile with the household view. Independently rounded shares can create or lose cents. Binary floating-point money can make equality unreliable. The maximum accepted inputs can also overflow an `int64` multiplication even though the final share is safe.
 
@@ -40,7 +40,7 @@ The first version optimizes for a correct, reviewable plan for two people. These
 
 ## 5. Server-owned identity and invite-only access
 
-**Decision.** Use the established Go OpenID Connect library to verify Google identities. Bind two configured invitations to stable Google subjects. Issue opaque, server-stored sessions and authorize every household request.
+**Decision.** Use the established Go OpenID Connect library to verify Google identities. Bind one or two configured invitations to stable Google subjects only when their profiles exist in the saved plan. Issue opaque, server-stored sessions and authorize every household request.
 
 **Reason.** Google proves identity; Bank Piggy controls household access and session revocation. The browser cannot grant itself a household by changing a request field. Server-side sessions make logout and invitation changes enforceable on the next request.
 
@@ -95,5 +95,13 @@ The first version optimizes for a correct, reviewable plan for two people. These
 **Reason.** One account list supports separate retirement and savings types without duplicated totals drifting apart. Legacy amounts lack account-type evidence, so migration uses generic Savings and Other investments. Users supply more specific types when known.
 
 **Tradeoff.** Balances remain manual snapshots with no provider reconciliation or joint-account model. Startup can change an affected plan's revision. Row locks, matching JSON/row revisions, idempotent predicates, and transaction rollback preserve coherent saved state. Group bounds limit totals as well as individual accounts.
+
+## 12. Start with one person and add the partner explicitly
+
+**Decision.** Seed one financial profile. Permit one optional second profile in the canonical contract. Append it through the existing whole-plan save and preserve all current drafts. Keep stable member IDs and the existing two allocation fields. A solo allocation uses the first field for the full amount and zero for the second.
+
+**Reason.** A first-time user should not need to complete or ignore a second profile. Supporting one saved member keeps setup, totals, and authorization consistent. Personal ownership for new solo expenses and goals prevents a later addition from redistributing them.
+
+**Tradeoff.** The product still has at most two people and has no profile removal operation. The row-locked save rejects member removal. Login invitations stay in server configuration; adding a financial profile does not grant access. A second invited account cannot sign in until its profile exists. Existing saved profiles remain intact, including a second member with no income.
 
 See [user stories](../user-stories.md) for observable behavior, [data rules](data-model.md) for numerical examples, and [security](security.md) for trust boundaries and rejection paths.

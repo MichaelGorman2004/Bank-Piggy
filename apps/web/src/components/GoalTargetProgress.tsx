@@ -7,6 +7,7 @@ import styles from './GoalTargetProgress.module.css';
 
 interface GoalTargetProgressProps {
   readonly goal: Goal;
+  readonly memberCount: number;
   readonly projection?: GoalProjection;
 }
 
@@ -63,8 +64,10 @@ export function GoalTargetProgress(props: GoalTargetProgressProps) {
     <div className={styles.target}>
       <p className={styles.title}>
         {goal.trip ? <Plane size={14} /> : <ShoppingBag size={14} />}
-        {goal.ownerId === 'shared' ? `Shared ${label.toLowerCase()}` : label} ·{' '}
-        {monthLabel(details.targetMonth)}
+        {props.memberCount > 1 && goal.ownerId === 'shared'
+          ? `Shared ${label.toLowerCase()}`
+          : label}{' '}
+        · {monthLabel(details.targetMonth)}
       </p>
       <p>
         {money(details.savedAmountCents)} saved of {money(target)} ·{' '}

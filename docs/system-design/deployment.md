@@ -17,21 +17,21 @@ Railway's current documentation says new services cannot use `railway.toml` or `
 1. Use PostgreSQL 18 in Railway and CI. The Railway service uses `ghcr.io/railwayapp-templates/postgres-ssl:18`, private DNS `postgres.railway.internal`, and the attached `postgres-volume`. Public database access is disabled. Keep the initialized volume on PostgreSQL 18 and its network private. See [Railway PostgreSQL](https://docs.railway.com/databases/postgresql).
 2. Add the application service from the reviewed source. The current setup uploads a clean archive of the release commit; GitHub automatic deployment is not connected. Keep the source root at the repository root. Railway must build the root `Dockerfile`. Leave custom build, start, and pre-deploy commands empty; the image supplies its entrypoint and the app performs its startup migration.
 3. Set one application replica. Add an HTTPS Railway domain with target port `8080`. Use that exact origin for `APP_BASE_URL` and Google sign-in.
-4. Configure a Google OAuth client of type **Web application**. Add `https://YOUR-DOMAIN/auth/google/callback` as an authorized redirect URI. The server requests only OpenID Connect, email, and profile scopes. Google permits these basic identity scopes without requiring the account to be a Testing test user. Bank Piggy's two server-side invitations enforce access; Google's test-user list is not the security boundary. Add both invited accounts as test users for setup clarity. See [Google's audience rules](https://support.google.com/cloud/answer/15549945) and [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect).
+4. Configure a Google OAuth client of type **Web application**. Add `https://YOUR-DOMAIN/auth/google/callback` as an authorized redirect URI. The server requests only OpenID Connect, email, and profile scopes. Google permits these basic identity scopes without requiring the account to be a Testing test user. Bank Piggy's server-side invitations and saved membership enforce access; Google's test-user list is not the security boundary. Add the invited accounts as test users for setup clarity. See [Google's audience rules](https://support.google.com/cloud/answer/15549945) and [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect).
 5. Set the application variables below. In the database reference, replace `Postgres` with the exact PostgreSQL service name. Store the Google secret and database connection as private service variables.
 
-| Variable                              | Value                                              |
-| ------------------------------------- | -------------------------------------------------- |
-| `APP_MODE`                            | `private`                                          |
-| `PORT`                                | `8080`                                             |
-| `LISTEN_ADDR`                         | `0.0.0.0:8080`                                     |
-| `WEB_DIST_DIR`                        | `/app/web`                                         |
-| `APP_BASE_URL`                        | `https://YOUR-DOMAIN`                              |
-| `DATABASE_URL`                        | `${{Postgres.DATABASE_URL}}`                       |
-| `GOOGLE_CLIENT_ID`                    | Google web client ID                               |
-| `GOOGLE_CLIENT_SECRET`                | Google web client secret                           |
-| `HOUSEHOLD_INVITES`                   | Two different invited email addresses, comma apart |
-| `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `15`                                               |
+| Variable                              | Value                                           |
+| ------------------------------------- | ----------------------------------------------- |
+| `APP_MODE`                            | `private`                                       |
+| `PORT`                                | `8080`                                          |
+| `LISTEN_ADDR`                         | `0.0.0.0:8080`                                  |
+| `WEB_DIST_DIR`                        | `/app/web`                                      |
+| `APP_BASE_URL`                        | `https://YOUR-DOMAIN`                           |
+| `DATABASE_URL`                        | `${{Postgres.DATABASE_URL}}`                    |
+| `GOOGLE_CLIENT_ID`                    | Google web client ID                            |
+| `GOOGLE_CLIENT_SECRET`                | Google web client secret                        |
+| `HOUSEHOLD_INVITES`                   | One or two distinct invited emails, comma apart |
+| `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `15`                                            |
 
 Set `PORT` explicitly in Railway. Railway uses it for routing and health checks; the Go app reads `LISTEN_ADDR`. Keep both port values at `8080`. The app's default loopback listener remains safe for local use outside the container. [Railway health checks](https://docs.railway.com/deployments/healthchecks)
 
@@ -56,8 +56,8 @@ After deployment, record the Railway deployment ID and source commit. Confirm th
 - `GET /healthz` returns `200`. This endpoint checks PostgreSQL. Railway uses it during deployment; it does not continuously monitor the running service.
 - The HTTPS root page and its JavaScript, CSS, image, and provider assets load from the same domain. The page offers Google sign-in.
 - An unauthenticated `GET /api/household` returns `401`. The demo-session endpoint is unavailable in private mode.
-- Each invited Google account can sign in. An uninvited account is rejected. Session cookies have `Secure` and `HttpOnly`.
-- A new private household opens with an empty plan. A manual edit survives reload and a service restart. Verify both member views and a conflicting edit in two windows.
+- Each bootstrap Google account with a saved profile can sign in. A valid household link can add and authorize the second person. An account without either authorization is rejected. Session cookies have `Secure` and `HttpOnly`.
+- A new private household opens with one person and an empty plan. A manual edit survives reload and a service restart. Add a second profile, then verify its sign-in, both member views, and a conflicting edit in two windows. Preserve existing two-person plans.
 - Check mobile, keyboard, empty, populated, and error flows on the deployed origin. Keep personal amounts, email addresses, session cookies, and secrets out of screenshots and logs.
 
 Local tests with a signed provider simulate Google. A successful image build does not prove live sign-in, deployed persistence, or backups. Bank feeds are outside this release.
@@ -80,4 +80,6 @@ The app applies schema and account upgrades in one PostgreSQL transaction at sta
 
 For an application failure, select the last known working Railway deployment and redeploy it with the same private variables and database. Check database compatibility first; rolling back an image does not reverse a database upgrade. Repeat the health, sign-in, and saved-plan checks. Restore data only from a verified backup through a separate recovery plan.
 
-When the domain changes, update both `APP_BASE_URL` and Google's redirect URI before sign-in testing. Keep exactly two invitations. An invitation binds to its first verified Google subject; changing invitation text does not reassign an existing identity.
+When the domain changes, update both `APP_BASE_URL` and Google's redirect URI before sign-in testing. Configure one or two invitations and keep their order stable: the first maps to `member-1` and the second to `member-2`. A second bootstrap account requires its saved financial profile. An accepted household link can append that profile and does not require an environment change. The setup button offers a link after saving. An invitation binds to its first verified Google subject; changing invitation text does not reassign an existing identity.
+
+For an invitation release, verify link creation, copy, replacement, revoke, accepted Google sign-in, and a later normal sign-in on the deployed origin. Confirm that an old link cannot block normal sign-in. For To-do, verify a saved pay schedule, manual and automatic bills, checkbox reload, source-change invalidation, and a stale write. Use test-only records or approved user inputs; do not log invitation secrets. Local signed-provider checks do not establish these live results.

@@ -46,11 +46,15 @@ export function PlanExpensesStep(props: ExpensesStepProps) {
   const { state, dispatch } = props;
   return (
     <div className={styles.section}>
-      <DefaultSplit {...props} />
-      <p className={styles.help}>
-        Existing expense splits stay the same. Open an expense after saving to change its split or
-        record who pays.
-      </p>
+      {state.members.length > 1 && (
+        <>
+          <DefaultSplit {...props} />
+          <p className={styles.help}>
+            Existing expense splits stay the same. Open an expense after saving to change its split
+            or record who pays.
+          </p>
+        </>
+      )}
       {state.expenses.map((draft, index) => (
         <PlanItemRow
           key={draft.expense.id}

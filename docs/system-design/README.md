@@ -4,6 +4,8 @@ Bank Piggy turns one saved household plan into consistent household and personal
 
 These documents describe the implemented first version. Update the diagrams when routes, state ownership, or transaction boundaries change. The [product brief](../product-brief.md) includes future work that is outside this implementation.
 
+See [household sharing, payroll, and pay-period tasks](sharing-payroll-todos.md) for invitation claims, contribution estimates, expected dates, reminder allocation, and completion transactions.
+
 See Overview on [desktop](images/overview.png) or [mobile](images/mobile.png), Money flow on [desktop](images/money-flow.png) or [mobile](images/mobile-money-flow.png), Expenses on [desktop](images/expenses.png) or [mobile](images/mobile-expenses.png), and Goals on [desktop](images/goals.png) or [mobile](images/mobile-goals.png). The previews use fictional local reference data.
 
 ## Architecture
@@ -15,7 +17,7 @@ flowchart LR
     HTTP["Go HTTP server<br/>Session, origin, CSRF, input checks"]
     Budget["Budget feature<br/>Account totals, allocations, schedules, target rules"]
     Store["PostgreSQL store<br/>Scoped queries and revision transaction"]
-    DB[("PostgreSQL<br/>Plans, identities, sessions, sign-in attempts")]
+    DB[("PostgreSQL<br/>Plans, identities, sessions, sign-in attempts, invitations, task completion")]
     Google["Google OpenID Connect<br/>Private mode only"]
 
     Member -->|"View or edit a plan"| Browser
@@ -47,9 +49,9 @@ Before the listener starts, [Store.Open](../../apps/api/internal/store/store.go)
 
 ## Focused workspace
 
-Overview is the default and renders [HouseholdOverview](../../apps/web/src/components/HouseholdOverview.tsx): Plan totals, At a glance, and Balances. [At a glance](../../apps/web/src/components/PlanDetails.tsx) compares both members in compact income and balance tables. Large display values keep their exact amounts in accessible labels and hover text. Balances shows scoped account-type breakdowns; plan setup manages individual account records. Money flow renders the Sankey. Expenses combines every payment type. Goals selects ordinary contributions with optional saved progress; Trips & purchases selects dated trip and purchase goals. These views share one saved plan.
+Overview is the default and renders [HouseholdOverview](../../apps/web/src/components/HouseholdOverview.tsx): Plan totals, At a glance, and Balances. [At a glance](../../apps/web/src/components/PlanDetails.tsx) shows the saved members in compact income and balance tables. New plans start with one person; setup can append an optional second profile. Large display values keep their exact amounts in accessible labels and hover text. Balances shows scoped account-type breakdowns; plan setup manages individual account records. Money flow renders the Sankey. Expenses combines every payment type. Goals selects ordinary contributions with optional saved progress; Trips & purchases selects dated trip and purchase goals. These views share one saved plan.
 
-Scope, period, and planning month stay above the active view. [Record selectors](../../apps/web/src/features/plan/viewRecords.ts) preserve ownership and leave the plan unchanged. Expenses filters All types, Subscriptions, Bills & costs, or Loans, then sorts the selected scope and period's canonical allocations from largest to smallest. Ties retain saved order. Upcoming, ended, and zero-share records remain reachable. The card's add actions inherit its filter; All types and the header's Add expense default to a bill. The [view registry](../../apps/web/src/features/plan/views.ts) owns the five navigation labels and header actions.
+Financial views keep scope, period, and planning month above the active view. To-do keeps scope and uses its own As-of date. [Record selectors](../../apps/web/src/features/plan/viewRecords.ts) preserve ownership and leave the plan unchanged. Expenses filters All types, Subscriptions, Bills & costs, or Loans, then sorts the selected scope and period's canonical allocations from largest to smallest. Ties retain saved order. Upcoming, ended, and zero-share records remain reachable. The card's add actions inherit its filter; All types and the header's Add expense default to a bill. The [view registry](../../apps/web/src/features/plan/views.ts) owns the six navigation labels and header actions.
 
 The frame uses `100dvh`, the browser's dynamic viewport height. The document, `.main`, and `.view` remain still. [FinanceCard](../../apps/web/src/components/FinanceCard.tsx) allocates one scrollable body below fixed headers, actions, and optional filters, with an optional fixed footer. Each body is a named region with keyboard focus. The Money flow chart uses the same boundary through the `flowBody` region in [Dashboard](../../apps/web/src/components/Dashboard.tsx). See [workspace layout](../../apps/web/src/Workspace.module.css) and [card layout](../../apps/web/src/components/FinanceCard.module.css).
 
@@ -108,17 +110,23 @@ Read generations ignore results from older requests or an unmounted component. S
 
 ## API surface
 
-| Route                              | Access and result                                                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `GET /healthz`                     | Database health check; `503` when PostgreSQL is unavailable.                                                       |
-| `GET /api/session`                 | Current session metadata, or an unauthenticated response.                                                          |
-| `POST /api/demo/session`           | Exact-origin, loopback-only local session. New plans start empty.                                                  |
-| `GET /api/household?month=YYYY-MM` | Valid session and supported month; saved plan, period summaries, and trip and purchase projections.                |
-| `PUT /api/household?month=YYYY-MM` | Valid session, exact origin, CSRF token, valid plan, and current revision; returns projections for the same month. |
-| `POST /api/logout`                 | Same mutation checks; revoke session and clear cookie.                                                             |
-| `GET /auth/google`                 | Start Google sign-in in configured private mode.                                                                   |
-| `GET /auth/google/callback`        | Consume a sign-in attempt, verify Google identity, bind invitation, issue session.                                 |
-| Other `GET` application paths      | Built frontend or a safe missing-frontend response. Unknown API/sign-in paths return `404`.                        |
+| Route                                    | Access and result                                                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `GET /healthz`                           | Database health check; `503` when PostgreSQL is unavailable.                                                       |
+| `GET /api/session`                       | Current session metadata, or an unauthenticated response.                                                          |
+| `POST /api/demo/session`                 | Exact-origin, loopback-only local session. New plans start empty.                                                  |
+| `GET /api/household?month=YYYY-MM`       | Valid session and supported month; saved plan, period summaries, and trip and purchase projections.                |
+| `PUT /api/household?month=YYYY-MM`       | Valid session, exact origin, CSRF token, valid plan, and current revision; returns projections for the same month. |
+| `POST /api/logout`                       | Same mutation checks; revoke session and clear cookie.                                                             |
+| `GET /api/household/invitation`          | Current member; link state without the secret.                                                                     |
+| `POST /api/household/invitation`         | First member, origin, CSRF, and an unlinked partner slot; create or replace a link.                                |
+| `DELETE /api/household/invitation`       | First member, origin, and CSRF; revoke a pending link.                                                             |
+| `POST /api/household/invitation/prepare` | Exact-origin JSON request; limited preview and short-lived invitation cookie.                                      |
+| `GET /api/todos?date=YYYY-MM-DD`         | Current member and explicit calendar date; generated tasks with persisted completion.                              |
+| `PUT /api/todos/{id}`                    | Current member, origin, CSRF, plan revision, validated source task, and expected checkbox state.                   |
+| `GET /auth/google`                       | Start Google sign-in in configured private mode.                                                                   |
+| `GET /auth/google/callback`              | Consume a sign-in attempt, verify Google identity, bind invitation, issue session.                                 |
+| Other `GET` application paths            | Built frontend or a safe missing-frontend response. Unknown API/sign-in paths return `404`.                        |
 
 The client receives safe error codes and messages. Request failures do not return database errors or financial payloads in logs. See [security](security.md) for the exact checks and the limits of this boundary.
 
@@ -166,9 +174,9 @@ Meaningful financial cases included a $10.01 expense with a 0% share retained th
 
 Controlled chart checks retained one SVG element across period, scope, editor, response, and resize changes. Fixtures also checked removed nodes, empty transitions, stale observer callbacks, and failure cleanup. Calendar checks covered automatic application, failed-request recovery, newer choices winning over held responses, and returning to the accepted month while an older successful request remained pending. Keyboard navigation, Escape, light dismiss, focus return, optional clearing, required validation, payment terms, and retained target drafts passed.
 
-The final browser pass checked all five views at 320×568, 390×844, 844×390, 1366×768, and 1512×857. At a glance shows both tables, twelve values, and the shared split without internal scrolling. Account insertion, removal, exact-cent saves, reopen, simulated `503` recovery, and keyboard focus passed. Ordinary goal create/edit/reopen, saved/target drafts, zero-target rejection, overfunded progress, and failed-save retry passed. These tests restored the isolated reference records and totals after writes. The compiled preview additionally passed empty/error retry and phone containment checks without financial writes or browser errors.
+An earlier browser pass checked the original five financial views at 320×568, 390×844, 844×390, 1366×768, and 1512×857. At a glance shows both tables, twelve values, and the shared split without internal scrolling. Account insertion, removal, exact-cent saves, reopen, simulated `503` recovery, and keyboard focus passed. Ordinary goal create/edit/reopen, saved/target drafts, zero-target rejection, overfunded progress, and failed-save retry passed. These tests restored the isolated reference records and totals after writes. The compiled preview additionally passed empty/error retry and phone containment checks without financial writes or browser errors.
 
-Browser review uses the compiled Go app at `http://127.0.0.1:5173`, serving the API and static frontend without Vite hot module replacement. The native context uses `viewport: null`; all five views fit its measured 1512×857 window after reload. Health returned `200`, and no Vite client or browser errors were present. Human review of the compiled preview reported “No blink now.” The earlier idle blink was not reproduced in headless checks, and its cause remains unproven.
+That earlier browser review used the compiled Go app at `http://127.0.0.1:5173`, serving the API and static frontend without Vite hot module replacement. The native context uses `viewport: null`; all five views fit its measured 1512×857 window after reload. Health returned `200`, and no Vite client or browser errors were present. Human review of the compiled preview reported “No blink now.” The earlier idle blink was not reproduced in headless checks, and its cause remains unproven.
 
 Populated application browser evidence uses isolated local reference data. Private Railway deployment, HTTPS, PostgreSQL health, one invited Google sign-in, and saved-name persistence through restart and redeployment have also passed. Native Safari review covered the deployed interface. The second invited login, live rejection of an uninvited account, physical iOS, connected banks, and backup restore remain unverified. CI evidence is separate from live service checks.
 
@@ -176,6 +184,6 @@ Populated application browser evidence uses isolated local reference data. Priva
 
 1. Isolate emulated viewport and device profiles in separate browser contexts.
 2. Use the actual window with `viewport: null` and the compiled Go app for handoff. Reload and check measured frame bounds before screenshots.
-3. Test all five views, typed-account edits and grouped totals, targeted and untargeted goal rows, compact At a glance tables, expense filters, named card-body scrolling, calendar bounds, keyboard focus, and short-screen placement.
+3. Test all six views, typed-account edits and grouped totals, targeted and untargeted goal rows, compact At a glance tables, expense filters, named card-body scrolling, calendar bounds, keyboard focus, and short-screen placement.
 
 Continue with the [data model](data-model.md), [security model](security.md), [design decisions](decisions.md), or [user stories](../user-stories.md).

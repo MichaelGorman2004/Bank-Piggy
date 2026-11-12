@@ -8,9 +8,14 @@ export interface PaymentDraft {
   readonly endMonth: string;
   readonly endMode: 'ongoing' | 'month' | 'term';
   readonly termMonths: string;
+  readonly paymentMode: NonNullable<Expense['paymentMode']>;
+  readonly dueDay: string;
 }
 interface PaymentResult {
-  readonly schedule?: Pick<Expense, 'kind' | 'providerId' | 'startMonth' | 'endMonth'>;
+  readonly schedule?: Pick<
+    Expense,
+    'kind' | 'providerId' | 'startMonth' | 'endMonth' | 'paymentMode' | 'dueDay'
+  >;
   readonly error?: string;
 }
 
@@ -28,6 +33,8 @@ export function paymentDraft(expense?: Expense): PaymentDraft {
     endMonth: payment.endMonth ?? '',
     endMode: payment.endMonth ? 'month' : 'ongoing',
     termMonths: '',
+    paymentMode: payment.paymentMode ?? (payment.kind === 'subscription' ? 'automatic' : 'manual'),
+    dueDay: payment.dueDay === undefined ? '' : String(payment.dueDay),
   };
 }
 
@@ -39,11 +46,14 @@ export function paymentDraft(expense?: Expense): PaymentDraft {
 export function paymentValue(draft: PaymentDraft): PaymentResult {
   if (draft.startMonth && !validMonth(draft.startMonth))
     return { error: 'Enter a valid start month.' };
+  const handling = paymentHandling(draft);
+  if (handling.error) return { error: handling.error };
   const result = paymentEnd(draft);
   if (result.error) return result;
   return {
     schedule: {
       kind: draft.kind,
+      ...handling.fields,
       ...(draft.providerId ? { providerId: draft.providerId } : {}),
       ...(draft.startMonth ? { startMonth: draft.startMonth } : {}),
       ...(result.month ? { endMonth: result.month } : {}),
@@ -79,4 +89,25 @@ export function paymentStatus(expense: Expense, month: string): string {
   if (expense.startMonth && expense.startMonth > month) return 'Upcoming';
   if (expense.endMonth && expense.endMonth < month) return 'Ended';
   return 'Active';
+}
+
+/**
+ * Validates an explicit manual due day without inventing a schedule for old costs.
+ * @param draft Editable payment mode and optional due day.
+ * @returns Canonical handling fields or an actionable day error.
+ */
+function paymentHandling(draft: PaymentDraft): {
+  readonly fields?: Pick<Expense, 'paymentMode' | 'dueDay'>;
+  readonly error?: string;
+} {
+  if (draft.paymentMode === 'automatic') return { fields: { paymentMode: 'automatic' } };
+  const dueDay = draft.dueDay ? Number(draft.dueDay) : undefined;
+  if (dueDay !== undefined && (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31))
+    return { error: 'Enter a due day from 1 through 31, or leave it empty.' };
+  return {
+    fields: {
+      ...(draft.kind === 'subscription' ? { paymentMode: draft.paymentMode } : {}),
+      ...(dueDay !== undefined ? { dueDay } : {}),
+    },
+  };
 }

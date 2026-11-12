@@ -17,9 +17,10 @@ import (
 
 const sessionCookieName = "bank_piggy_session"
 const sessionLifetime = 7 * 24 * time.Hour
+const opaqueTokenBytes = 32
 
 func randomToken() (string, error) {
-	bytes := make([]byte, 32)
+	bytes := make([]byte, opaqueTokenBytes)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
@@ -53,10 +54,17 @@ func (s *Server) lookupSession(r *http.Request) (store.Session, error) {
 	if session.HouseholdID != s.householdID() || (session.MemberID != "member-1" && session.MemberID != "member-2") {
 		return store.Session{}, store.ErrUnauthorized
 	}
-	if s.config.Mode == "private" && session.MemberID != s.invitedMember(session.Email) {
+	if s.config.Mode == "private" && !s.privateSessionAllowed(session) {
 		return store.Session{}, store.ErrUnauthorized
 	}
 	return session, nil
+}
+
+func (s *Server) privateSessionAllowed(session store.Session) bool {
+	if session.Email == "" {
+		return false
+	}
+	return session.InvitationAccepted || session.MemberID == s.invitedMember(session.Email)
 }
 
 func (s *Server) requireSession(w http.ResponseWriter, r *http.Request) (store.Session, bool) {
@@ -106,7 +114,7 @@ func (s *Server) sessionResponse(r *http.Request, session *store.Session) (budge
 			return response, nil
 		}
 	}
-	return response, store.ErrUnauthorized
+	return response, nil
 }
 
 func (s *Server) session(w http.ResponseWriter, r *http.Request) {

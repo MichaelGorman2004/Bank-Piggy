@@ -23,7 +23,9 @@ interface GoalEditorProps {
  * @returns Current draft state and event handlers.
  */
 function useGoalForm(props: GoalEditorProps) {
-  const [draft, setDraft] = useState(() => goalDraft(props.goal, props.initialKind));
+  const [draft, setDraft] = useState(() =>
+    goalDraft(props.household, props.goal, props.initialKind),
+  );
   const [localError, setLocalError] = useState<string | null>(null);
   /**
    * Merges edited fields into the latest local draft.
@@ -38,7 +40,7 @@ function useGoalForm(props: GoalEditorProps) {
    */
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = goalValue(draft, props.goal?.id ?? crypto.randomUUID());
+    const result = goalValue(draft, props.goal?.id ?? crypto.randomUUID(), props.household);
     if (result.error) {
       setLocalError(result.error);
       return;
@@ -59,7 +61,7 @@ export function GoalEditor(props: GoalEditorProps) {
   return (
     <Modal
       title={props.goal ? 'Edit goal' : 'Make room for a goal'}
-      description="Plan a monthly contribution. Add a savings target for a trip or purchase when needed."
+      description="Plan contributions from take-home pay. Add a savings target or an annual Roth IRA goal."
       onClose={props.onClose}
       busy={props.busy}
     >

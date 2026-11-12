@@ -77,7 +77,7 @@ function HeaderFilters(props: DashboardHeaderProps) {
         </select>
         <ChevronDown className={ownStyles.selectChevron} size={14} aria-hidden="true" />
       </span>
-      <PeriodFilter {...props} />
+      {props.view !== 'todos' && <PeriodFilter {...props} />}
     </div>
   );
 }
@@ -88,7 +88,7 @@ function HeaderFilters(props: DashboardHeaderProps) {
  * @returns A named primary action with the matching edit or add icon.
  */
 function HeaderAction(props: DashboardHeaderProps) {
-  const ActionIcon = props.view === 'overview' || props.view === 'flow' ? SlidersHorizontal : Plus;
+  const ActionIcon = ['overview', 'flow', 'todos'].includes(props.view) ? SlidersHorizontal : Plus;
   const actionLabel = VIEW_DETAILS[props.view].actionLabel;
   return (
     <button
@@ -115,17 +115,19 @@ export function DashboardHeader(props: DashboardHeaderProps) {
         <div className={ownStyles.heading}>
           <h1>{VIEW_DETAILS[props.view].title}</h1>
           <p>
-            {props.view === 'flow'
-              ? 'Income and planned allocations.'
-              : props.scope === HOUSEHOLD_SCOPE
-                ? `${props.members.map((item) => item.name).join(' & ')}’s household plan`
-                : `${selected?.name ?? 'Your'}’s share of the plan`}
+            {props.view === 'todos'
+              ? 'Manual payments and goal contributions for each pay period.'
+              : props.view === 'flow'
+                ? 'Income and planned allocations.'
+                : props.scope === HOUSEHOLD_SCOPE
+                  ? `${props.members.map((item) => item.name).join(' & ')}’s household plan`
+                  : `${selected?.name ?? 'Your'}’s share of the plan`}
           </p>
         </div>
         <HeaderAction {...props} />
         <HeaderFilters {...props} />
       </header>
-      {props.period !== 'monthly' && (
+      {props.view !== 'todos' && props.period !== 'monthly' && (
         <p className={ownStyles.periodNote}>
           <Info size={12} />
           {props.period === 'yearly'

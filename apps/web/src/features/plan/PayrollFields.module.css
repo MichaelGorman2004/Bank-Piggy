@@ -1,0 +1,39 @@
+.disclosure {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.disclosure summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 0 12px;
+}
+.toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+}
+.toggle input[type='checkbox'] {
+  min-height: 18px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--walnut);
+}
+.tier {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+@media (max-width: 600px) {
+  .tier {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .tier button {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
