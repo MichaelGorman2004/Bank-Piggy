@@ -80,7 +80,7 @@ New session and sign-in-attempt creation each prune at most 100 expired rows of 
 
 ## Data, errors, and resources
 
-The server sets `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, and `X-Frame-Options: DENY`. API failures return safe messages. Request error logs record the error type rather than the financial request body, SQL error, session token, or Google credentials.
+The server sets `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and `X-Frame-Options: DENY`. The referrer policy keeps household invitation links out of outgoing referrer headers. API failures return safe messages. Request error logs record the error type rather than the financial request body, SQL error, session token, or Google credentials.
 
 Requests have a ten-second context deadline. The HTTP server also sets header, read, write, and idle timeouts. PostgreSQL connections close during shutdown. Failed transactions roll back with a bounded cleanup context. These controls limit resource use and preserve the original error.
 

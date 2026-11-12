@@ -41,6 +41,12 @@ Startup shares a 20-second deadline across PostgreSQL migrations, Google discove
 
 The Go process handles `SIGTERM` and gives requests up to 10 seconds to finish. The 15-second Railway drain setting gives the process time to complete that shutdown. See [Railway variable reference](https://docs.railway.com/variables/reference).
 
+## Enable automatic deployment
+
+Automatic deployment is not connected. Give the existing Railway GitHub App access to this repository, connect the application service to the `main` branch, and enable **Wait for CI** in the service settings. Keep the repository root and root Dockerfile as the build source. Preserve the existing runtime variables, domain, and private database connection.
+
+The quality workflow runs on every push, including pushes to `main`. With **Wait for CI** enabled, Railway waits for GitHub Actions before it deploys a new commit. Verify the first automatic deployment against its exact commit and served asset hashes. A local commit does not trigger deployment until it is pushed to GitHub. See [Railway GitHub automatic deployments](https://docs.railway.com/deployments/github-autodeploys).
+
 ## Verify a private release
 
 Run the full quality gate against a separate, disposable PostgreSQL 18 database before release. CI uses `postgres:18-alpine` to match the Railway major version. The earlier local full quality gate and application-container smoke check used PostgreSQL 14.15. Record separate Go race and integration test results from a fresh PostgreSQL 18 database.
