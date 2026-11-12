@@ -15,7 +15,7 @@ Railway's current documentation says new services cannot use `railway.toml` or `
 ## Create the services
 
 1. Use PostgreSQL 18 in Railway and CI. The Railway service uses `ghcr.io/railwayapp-templates/postgres-ssl:18`, private DNS `postgres.railway.internal`, and the attached `postgres-volume`. Public database access is disabled. Keep the initialized volume on PostgreSQL 18 and its network private. See [Railway PostgreSQL](https://docs.railway.com/databases/postgresql).
-2. Add the application service from the reviewed source. The current setup uploads a clean archive of the release commit; GitHub automatic deployment is not connected. Keep the source root at the repository root. Railway must build the root `Dockerfile`. Leave custom build, start, and pre-deploy commands empty; the image supplies its entrypoint and the app performs its startup migration.
+2. Connect the application service to `MichaelGorman2004/Bank-Piggy` on the `main` branch and enable **Wait for CI**. Production uses this GitHub connection for automatic deployment. Keep the source root at the repository root. Railway must build the root `Dockerfile`. Leave custom build, start, and pre-deploy commands empty; the image supplies its entrypoint and the app performs its startup migration.
 3. Set one application replica. Add an HTTPS Railway domain with target port `8080`. Use that exact origin for `APP_BASE_URL` and Google sign-in.
 4. Configure a Google OAuth client of type **Web application**. Add `https://YOUR-DOMAIN/auth/google/callback` as an authorized redirect URI. The server requests only OpenID Connect, email, and profile scopes. Google permits these basic identity scopes without requiring the account to be a Testing test user. Bank Piggy's server-side invitations and saved membership enforce access; Google's test-user list is not the security boundary. Add the invited accounts as test users for setup clarity. See [Google's audience rules](https://support.google.com/cloud/answer/15549945) and [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect).
 5. Set the application variables below. In the database reference, replace `Postgres` with the exact PostgreSQL service name. Store the Google secret and database connection as private service variables.
@@ -41,9 +41,9 @@ Startup shares a 20-second deadline across PostgreSQL migrations, Google discove
 
 The Go process handles `SIGTERM` and gives requests up to 10 seconds to finish. The 15-second Railway drain setting gives the process time to complete that shutdown. See [Railway variable reference](https://docs.railway.com/variables/reference).
 
-## Enable automatic deployment
+## Automatic deployment
 
-Automatic deployment is not connected. Give the existing Railway GitHub App access to this repository, connect the application service to the `main` branch, and enable **Wait for CI** in the service settings. Keep the repository root and root Dockerfile as the build source. Preserve the existing runtime variables, domain, and private database connection.
+Production is connected to `MichaelGorman2004/Bank-Piggy` on `main`, with **Wait for CI** enabled. The existing Railway GitHub App has access to this repository. The application builds from the repository root and root Dockerfile. The source connection preserves the runtime variables, domain, and private database connection.
 
 The quality workflow runs on every push, including pushes to `main`. With **Wait for CI** enabled, Railway waits for GitHub Actions before it deploys a new commit. Verify the first automatic deployment against its exact commit and served asset hashes. A local commit does not trigger deployment until it is pushed to GitHub. See [Railway GitHub automatic deployments](https://docs.railway.com/deployments/github-autodeploys).
 
