@@ -19,25 +19,28 @@ sources are [Amazon](https://github.com/simple-icons/simple-icons/blob/11.15.0/i
 
 ## Banker piggy and background
 
-Both original images were generated with the built-in `image_gen` tool. No API key or CLI fallback was used. The selected outputs are saved in this repository. The final mascot is a 640-pixel Lanczos downscale of the first built-in cleanup edit. The favicon is a 64-pixel Lanczos downscale of that final mascot. The background is a WebP conversion at quality 88.
+The mascot and background were generated with the built-in `image_gen` tool. The current mascot uses the approved younger piglet design: a larger head, round cheeks, a smaller snout, a gentle smile, and a tiny brown suit with an orange tie. The existing mascot was the reference image. The approved output was resampled with macOS `sips` to 640 pixels for the app and 64 pixels for the matching favicon. The background is a WebP conversion at quality 88.
 
 | Asset                                       | Dimensions | Format   | Size          |
 | ------------------------------------------- | ---------- | -------- | ------------- |
-| `apps/web/public/assets/banker-piggy.png`   | 640 × 640  | RGBA PNG | 406,153 bytes |
+| `apps/web/public/assets/banker-piggy.png`   | 640 × 640  | RGBA PNG | 352,164 bytes |
 | `apps/web/public/assets/warm-interior.webp` | 1672 × 941 | RGB WebP | 205,706 bytes |
-| `apps/web/public/assets/favicon.png`        | 64 × 64    | RGBA PNG | 8,648 bytes   |
+| `apps/web/public/assets/favicon.png`        | 64 × 64    | RGBA PNG | 6,635 bytes   |
 
-The mascot and favicon contain actual alpha transparency. Both generated images and the favicon were visually checked. The mascot stays readable at 64 pixels. Two built-in cleanup edits preserved the pig. The first edit was selected; the second increased stray pixels and was rejected. Small disconnected pixels remain at alpha 1/255. The image viewer exaggerates their red color; normal compositing makes them nearly invisible. No manual alpha removal was applied.
+The mascot and favicon preserve actual alpha transparency. The favicon URL carries the design version so browsers can fetch the new icon. The welcome illustration and sidebar use the same mascot file.
 
 ## Mascot prompt
 
 ```text
-Use case: logo-brand
-Asset type: Bank Piggy finance dashboard mascot, square icon and larger welcome illustration.
-Primary request: A friendly pink cartoon banker pig, head and upper torso, with a brown suit jacket, cream shirt, and burnt orange tie. Charming rounded polished illustration, expressive kind eyes, small ears, simple readable face, soft dimensional shading and crisp silhouette. Centered front-facing portrait, comfortably fits a square with small clear margins, readable at 48 to 80 pixels.
-Scene/backdrop: Genuine transparent alpha background; no backdrop, no ground plane.
-Color palette: Warm pink skin, chocolate brown jacket, cream shirt, burnt orange tie.
-Constraints: Only the pig and its clothing. No text, numbers, logos, coins, glasses, hats, props, frame, border, or watermark. Actual alpha transparency around the complete silhouette.
+Use case: precise-object-edit.
+Asset type: Bank Piggy mascot, a transparent square app icon and welcome illustration.
+Edit target: Image 1 is the current Bank Piggy mascot. Redesign this same banker pig to look much younger and cuter, like a cheerful little piglet playing dress-up as a banker.
+Change: Give him a larger round head relative to a much smaller body, soft plump cheeks, a short little button snout, large gentle dark-brown eyes with warm catchlights, small soft floppy ears, and a sweet small smile. Reduce the mature human-like eyebrows and broad adult shoulders. The expression should feel innocent, friendly, and charming, without the existing large adult-looking open-mouth grin.
+Keep: Pink pig identity, chocolate-brown suit jacket, cream shirt, burnt-orange necktie, centered front-facing head and upper torso. Use a tiny softly rounded jacket and a slightly oversized orange tie to make the outfit playful. No visible hands. Preserve the warm brown, cream, orange, and pink brand palette.
+Style: Polished dimensional cartoon illustration, soft velvety shading, rounded toy-like forms, a clear simple silhouette that stays readable at 64 pixels. Refined and warm rather than overly shiny plastic.
+Composition: One mascot only, comfortably centered in a square with a modest clear margin. The head occupies about three quarters of the character's height.
+Background: Genuine transparent alpha, clean antialiased edges, no speckles, no backdrop, no ground plane or cast shadow.
+Avoid: Text, logos, coins, props, hats, glasses, accessories, border, watermark, realistic animal fur, human child anatomy, or a full scene.
 ```
 
 Tool option: `transparent_background: true`.
@@ -53,14 +56,3 @@ Constraints: No people, text, UI, logos, watermark, office equipment, visible sc
 ```
 
 Tool option: `transparent_background: false`.
-
-## Selected cleanup edit prompt
-
-```text
-Use case: background-extraction
-Edit target: The provided Bank Piggy mascot PNG.
-Primary request: Clean only the transparent background and silhouette edge. Remove every disconnected red, white, or colored speckle, stray pixel cluster, and halo outside the pig's main silhouette, especially the speckles above the ears. Output a clean polished cutout with smooth antialiased edges and actual alpha transparency.
-Invariants: Preserve this exact pig identity and face, pink color, small ears, joyful expression, brown suit jacket, cream shirt, burnt orange tie, front-facing head/upper-torso composition and current proportions. Do not redesign, add or remove features, or change clothing, shading, pose or expression. Keep the complete pig centered in a square with a small transparent margin around it. No text, logos, watermark, props, added background or shadow plane.
-```
-
-Tool option: `transparent_background: true`. The original local PNG was the edit target.
