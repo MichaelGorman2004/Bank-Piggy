@@ -8,6 +8,7 @@ function account(overrides = {}) {
     name: 'Roth Traditional IRA 401k',
     providerType: 'investment',
     providerSubtype: 'brokerage',
+    mappingRevision: 1,
     mapping: { classification: 'unclassified' },
     ...overrides,
   };
@@ -26,6 +27,18 @@ test('account names never confirm retirement treatment or change provider classi
     accountSnapshotType(account({ mapping: { classification: 'traditional_401k' } })),
     'Traditional 401(k)',
   );
+});
+
+test('neutral automatic investment defaults retain the provider retirement label', () => {
+  for (const [providerSubtype, label] of [
+    ['401k', '401(k)'],
+    ['roth', 'IRA'],
+    ['ira', 'IRA'],
+  ]) {
+    const input = account({ providerSubtype, mapping: { classification: 'other_investment' } });
+    assert.equal(accountSnapshotType(input), label);
+    assert.equal(accountSnapshotType({ ...input, mappingRevision: 2 }), 'Other investment');
+  }
 });
 
 test('unknown provider subtypes remain readable and missing subtypes use the provider type', () => {

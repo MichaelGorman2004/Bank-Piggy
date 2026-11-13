@@ -31,7 +31,7 @@ const PROVIDER_ACCOUNT_LABELS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Uses resolved classifications first, then provider subtypes without inspecting account names.
+ * Uses saved choices first and retains provider labels for neutral investment defaults.
  * Retirement subtypes stay neutral until the member confirms Traditional or Roth treatment.
  * @param account Raw provider account and explicit saved classification.
  * @returns A readable account type without claiming that defaults are confirmed settings.
@@ -40,7 +40,8 @@ export function accountSnapshotType(account: ConnectedAccount): string {
   const confirmed = CONNECTED_TYPES.find(
     (item) => item.value === account.mapping.classification && item.value !== 'unclassified',
   );
-  if (confirmed) return confirmed.label;
+  if (confirmed && (account.mappingRevision > 1 || confirmed.value !== 'other_investment'))
+    return confirmed.label;
   const raw = account.providerSubtype?.trim() || account.providerType;
   const key = raw.toLowerCase().replaceAll('_', ' ');
   return PROVIDER_ACCOUNT_LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1);

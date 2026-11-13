@@ -25,7 +25,7 @@ export function AccountsDashboard(props: { readonly household: Household }) {
         description="All household accounts · Full account balances"
         actions={null}
         controls={<AccountsActions household={props.household} />}
-        footer={<p className={styles.note}>Balances update about every 30 minutes.</p>}
+        footer={<p className={styles.note}>Checks for updated balances every 30 minutes.</p>}
       >
         <AccountsContent household={props.household} />
       </FinanceCard>

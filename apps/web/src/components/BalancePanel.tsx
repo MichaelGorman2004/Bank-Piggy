@@ -112,5 +112,5 @@ function balanceHelp(failed: boolean, connected: boolean, hasManualAccounts: boo
     return 'Manual balances do not update automatically. Connect an institution for scheduled balance snapshots.';
   return hasManualAccounts
     ? 'If a linked account is also entered manually, match it in Connected accounts to count it once.'
-    : 'Plaid balances update about every 30 minutes. Budgets and goal progress stay separate.';
+    : 'Bank Piggy checks Plaid balances every 30 minutes. Budgets and goal progress stay separate.';
 }
