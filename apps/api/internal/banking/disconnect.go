@@ -108,12 +108,12 @@ func (s *Service) revokeJob(ctx context.Context, job work, token string) error {
 	return tx.Commit(ctx)
 }
 
-// ScheduleRefresh requests bounded durable work without creating overlapping calls.
+// ScheduleRefresh requests due work without bypassing sync or retry cooldowns.
 func (s *Service) ScheduleRefresh(ctx context.Context, identity Identity, id string) error {
 	if !s.config.Enabled {
 		return ErrUnavailable
 	}
-	tag, err := s.db.Pool.Exec(ctx, `UPDATE bank_connections SET next_sync_at=LEAST(next_sync_at,now()),failures=0 WHERE id=$1 AND household_id=$2 AND token_cipher IS NOT NULL AND state IN ('connected','delayed') AND (last_synced_at IS NULL OR last_synced_at<now()-$3::interval) AND environment=$4`, id, identity.HouseholdID, minimumRefreshInterval.String(), s.config.Environment)
+	tag, err := s.db.Pool.Exec(ctx, `UPDATE bank_connections SET next_sync_at=LEAST(next_sync_at,now()),failures=0 WHERE id=$1 AND household_id=$2 AND token_cipher IS NOT NULL AND state IN ('connected','delayed') AND next_sync_at<=now() AND (last_synced_at IS NULL OR last_synced_at<=now()-$3::interval) AND environment=$4`, id, identity.HouseholdID, minimumRefreshInterval.String(), s.config.Environment)
 	if err != nil {
 		return err
 	}

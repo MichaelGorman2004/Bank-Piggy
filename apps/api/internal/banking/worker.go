@@ -42,12 +42,15 @@ func (s *Service) claimWork(ctx context.Context, id string) (work, error) {
 		return work{}, err
 	}
 	var job work
+	// Reserve the next read before provider work so a crashed worker cannot read
+	// again after only the shorter ownership lease expires.
 	err = s.db.Pool.QueryRow(ctx, `WITH candidate AS (
  SELECT id FROM bank_connections WHERE ($1='' OR id=$1) AND token_cipher IS NOT NULL AND environment=$5
  AND state IN ('connected','delayed','disconnecting') AND failures<$2 AND next_sync_at<=now()
  AND (lease_until IS NULL OR lease_until<=now()) ORDER BY next_sync_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
- UPDATE bank_connections c SET lease_owner=$3,lease_until=now()+$4::interval FROM candidate
- WHERE c.id=candidate.id RETURNING c.id,c.household_id,c.kind,c.state,c.token_cipher,c.generation,c.failures`, id, MaxFailures, owner, LeaseDuration.String(), s.config.Environment).Scan(&job.ID, &job.HouseholdID, &job.Kind, &job.State, &job.Cipher, &job.Generation, &job.Failures)
+ UPDATE bank_connections c SET lease_owner=$3,lease_until=now()+$4::interval,
+ next_sync_at=CASE WHEN c.state='disconnecting' THEN c.next_sync_at ELSE now()+$6::interval END FROM candidate
+ WHERE c.id=candidate.id RETURNING c.id,c.household_id,c.kind,c.state,c.token_cipher,c.generation,c.failures`, id, MaxFailures, owner, LeaseDuration.String(), s.config.Environment, SyncInterval.String()).Scan(&job.ID, &job.HouseholdID, &job.Kind, &job.State, &job.Cipher, &job.Generation, &job.Failures)
 	job.Owner = owner
 	return job, err
 }
@@ -77,6 +80,7 @@ func (s *Service) processOne(ctx context.Context, id string) error {
 
 func (s *Service) failJob(ctx context.Context, job work, original error) error {
 	code, state := "provider_unavailable", "delayed"
+	retry := SyncInterval
 	var provider *ProviderError
 	if errors.As(original, &provider) {
 		code = provider.Code
@@ -86,8 +90,8 @@ func (s *Service) failJob(ctx context.Context, job work, original error) error {
 	}
 	if job.State == "disconnecting" {
 		state = "disconnecting"
+		retry = time.Minute * time.Duration(1<<min(job.Failures, 4))
 	}
-	retry := time.Minute * time.Duration(1<<min(job.Failures, 4))
 	_, err := s.db.Pool.Exec(ctx, `UPDATE bank_connections SET state=$1,error_code=CASE WHEN $2='provider_unavailable' AND error_code IN ('new_accounts_available','pending_disconnect','pending_expiration') THEN error_code ELSE $2 END,failures=failures+1,next_sync_at=now()+$3::interval,lease_owner=NULL,lease_until=NULL WHERE id=$4 AND generation=$5 AND lease_owner=$6 AND lease_until>now() AND state=$7`, state, code, retry.String(), job.ID, job.Generation, job.Owner, job.State)
 	return err
 }

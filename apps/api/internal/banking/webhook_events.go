@@ -28,7 +28,7 @@ func applyItemEvent(ctx context.Context, tx pgx.Tx, event webhookEvent) error {
 		_, err := tx.Exec(ctx, `UPDATE bank_connections SET error_code=$2 WHERE item_id=$1 AND state IN ('connected','delayed','reconnect') AND environment=$3`, event.ItemID, strings.ToLower(event.Code), event.Environment)
 		return err
 	case "LOGIN_REPAIRED", "ERROR":
-		_, err := tx.Exec(ctx, `UPDATE bank_connections SET state='delayed',failures=0,next_sync_at=now(),generation=generation+1,lease_owner=NULL,lease_until=NULL WHERE item_id=$1 AND state IN ('connected','delayed','reconnect') AND environment=$2`, event.ItemID, event.Environment)
+		_, err := tx.Exec(ctx, `UPDATE bank_connections SET state='delayed',failures=0,next_sync_at=CASE WHEN $3='LOGIN_REPAIRED' THEN now() ELSE GREATEST(next_sync_at,now()) END,generation=generation+1,lease_owner=NULL,lease_until=NULL WHERE item_id=$1 AND state IN ('connected','delayed','reconnect') AND environment=$2`, event.ItemID, event.Environment, event.Code)
 		return err
 	default:
 		return queueBalanceEvent(ctx, tx, event.ItemID, event.Environment)
@@ -36,7 +36,7 @@ func applyItemEvent(ctx context.Context, tx pgx.Tx, event webhookEvent) error {
 }
 
 func queueBalanceEvent(ctx context.Context, tx pgx.Tx, item, environment string) error {
-	_, err := tx.Exec(ctx, `UPDATE bank_connections SET next_sync_at=LEAST(next_sync_at,now()) WHERE item_id=$1 AND state IN ('connected','delayed') AND (last_synced_at IS NULL OR last_synced_at<now()-$2::interval) AND environment=$3`, item, minimumRefreshInterval.String(), environment)
+	_, err := tx.Exec(ctx, `UPDATE bank_connections SET next_sync_at=LEAST(next_sync_at,now()) WHERE item_id=$1 AND state IN ('connected','delayed') AND next_sync_at<=now() AND (last_synced_at IS NULL OR last_synced_at<=now()-$2::interval) AND environment=$3`, item, minimumRefreshInterval.String(), environment)
 	return err
 }
 

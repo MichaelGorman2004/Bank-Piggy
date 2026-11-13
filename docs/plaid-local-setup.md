@@ -1,10 +1,8 @@
 # Try Plaid locally
 
-The local configuration is prepared. Your Plaid account and API keys are the remaining external requirements. No Railway deployment is required for local testing.
+This guide covers local Sandbox testing and optional local production setup. The deployed production service is configured separately in Railway. No Railway deployment is required for local testing.
 
-The current UI preview is [http://127.0.0.1:5187](http://127.0.0.1:5187). It includes the mobile Today-button fix. Plaid remains disabled in that preview.
-
-The prepared Plaid configuration starts a separate app at [http://localhost:5188](http://localhost:5188) after you add the keys below. The encryption key is already generated. The `.env` file is private, owner-readable only, and ignored by Git. The separate local database is `bankpiggy_local` in the existing PostgreSQL 18 container. No bank data has been imported. If Docker has stopped, start Docker Desktop and run `docker start bank-piggy-plaid-pg18` before starting the app.
+The local Plaid app uses [http://localhost:5188](http://localhost:5188). Its private, ignored `.env` already contains Sandbox credentials and an encryption key. Michael completed Sandbox consent, and 14 simulated accounts were imported. These are not real bank balances. The separate local database is `bankpiggy_local` in the PostgreSQL 18 container. If Docker has stopped, start Docker Desktop and run `docker start bank-piggy-plaid-pg18` before starting the app.
 
 ## 1. Create your Plaid account
 
@@ -64,7 +62,7 @@ The compiled application and API share one origin. This command loads `.env`. It
 6. After linking, use **Reload status** when the first background check finishes. Accounts start excluded. Choose their owner and type before including them.
 7. If an imported account represents an existing manual account, select that manual balance as its replacement. Include a joint account once; exclude duplicate copies from another login.
 
-The Accounts view displays the latest saved provider values automatically while it is open. It shows current and available amounts separately and labels credit balances as amounts owed. Opening the view or selecting **Reload status** reads saved snapshots; it does not force an immediate bank update. To request an earlier provider check, open the connection manager and use **Request update**. The server keeps its existing cooldown and scheduled-update limits. Monthly spending and net investment contributions require transaction history and are not calculated from these snapshots.
+The Accounts view checks the latest saved provider values every 30 minutes while visible and when opened or brought back to the foreground. It shows current and available amounts separately and labels credit balances as amounts owed. Opening the view or selecting **Reload status** reads saved snapshots; it does not force an immediate bank update. Scheduled bank reads also run every 30 minutes. **Request update** cannot bypass that read or retry deadline. First import and consent repair can read immediately. Monthly spending and net investment contributions require transaction history and are not calculated from these snapshots.
 
 Press Control-C in the terminal to stop this app. Run the same command after editing `.env`. The database is separate from automated test schemas and does not reset when the app restarts.
 

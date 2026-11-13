@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { ConnectionList } from '@bank-piggy/contracts';
 
-const ACCOUNT_STATUS_POLL_INTERVAL = 30_000;
+const ACCOUNT_STATUS_POLL_INTERVAL = 30 * 60_000;
 type ReloadAccounts = () => Promise<ConnectionList | null>;
 type StatusPage = Pick<Document, 'visibilityState' | 'addEventListener' | 'removeEventListener'>;
 type StatusBrowser = Pick<
@@ -18,7 +18,7 @@ export function useAccountStatusUpdates(reload: ReloadAccounts): void {
 }
 
 /**
- * Reads on entry and foreground changes, with bounded polling and no overlapping reads.
+ * Reads on entry, foreground changes, and every 30 minutes without overlapping reads.
  * @param reload Authorized snapshot read; it owns error presentation and mutation serialization.
  * @param page Current document visibility and events.
  * @param browser Current window focus events and timers.
