@@ -60,7 +60,7 @@ export function BalancePanel({ summary, household, scope, onEdit }: BalancePanel
       {!balances ? (
         <BalanceAvailability scope={scope} />
       ) : connected ? (
-        <EffectiveBalances balances={balances} household={household} scope={scope} />
+        <EffectiveBalances balances={balances} scope={scope} />
       ) : (
         <ManualBalanceCategories household={household} scope={scope} summary={summary} />
       )}
