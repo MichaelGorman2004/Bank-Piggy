@@ -5,11 +5,13 @@ import { BalancePanel } from './BalancePanel';
 import { FinanceCard } from './FinanceCard';
 import { PlanDetails } from './PlanDetails';
 import { SummaryCards } from './SummaryCards';
+import { PlanCompleteness } from '../WorkspaceChrome';
 import styles from './HouseholdOverview.module.css';
 
 interface HouseholdOverviewProps {
   readonly household: Household;
   readonly payrollSummaries: readonly PayrollSummary[];
+  readonly householdIncomeCents: number;
   readonly summary: Summary;
   readonly factor: number;
   readonly scope: string;
@@ -50,6 +52,11 @@ export function HouseholdOverview(props: HouseholdOverviewProps) {
             description="Estimates for the selected scope and period."
             actions={null}
           >
+            <PlanCompleteness
+              incomeCents={props.householdIncomeCents}
+              expenseCount={props.household.expenses.length}
+              onEdit={props.onEdit}
+            />
             <SummaryCards summary={props.summary} factor={props.factor} />
           </FinanceCard>
         </div>

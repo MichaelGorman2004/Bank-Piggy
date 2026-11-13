@@ -1,8 +1,9 @@
 .tables {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
-  padding-top: 10px;
+  align-items: start;
+  gap: 12px;
+  padding-top: 8px;
 }
 .table {
   width: 100%;
@@ -14,12 +15,14 @@
 .table th,
 .table td {
   text-align: right;
-  padding: 5px 0;
+  padding: 3px 0 3px 8px;
+  overflow-wrap: anywhere;
   font-weight: 550;
 }
 .table th:first-child {
   width: 38%;
   text-align: left;
+  padding-left: 0;
 }
 .table thead th {
   color: var(--walnut);
@@ -27,7 +30,7 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   border-bottom: 1px solid var(--line);
-  padding-bottom: 7px;
+  padding-bottom: 5px;
 }
 .table tbody th {
   color: var(--walnut-soft);
@@ -36,64 +39,147 @@
 .table td {
   font-variant-numeric: tabular-nums;
 }
-.split {
+.shortValue {
+  display: none;
+}
+.summaryFallback {
+  display: none;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.footerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.sectionSelect {
+  display: none;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 6px 8px;
+  background: var(--glass);
+  color: var(--walnut);
+  font-size: 16px;
+}
+.detailsButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: var(--glass);
+  color: var(--walnut);
+  font-size: 12px;
+}
+.detailsButton:hover {
+  background: var(--orange-wash);
+}
+.detailsButton[data-review='true'] {
+  color: var(--danger);
+}
+.detailsContent {
+  display: grid;
+  gap: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.detailsContent dl {
+  margin: 8px 0;
+}
+.detailsContent dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+.detailsContent dt,
+.detailsContent p {
+  color: var(--walnut-soft);
+}
+.detailsContent dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.sharedSplit {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--walnut-soft);
-  font-size: 10px;
 }
-@media (min-width: 650px) {
+.detailsFacts {
+  display: grid;
+  gap: 18px;
+}
+.detailsFacts .table {
+  line-height: 1.4;
+}
+.detailsFacts .table th,
+.detailsFacts .table td {
+  padding-block: 4px;
+}
+.detailsFacts .table thead th {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+@container household-snapshot (min-width: 640px) {
   .tables {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
   }
 }
-@media (max-height: 650px) {
+@container household-snapshot ((width < 640px) and (height < 420px)) or (height < 300px) {
   .tables {
-    gap: 4px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .tables > [data-active='false'] {
+    display: none;
+  }
+  .sectionSelect {
+    display: block;
+  }
+  .fullValue {
+    display: none;
+  }
+  .shortValue {
+    display: inline;
+  }
+}
+@container household-snapshot (max-height: 280px) {
+  .tables {
     padding-top: 0;
   }
   .table {
-    font-size: 11px;
     line-height: 1.3;
   }
   .table th,
   .table td {
-    padding: 2px 0;
+    padding-block: 0;
   }
   .table thead th {
-    padding-bottom: 4px;
+    padding-bottom: 3px;
   }
 }
-
-.payroll {
-  margin-top: 14px;
-  padding: 12px 0 4px;
-  border-top: 1px solid var(--line);
-  font-size: 11px;
+@container household-snapshot (max-height: 260px) {
+  .card [data-card-description] {
+    display: none;
+  }
 }
-.payroll summary {
-  cursor: pointer;
-  font-weight: 550;
-  min-height: 28px;
-}
-.payroll > div {
-  margin: 10px 0;
-}
-.payroll dl {
-  margin: 6px 0 10px;
-}
-.payroll dl > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 3px 0;
-}
-.payroll dt,
-.payroll p {
-  color: var(--walnut-soft);
-}
-.payroll p {
-  line-height: 1.5;
+@container household-snapshot (max-height: 200px) {
+  .tables,
+  .sectionSelect {
+    display: none;
+  }
+  .summaryFallback {
+    display: block;
+  }
 }
