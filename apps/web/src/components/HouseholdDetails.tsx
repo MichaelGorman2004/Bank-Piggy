@@ -79,12 +79,6 @@ function HouseholdDetailContent(props: HouseholdDetailsProps) {
       {tracked.map((summary) => (
         <PayrollFacts key={summary.memberId} members={household.members} summary={summary} />
       ))}
-      {tracked.length > 0 && (
-        <p>
-          These amounts do not reduce take-home pay again. Estimates use base salary and entered
-          match rules; limits and vesting are not applied.
-        </p>
-      )}
       {tracked.length === 0 && <p>No payroll investments entered.</p>}
     </div>
   );
