@@ -1,7 +1,8 @@
 import type { ConnectedAccount, Household } from '@bank-piggy/contracts';
 import { AccountMappingFields } from './AccountMappingFields';
 import { accountProblem } from './mappingDraft';
-import { connectedMoney, syncTime } from './presentation';
+import { accountSnapshotMoney } from './accountSnapshotMoney';
+import { accountSnapshotBalanceLabel, accountSnapshotType } from './accountSnapshotLabels';
 import { useAccountMapping, type AccountMappingOptions } from './useAccountMapping';
 import styles from './Connections.module.css';
 import formStyles from '../plan/Editors.module.css';
@@ -19,6 +20,7 @@ type MappingState = ReturnType<typeof useAccountMapping>;
 export function ConnectedAccountRow(props: AccountRowProps) {
   const { account } = props;
   const state = useAccountMapping(props);
+  const balance = accountSnapshotMoney(account.currentBalanceCents, account.currency);
   return (
     <details className={styles.account}>
       <summary>
@@ -27,11 +29,12 @@ export function ConnectedAccountRow(props: AccountRowProps) {
           {account.mask ? ` · ${account.mask}` : ''}
         </strong>
         <span>
-          {connectedMoney(account.currentBalanceCents, account.currency)} ·{' '}
+          {accountSnapshotBalanceLabel(account)}:{' '}
+          {balance === 'Unavailable' ? 'Not provided' : balance} ·{' '}
           {account.mapping.enabled ? 'Selected' : 'Excluded'}
         </span>
       </summary>
-      <AccountSnapshot account={account} />
+      <p className={styles.meta}>{accountSnapshotType(account)}</p>
       <AccountMappingForm state={state} account={account} household={props.household} />
     </details>
   );
@@ -124,25 +127,5 @@ function MappingActions(props: { readonly state: MappingState }) {
         </p>
       )}
     </>
-  );
-}
-
-/**
- * Separates provider freshness and available balance from the current balance used in totals.
- * @param props Current provider snapshot.
- * @param props.account Current provider snapshot.
- * @returns Provider type, freshness, and available-balance labels.
- */
-function AccountSnapshot(props: { readonly account: ConnectedAccount }) {
-  const account = props.account;
-  return (
-    <p className={styles.meta}>
-      Provider type: {account.providerType}
-      {account.providerSubtype ? ` / ${account.providerSubtype}` : ''}
-      <br />
-      Available: {connectedMoney(account.availableBalanceCents, account.currency)}
-      <br />
-      Institution data time: {syncTime(account.providerUpdatedAt)}
-    </p>
   );
 }

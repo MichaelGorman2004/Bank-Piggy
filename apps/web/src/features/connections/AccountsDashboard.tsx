@@ -3,7 +3,6 @@ import type { Household } from '@bank-piggy/contracts';
 import { FinanceCard } from '../../components/FinanceCard';
 import { ConnectedAccounts } from './ConnectedAccounts';
 import { useConnectionData } from './ConnectionsContext';
-import { useAccountStatusUpdates } from './useAccountStatusUpdates';
 import { AccountInstitution } from './AccountInstitution';
 import styles from './AccountsDashboard.module.css';
 
@@ -15,8 +14,6 @@ import styles from './AccountsDashboard.module.css';
  * @returns One bounded card with shared connection management and saved balances.
  */
 export function AccountsDashboard(props: { readonly household: Household }) {
-  const state = useConnectionData();
-  useAccountStatusUpdates(state.reload);
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
@@ -28,11 +25,7 @@ export function AccountsDashboard(props: { readonly household: Household }) {
         description="All household accounts · Full account balances"
         actions={null}
         controls={<AccountsActions household={props.household} />}
-        footer={
-          <p className={styles.note}>
-            Balances update on a schedule. Check each account’s update time.
-          </p>
-        }
+        footer={<p className={styles.note}>Balances update about every 30 minutes.</p>}
       >
         <AccountsContent household={props.household} />
       </FinanceCard>
@@ -76,14 +69,10 @@ function AccountsContent(props: { readonly household: Household }) {
  * Reloads saved status without requesting a new provider read or changing mappings.
  * @param props Saved household for the existing connection manager.
  * @param props.household Saved household members and manual accounts.
- * @returns Fixed account actions and an account count without a balance sum.
+ * @returns Fixed account connection and saved-status actions.
  */
 function AccountsActions(props: { readonly household: Household }) {
   const state = useConnectionData();
-  const count = state.data?.connections.reduce(
-    (total, connection) => total + connection.accounts.length,
-    0,
-  );
   return (
     <div className={styles.controls}>
       <div className={styles.actions}>
@@ -99,11 +88,6 @@ function AccountsActions(props: { readonly household: Household }) {
           {state.loading ? 'Loading…' : 'Reload status'}
         </button>
       </div>
-      {count !== undefined && (
-        <p className={styles.note}>
-          {String(count)} linked {count === 1 ? 'account' : 'accounts'}
-        </p>
-      )}
     </div>
   );
 }

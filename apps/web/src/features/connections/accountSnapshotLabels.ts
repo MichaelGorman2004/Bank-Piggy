@@ -31,16 +31,16 @@ const PROVIDER_ACCOUNT_LABELS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Uses saved classifications first, then the provider subtype without inspecting account names.
+ * Uses resolved classifications first, then provider subtypes without inspecting account names.
  * Retirement subtypes stay neutral until the member confirms Traditional or Roth treatment.
  * @param account Raw provider account and explicit saved classification.
- * @returns A readable account type with confirmed mapping status when available.
+ * @returns A readable account type without claiming that defaults are confirmed settings.
  */
 export function accountSnapshotType(account: ConnectedAccount): string {
   const confirmed = CONNECTED_TYPES.find(
     (item) => item.value === account.mapping.classification && item.value !== 'unclassified',
   );
-  if (confirmed) return `${confirmed.label} · Confirmed`;
+  if (confirmed) return confirmed.label;
   const raw = account.providerSubtype?.trim() || account.providerType;
   const key = raw.toLowerCase().replaceAll('_', ' ');
   return PROVIDER_ACCOUNT_LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1);
@@ -49,14 +49,10 @@ export function accountSnapshotType(account: ConnectedAccount): string {
 /**
  * Separates money owed from deposit and investment balances.
  * @param account Raw provider account type.
- * @returns Current and available value labels with credit-specific meaning.
+ * @returns The primary balance label for the provider account type.
  */
-export function accountSnapshotBalanceLabels(account: ConnectedAccount) {
-  return {
-    current:
-      account.providerType === 'credit' || account.providerType === 'loan'
-        ? 'Amount owed'
-        : 'Current',
-    available: account.providerType === 'credit' ? 'Available credit' : 'Available',
-  };
+export function accountSnapshotBalanceLabel(account: ConnectedAccount): string {
+  return account.providerType === 'credit' || account.providerType === 'loan'
+    ? 'Amount owed'
+    : 'Balance';
 }

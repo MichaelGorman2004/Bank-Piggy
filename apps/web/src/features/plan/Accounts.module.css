@@ -28,6 +28,10 @@
 .row select {
   width: 100%;
 }
+.source {
+  color: var(--walnut-soft);
+  font-size: 12px;
+}
 .remove {
   display: grid;
   place-items: center;

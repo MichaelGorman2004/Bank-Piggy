@@ -8,6 +8,7 @@ import { WorkspaceContent } from './WorkspaceContent';
 import { useWorkspace } from './useWorkspace';
 import styles from './Workspace.module.css';
 import { plaidReturn } from './features/connections/oauthReturn';
+import { ConnectionsProvider } from './features/connections/ConnectionsContext';
 
 export interface WorkspaceProps {
   readonly session: Session;
@@ -37,45 +38,70 @@ export function Workspace(props: WorkspaceProps) {
   });
   const sharing = useWorkspaceSharing(props, ui);
   return (
-    <div className={styles.app}>
-      <a href="#main" className={styles.skip}>
-        Skip to main content
-      </a>
-      <Sidebar
-        session={props.session}
-        members={props.data.household.members}
-        view={ui.view}
-        open={ui.mobileOpen}
-        onView={ui.setView}
-        onClose={ui.closeMobile}
-        onSignout={props.onSignout}
-        onShare={() => {
-          void sharing.show();
-        }}
-      />
-      <div className={styles.workspace}>
-        <WorkspaceBar
+    <ConnectionsProvider
+      revision={props.data.household.revision}
+      csrfToken={props.session.csrfToken ?? ''}
+    >
+      <div className={styles.app}>
+        <a href="#main" className={styles.skip}>
+          Skip to main content
+        </a>
+        <Sidebar
+          session={props.session}
+          members={props.data.household.members}
           view={ui.view}
-          saving={props.saving}
-          mobileOpen={ui.mobileOpen}
-          onMenu={() => {
-            ui.setMobileOpen(true);
+          open={ui.mobileOpen}
+          onView={ui.setView}
+          onClose={ui.closeMobile}
+          onSignout={props.onSignout}
+          onShare={() => {
+            void sharing.show();
           }}
         />
-        <WorkspaceContent app={props} ui={ui} />
+        <div className={styles.workspace}>
+          <WorkspaceBar
+            view={ui.view}
+            saving={props.saving}
+            mobileOpen={ui.mobileOpen}
+            onMenu={() => {
+              ui.setMobileOpen(true);
+            }}
+          />
+          <WorkspaceContent app={props} ui={ui} />
+        </div>
+        <WorkspaceDialogs app={props} ui={ui} sharing={sharing} />
       </div>
+    </ConnectionsProvider>
+  );
+}
+
+/**
+ * Keeps plan and invitation dialogs within the household's shared balance source.
+ * @param props Persisted household, editor state, and invitation actions.
+ * @param props.app Saved household and persistence feedback.
+ * @param props.ui Current editor and its close action.
+ * @param props.sharing Household invitation and save actions.
+ * @returns Household dialogs without replacing their editable drafts on balance refresh.
+ */
+function WorkspaceDialogs(props: {
+  readonly app: WorkspaceProps;
+  readonly ui: ReturnType<typeof useWorkspace>;
+  readonly sharing: ReturnType<typeof useWorkspaceSharing>;
+}) {
+  return (
+    <>
       <PlanDialogs
-        active={ui.active}
-        data={props.data}
-        busy={props.saving}
-        error={props.saveError}
+        active={props.ui.active}
+        data={props.app.data}
+        busy={props.app.saving}
+        error={props.app.saveError}
         onClose={() => {
-          ui.setActive(null);
+          props.ui.setActive(null);
         }}
-        onSave={sharing.save}
+        onSave={props.sharing.save}
       />
-      <SharingDialog state={sharing} />
-    </div>
+      <SharingDialog state={props.sharing} />
+    </>
   );
 }
 

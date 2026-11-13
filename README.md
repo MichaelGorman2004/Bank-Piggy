@@ -13,7 +13,7 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Share a one-use household invitation link. The recipient joins through Google and keeps access on later sign-ins.
 - Record Traditional and Roth 401(k) percentages, tiered employer matching, or an entered employer contribution. Show these estimates separately from take-home pay.
 - Track named savings, retirement, and investment accounts by type. Derive savings and investment totals from those snapshots.
-- Optionally link read-only Plaid balances, confirm account ownership and type, and reconcile manual snapshots. Start in Sandbox; live eligibility and exact account coverage need separate checks.
+- Optionally link read-only Plaid balances, review automatic account defaults, and match existing manual snapshots. Start in Sandbox; live eligibility and exact account coverage need separate checks.
 - Switch between the household view and the signed-in member's allocated share.
 - Divide shared expenses evenly, by custom percentage, or by annual base salary. Record the payer separately.
 - Add, edit, and remove expenses and goals. Keep several goals active in the same budget.
@@ -28,12 +28,12 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Save plans in PostgreSQL. Detect concurrent edits instead of overwriting another window's changes.
 - Run an explicit loopback-only demo, or configure private access for one or two invited Google accounts.
 
-Each navigation view has one task. Planning views share the household scope, period, and planning month. To-do uses the same household scope and its own As-of date. Accounts shows full linked balances for the household with its own update times.
+Each navigation view has one task. Planning views share the household scope, period, and planning month. To-do uses the same household scope and its own As-of date. Accounts shows full linked balances for the household with one amount per account.
 
 | View               | Content                                                            |
 | ------------------ | ------------------------------------------------------------------ |
 | Overview (default) | Plan totals, recorded inputs, and balance snapshots.               |
-| Accounts           | All returned linked accounts, latest balances, and update times.   |
+| Accounts           | All returned linked accounts and their latest balances.            |
 | Money flow         | Sankey of income and planned allocations.                          |
 | Expenses           | Bills, subscriptions, regular costs, and loans with type filters.  |
 | Goals              | Ordinary savings, investment, and debt contributions.              |

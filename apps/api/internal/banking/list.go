@@ -65,7 +65,7 @@ func readConnections(ctx context.Context, tx pgx.Tx, identity Identity, environm
 	}
 	rows.Close()
 	for index := range result {
-		accounts, err := readAccounts(ctx, tx, result[index].ID)
+		accounts, err := readAccounts(ctx, tx, result[index].ID, result[index].ConnectedByMemberID)
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +74,7 @@ func readConnections(ctx context.Context, tx pgx.Tx, identity Identity, environm
 	return result, nil
 }
 
-func readAccounts(ctx context.Context, tx pgx.Tx, id string) ([]budget.ConnectedAccount, error) {
+func readAccounts(ctx context.Context, tx pgx.Tx, id, owner string) ([]budget.ConnectedAccount, error) {
 	rows, err := tx.Query(ctx, `SELECT id,snapshot,active,mapping,mapping_revision FROM bank_accounts WHERE connection_id=$1 ORDER BY id`, id)
 	if err != nil {
 		return nil, err
@@ -95,6 +95,7 @@ func readAccounts(ctx context.Context, tx pgx.Tx, id string) ([]budget.Connected
 		if err := json.Unmarshal(mapping, &account.Mapping); err != nil {
 			return nil, err
 		}
+		account.Mapping = defaultAccountMapping(account, owner)
 		result = append(result, account)
 	}
 	return result, rows.Err()

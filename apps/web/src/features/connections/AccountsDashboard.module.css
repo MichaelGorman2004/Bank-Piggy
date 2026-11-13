@@ -50,8 +50,7 @@
 .reload:hover {
   background: var(--orange-wash);
 }
-.note,
-.freshness {
+.note {
   font-size: 11px;
   line-height: 1.5;
   color: var(--walnut-soft);
@@ -105,14 +104,9 @@
 .state {
   font-size: 11px;
   color: var(--walnut-soft);
-}
-.state {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 3px 8px;
-}
-.freshness {
-  margin-top: 8px;
 }
 .institution > .notice {
   margin-top: 10px;
@@ -146,30 +140,8 @@
 .accountIdentity > .note {
   margin-top: 3px;
 }
-.details {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
-.details summary {
-  width: fit-content;
-  min-height: 44px;
-  padding-block: 12px 8px;
-  color: var(--walnut-soft);
-  font-size: 11px;
-  cursor: pointer;
-}
-.detailContent {
-  display: grid;
-  gap: 5px;
-  border-left: 2px solid var(--line);
-  padding: 0 0 6px 12px;
-  color: var(--walnut-soft);
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
 .balances {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin: 0;
   text-align: right;

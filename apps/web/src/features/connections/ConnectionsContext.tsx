@@ -1,11 +1,12 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useConnections } from './useConnections';
+import { useAccountStatusUpdates } from './useAccountStatusUpdates';
 
 type ConnectionData = ReturnType<typeof useConnections> & { readonly csrfToken: string };
 const Context = createContext<ConnectionData | null>(null);
 
 /**
- * Shares one authoritative balance projection between Overview tables and account management.
+ * Shares and refreshes one balance projection across financial views and plan editors.
  * @param props Current plan revision and financial workspace.
  * @param props.revision Saved household revision.
  * @param props.csrfToken Current session mutation token.
@@ -18,6 +19,7 @@ export function ConnectionsProvider(props: {
   readonly children: ReactNode;
 }) {
   const state = useConnections(props.revision);
+  useAccountStatusUpdates(state.reload);
   return <Context value={{ ...state, csrfToken: props.csrfToken }}>{props.children}</Context>;
 }
 

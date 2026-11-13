@@ -12,7 +12,6 @@ import type { useWorkspace } from './useWorkspace';
 import type { ActiveDialog } from './features/plan/PlanDialogs';
 import { VIEW_DETAILS, type View } from './features/plan/views';
 import styles from './Workspace.module.css';
-import { ConnectionsProvider } from './features/connections/ConnectionsContext';
 import { AccountsDashboard } from './features/connections/AccountsDashboard';
 
 interface WorkspaceContentProps {
@@ -47,25 +46,20 @@ export function WorkspaceContent({ app, ui }: WorkspaceContentProps) {
     ui.scope === HOUSEHOLD_SCOPE ? data.summary.household : data.summary.members[ui.scope];
   const factor = periodFactor(period, member);
   return (
-    <ConnectionsProvider
-      revision={app.data.household.revision}
-      csrfToken={app.session.csrfToken ?? ''}
-    >
-      <main id="main" className={styles.main} tabIndex={-1}>
-        <WorkspaceFilters app={app} ui={ui} period={period} />
-        <ReloadNotice conflict={app.conflict} error={app.error} onReload={app.onReload} />
-        {ui.view !== 'todos' && ui.view !== 'accounts' && (
-          <PlanCompleteness
-            incomeCents={app.data.summary.household.monthlyTakeHomeCents}
-            expenseCount={app.data.household.expenses.length}
-            onEdit={() => {
-              ui.open({ type: 'plan' });
-            }}
-          />
-        )}
-        <WorkspaceView app={app} ui={ui} data={data} summary={summary} factor={factor} />
-      </main>
-    </ConnectionsProvider>
+    <main id="main" className={styles.main} tabIndex={-1}>
+      <WorkspaceFilters app={app} ui={ui} period={period} />
+      <ReloadNotice conflict={app.conflict} error={app.error} onReload={app.onReload} />
+      {ui.view !== 'todos' && ui.view !== 'accounts' && (
+        <PlanCompleteness
+          incomeCents={app.data.summary.household.monthlyTakeHomeCents}
+          expenseCount={app.data.household.expenses.length}
+          onEdit={() => {
+            ui.open({ type: 'plan' });
+          }}
+        />
+      )}
+      <WorkspaceView app={app} ui={ui} data={data} summary={summary} factor={factor} />
+    </main>
   );
 }
 
