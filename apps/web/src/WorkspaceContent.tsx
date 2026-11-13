@@ -49,7 +49,7 @@ export function WorkspaceContent({ app, ui }: WorkspaceContentProps) {
     <main id="main" className={styles.main} tabIndex={-1}>
       <WorkspaceFilters app={app} ui={ui} period={period} />
       <ReloadNotice conflict={app.conflict} error={app.error} onReload={app.onReload} />
-      {ui.view !== 'todos' && ui.view !== 'accounts' && (
+      {ui.view !== 'todos' && ui.view !== 'accounts' && ui.view !== 'overview' && (
         <PlanCompleteness
           incomeCents={app.data.summary.household.monthlyTakeHomeCents}
           expenseCount={app.data.household.expenses.length}

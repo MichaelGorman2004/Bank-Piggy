@@ -53,6 +53,10 @@
 .body:focus-visible {
   outline: none;
 }
+.staticBody {
+  overflow: visible;
+  scrollbar-gutter: auto;
+}
 .card:has(> .body:focus-visible) .heading h2 {
   text-decoration: underline;
   text-decoration-thickness: 2px;

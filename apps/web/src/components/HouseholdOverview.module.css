@@ -20,6 +20,9 @@
   min-width: 0;
   min-height: 0;
 }
+.details {
+  container: household-snapshot / size;
+}
 .totals {
   grid-column: 1 / -1;
 }
