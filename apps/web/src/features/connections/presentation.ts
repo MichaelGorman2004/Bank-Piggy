@@ -12,18 +12,6 @@ export const CONNECTION_STATE_LABELS: Readonly<Record<ConnectionState, string>> 
 };
 
 /**
- * Shows a local synchronization time without treating an absent timestamp as fresh.
- * @param value Optional server timestamp.
- * @returns Local date and time, or an explicit unavailable label.
- */
-export function syncTime(value: string | null | undefined): string {
-  if (!value) return 'Not yet';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Unavailable';
-  return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-}
-
-/**
  * Keeps missing values and unsupported currencies distinct from a zero USD balance.
  * @param cents Optional provider balance in integer cents.
  * @param currency Optional provider currency code.

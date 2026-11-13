@@ -3,12 +3,7 @@ import type { Connection, Household } from '@bank-piggy/contracts';
 import { disconnectConnection, refreshConnection } from './api';
 import { useConnectionData } from './ConnectionsContext';
 import { ConnectedAccountRow } from './ConnectedAccountRow';
-import {
-  CONNECTION_STATE_LABELS,
-  connectionNotice,
-  disconnectFeedback,
-  syncTime,
-} from './presentation';
+import { CONNECTION_STATE_LABELS, connectionNotice, disconnectFeedback } from './presentation';
 import styles from './Connections.module.css';
 import formStyles from '../plan/Editors.module.css';
 
@@ -20,7 +15,7 @@ interface ConnectionRowProps {
 }
 
 /**
- * Shows connection ownership, freshness, and explicit provider recovery actions.
+ * Shows connection ownership and explicit provider recovery actions.
  * @param props Authorized connection and saved household members.
  * @returns One institution with its account mapping disclosures.
  */
@@ -51,11 +46,11 @@ export function ConnectionRow(props: ConnectionRowProps) {
 }
 
 /**
- * Labels connection state and provider freshness without promising real-time data.
+ * Labels connection state and keeps provider recovery notices visible.
  * @param props Authorized connection and connecting member name.
  * @param props.connection Current connection snapshot.
  * @param props.memberName Saved connecting member name.
- * @returns Connection state and scheduled-update timing.
+ * @returns Connection state and actionable recovery guidance.
  */
 function ConnectionMetadata(props: {
   readonly connection: Connection;
@@ -66,16 +61,6 @@ function ConnectionMetadata(props: {
   return (
     <p className={styles.meta}>
       {CONNECTION_STATE_LABELS[connection.state]} · Linked by {props.memberName}
-      <br />
-      Last successful update: {syncTime(connection.lastSyncedAt)}
-      <br />
-      {connection.nextSyncAt && (
-        <>
-          Next scheduled check: {syncTime(connection.nextSyncAt)}
-          <br />
-        </>
-      )}
-      Updates are scheduled snapshots. Institution data can be older.
       {notice && (
         <>
           <br />

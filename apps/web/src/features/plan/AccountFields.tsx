@@ -4,10 +4,13 @@ import { ACCOUNT_TYPES } from '../accounts/accountTypes';
 import type { AccountDraft, AccountUpdate } from './accountDraft';
 import { PlanMoneyField } from './PlanFields';
 import styles from './Accounts.module.css';
+import { moneyInput } from './format';
+import type { ManualAccountSource } from './manualAccountSource';
 
 interface AccountFieldsProps {
   readonly account: AccountDraft;
   readonly index: number;
+  readonly source?: ManualAccountSource;
   readonly onChange: (update: AccountUpdate) => void;
   readonly onRemove: () => void;
 }
@@ -40,16 +43,42 @@ export function AccountFields(props: AccountFieldsProps) {
           onChange({ type });
         }}
       />
-      <PlanMoneyField
-        label="Balance ($)"
-        required
-        value={account.balance}
-        onChange={(balance) => {
-          onChange({ balance });
-        }}
-      />
+      <AccountBalanceField account={account} source={props.source} onChange={onChange} />
       <RemoveAccountButton name={account.name || String(index + 1)} onRemove={onRemove} />
     </fieldset>
+  );
+}
+
+/**
+ * Displays the authoritative linked balance without writing it into the manual draft.
+ * @param props Manual draft, explicit linked source, and manual edit callback.
+ * @returns A read-only linked balance or an honestly labeled manual fallback.
+ */
+function AccountBalanceField(props: Pick<AccountFieldsProps, 'account' | 'source' | 'onChange'>) {
+  const source = props.source;
+  if (source?.state === 'linked')
+    return (
+      <label>
+        Balance ($)
+        <input readOnly value={moneyInput(source.balanceCents)} />
+        <span className={styles.source}>Updated from Plaid</span>
+      </label>
+    );
+  const help = source
+    ? source.state === 'pending'
+      ? 'Linked balance updating. Manual fallback shown.'
+      : 'Plaid balance unavailable. Manual fallback shown.'
+    : undefined;
+  return (
+    <PlanMoneyField
+      label={source ? 'Manual fallback ($)' : 'Manual balance ($)'}
+      required
+      value={props.account.balance}
+      help={help}
+      onChange={(balance) => {
+        props.onChange({ balance });
+      }}
+    />
   );
 }
 

@@ -2,7 +2,7 @@ package banking
 
 import "bankpiggy/api/internal/budget"
 
-// EffectiveBalances overlays only explicit mappings and never mutates the saved plan.
+// EffectiveBalances overlays resolved account mappings without changing the saved plan.
 // A shared account appears once in household totals; personal shares reconcile cents.
 func EffectiveBalances(plan budget.Household, connections []budget.Connection) budget.EffectiveBalances {
 	result := budget.EffectiveBalances{Members: map[string]budget.BalanceTotals{}, Accounts: []budget.EffectiveAccount{}}

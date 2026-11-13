@@ -10,6 +10,7 @@ import { BalanceCategory } from './BalanceBreakdown';
 import { ConnectedAccounts } from '../features/connections/ConnectedAccounts';
 import { useConnectionData } from '../features/connections/ConnectionsContext';
 import { EffectiveBalances } from '../features/connections/EffectiveBalances';
+import { BalanceAvailability } from '../features/connections/BalanceAvailability';
 import connectionStyles from '../features/connections/Connections.module.css';
 
 interface BalancePanelProps {
@@ -35,11 +36,7 @@ export function BalancePanel({ summary, household, scope, onEdit }: BalancePanel
   return (
     <FinanceCard
       title="Where you stand"
-      description={
-        connected && balances
-          ? 'Current balance snapshots · USD'
-          : 'Current balances · Manually tracked'
-      }
+      description="Latest balances · USD"
       actions={
         <div className={connectionStyles.balanceActions}>
           <ConnectedAccounts household={household} />
@@ -50,13 +47,19 @@ export function BalancePanel({ summary, household, scope, onEdit }: BalancePanel
       }
       footer={
         <p className={ownStyles.balanceFooter}>
-          {connected && !balances
-            ? 'Connected balances are updating for the saved plan. Showing manual snapshots.'
-            : balanceHelp(Boolean(connections.error), connected)}
+          {!balances
+            ? 'Current balances will appear after the saved account data loads.'
+            : balanceHelp(
+                Boolean(connections.error),
+                connected,
+                household.members.some((member) => member.accounts.length > 0),
+              )}
         </p>
       }
     >
-      {connected && balances ? (
+      {!balances ? (
+        <BalanceAvailability scope={scope} />
+      ) : connected ? (
         <EffectiveBalances balances={balances} household={household} scope={scope} />
       ) : (
         <ManualBalanceCategories household={household} scope={scope} summary={summary} />
@@ -64,7 +67,7 @@ export function BalancePanel({ summary, household, scope, onEdit }: BalancePanel
       <div className={`${ownStyles.balanceRow} ${balanceStyles.debt}`}>
         <span className={ownStyles.balanceLabel}>
           <WalletCards size={18} />
-          Outstanding debt
+          Manual debt
         </span>
         <strong>{money(summary.debtCents)}</strong>
       </div>
@@ -99,12 +102,15 @@ function ManualBalanceCategories(props: Omit<BalancePanelProps, 'onEdit'>) {
  * Describes the visible snapshot source and makes connection failure actionable.
  * @param failed Whether a connection request failed.
  * @param connected Whether the household has a connected balance source.
+ * @param hasManualAccounts Whether manual snapshots may need explicit duplicate matching.
  * @returns Honest snapshot guidance.
  */
-function balanceHelp(failed: boolean, connected: boolean): string {
+function balanceHelp(failed: boolean, connected: boolean, hasManualAccounts: boolean): string {
   if (failed)
     return 'Connected balances could not load. Showing the last saved view; open Connected accounts to retry.';
-  return connected
-    ? 'Connected snapshots update on a schedule. Manual balances stay separate from your monthly plan.'
-    : 'Manual balances do not update automatically. Connect an institution for scheduled balance snapshots.';
+  if (!connected)
+    return 'Manual balances do not update automatically. Connect an institution for scheduled balance snapshots.';
+  return hasManualAccounts
+    ? 'If a linked account is also entered manually, match it in Connected accounts to count it once.'
+    : 'Bank Piggy checks Plaid balances every 30 minutes. Budgets and goal progress stay separate.';
 }

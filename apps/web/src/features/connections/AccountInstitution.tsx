@@ -1,14 +1,14 @@
 import type { Connection, Household } from '@bank-piggy/contracts';
 import { AccountSnapshotRow } from './AccountSnapshotRow';
-import { CONNECTION_STATE_LABELS, connectionNotice, syncTime } from './presentation';
+import { CONNECTION_STATE_LABELS, connectionNotice } from './presentation';
 import styles from './AccountsDashboard.module.css';
 
 /**
- * Groups raw account snapshots by institution login and exposes update freshness.
+ * Groups raw account snapshots by institution login and shows connection problems.
  * @param props Authorized institution and household member names.
  * @param props.connection Authorized institution state and all its accounts.
  * @param props.household Saved household members.
- * @returns Institution state, saved update times, and every linked account.
+ * @returns Institution state, recovery guidance, and every linked account.
  */
 export function AccountInstitution(props: {
   readonly connection: Connection;
@@ -26,10 +26,6 @@ export function AccountInstitution(props: {
         </div>
         <span className={styles.state}>{CONNECTION_STATE_LABELS[connection.state]}</span>
       </div>
-      <p className={styles.freshness}>
-        Last successful sync: {syncTime(connection.lastSyncedAt)}
-        {connection.nextSyncAt && ` · Next check: ${syncTime(connection.nextSyncAt)}`}
-      </p>
       {notice && <p className={styles.notice}>{notice}</p>}
       {connection.accounts.length === 0 && (
         <p className={styles.message}>
@@ -38,7 +34,7 @@ export function AccountInstitution(props: {
       )}
       <div className={styles.accounts}>
         {connection.accounts.map((account) => (
-          <AccountSnapshotRow key={account.id} account={account} household={household} />
+          <AccountSnapshotRow key={account.id} account={account} />
         ))}
       </div>
     </section>

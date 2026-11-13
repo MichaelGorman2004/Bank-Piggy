@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { accountSnapshotBalanceLabels, accountSnapshotType } from './accountSnapshotLabels.ts';
+import { accountSnapshotBalanceLabel, accountSnapshotType } from './accountSnapshotLabels.ts';
 
 /** Builds provider inputs with no confirmed account classification. */
 function account(overrides = {}) {
@@ -8,6 +8,7 @@ function account(overrides = {}) {
     name: 'Roth Traditional IRA 401k',
     providerType: 'investment',
     providerSubtype: 'brokerage',
+    mappingRevision: 1,
     mapping: { classification: 'unclassified' },
     ...overrides,
   };
@@ -20,12 +21,24 @@ test('account names never confirm retirement treatment or change provider classi
   assert.equal(accountSnapshotType(account({ providerSubtype: 'roth' })), 'IRA');
   assert.equal(
     accountSnapshotType(account({ mapping: { classification: 'roth_ira' } })),
-    'Roth IRA · Confirmed',
+    'Roth IRA',
   );
   assert.equal(
     accountSnapshotType(account({ mapping: { classification: 'traditional_401k' } })),
-    'Traditional 401(k) · Confirmed',
+    'Traditional 401(k)',
   );
+});
+
+test('neutral automatic investment defaults retain the provider retirement label', () => {
+  for (const [providerSubtype, label] of [
+    ['401k', '401(k)'],
+    ['roth', 'IRA'],
+    ['ira', 'IRA'],
+  ]) {
+    const input = account({ providerSubtype, mapping: { classification: 'other_investment' } });
+    assert.equal(accountSnapshotType(input), label);
+    assert.equal(accountSnapshotType({ ...input, mappingRevision: 2 }), 'Other investment');
+  }
 });
 
 test('unknown provider subtypes remain readable and missing subtypes use the provider type', () => {
@@ -45,16 +58,7 @@ test('unknown provider subtypes remain readable and missing subtypes use the pro
 });
 
 test('credit and loan values describe money owed without presenting them as assets', () => {
-  assert.deepEqual(accountSnapshotBalanceLabels(account({ providerType: 'credit' })), {
-    current: 'Amount owed',
-    available: 'Available credit',
-  });
-  assert.deepEqual(accountSnapshotBalanceLabels(account({ providerType: 'loan' })), {
-    current: 'Amount owed',
-    available: 'Available',
-  });
-  assert.deepEqual(accountSnapshotBalanceLabels(account()), {
-    current: 'Current',
-    available: 'Available',
-  });
+  assert.equal(accountSnapshotBalanceLabel(account({ providerType: 'credit' })), 'Amount owed');
+  assert.equal(accountSnapshotBalanceLabel(account({ providerType: 'loan' })), 'Amount owed');
+  assert.equal(accountSnapshotBalanceLabel(account()), 'Balance');
 });

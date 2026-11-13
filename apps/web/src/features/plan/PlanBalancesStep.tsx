@@ -7,6 +7,8 @@ import type { PlanAction } from './planReducer';
 import { PlanMoneyField } from './PlanFields';
 import styles from './Editors.module.css';
 import accountStyles from './Accounts.module.css';
+import { useConnectionData } from '../connections/ConnectionsContext';
+import { manualAccountSource } from './manualAccountSource';
 
 interface MemberBalancesProps {
   readonly draft: MemberDraft;
@@ -21,6 +23,7 @@ interface MemberBalancesProps {
  */
 function MemberBalances(props: MemberBalancesProps) {
   const { draft, index, dispatch } = props;
+  const connections = useConnectionData();
   return (
     <section className={styles.member}>
       <h3>{draft.name || `Member ${String(index + 1)}`}</h3>
@@ -30,6 +33,7 @@ function MemberBalances(props: MemberBalancesProps) {
             key={account.id}
             account={account}
             index={accountIndex}
+            source={manualAccountSource(connections, draft.member.id, account.id)}
             onChange={(update) => {
               dispatch({ type: 'account', memberIndex: index, id: account.id, update });
             }}
@@ -38,7 +42,7 @@ function MemberBalances(props: MemberBalancesProps) {
             }}
           />
         ))}
-        {!draft.accounts.length && <p className={styles.help}>No accounts entered.</p>}
+        {!draft.accounts.length && <p className={styles.help}>No manual accounts entered.</p>}
         <AddAccountButton {...props} />
         <PlanMoneyField
           label="Outstanding debt ($)"
@@ -96,8 +100,8 @@ export function PlanBalances(props: {
     <details>
       <summary>Current balances (optional)</summary>
       <p className={`${styles.help} ${accountStyles.intro}`}>
-        Enter savings, retirement, and brokerage balances manually. These snapshots do not change
-        monthly contributions or money saved toward a target.
+        Manage linked balances in Accounts. Add manual balances for accounts you have not linked.
+        These balances do not change monthly contributions or goal progress.
       </p>
       {members.map((draft, index) => (
         <MemberBalances key={draft.member.id} draft={draft} index={index} dispatch={dispatch} />

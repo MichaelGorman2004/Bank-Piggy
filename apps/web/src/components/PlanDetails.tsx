@@ -27,7 +27,7 @@ const INCOME_FACTS: ReadonlyArray<PlanFact> = [
 const BALANCE_FACTS: ReadonlyArray<PlanFact> = [
   { label: 'Savings', read: (member) => accountTotals(member.accounts).savingsCents },
   { label: 'Investments', read: (member) => accountTotals(member.accounts).investmentsCents },
-  { label: 'Debt', read: (member) => member.debtCents },
+  { label: 'Manual debt', read: (member) => member.debtCents },
 ];
 const COMPACT_THRESHOLD_CENTS = 100_000_000;
 
@@ -110,26 +110,6 @@ export function PlanDetails(props: {
   readonly household: Household;
   readonly payrollSummaries: readonly PayrollSummary[];
 }) {
-  const connections = useConnectionData();
-  const balances = connections.data?.connections.length ? connections.balances?.members : undefined;
-  const balanceFacts: ReadonlyArray<PlanFact> = balances
-    ? [
-        {
-          label: 'Checking',
-          read: (member) => balances[member.id].checkingCents,
-        },
-        { label: 'Savings', read: (member) => balances[member.id].savingsCents },
-        {
-          label: 'Investments',
-          read: (member) => balances[member.id].investmentsCents,
-        },
-        {
-          label: 'Health savings',
-          read: (member) => balances[member.id].hsaCents,
-        },
-        { label: 'Debt (manual)', read: (member) => member.debtCents },
-      ]
-    : BALANCE_FACTS;
   const split = { salary: 'Base salary', equal: 'Equal shares', custom: 'Custom percentage' };
   return (
     <FinanceCard
@@ -147,12 +127,37 @@ export function PlanDetails(props: {
     >
       <div className={styles.tables}>
         <FactTable members={props.household.members} facts={INCOME_FACTS} label="Income" />
-        <div>
-          <BalanceAvailability scope={HOUSEHOLD_SCOPE} />
-          <FactTable members={props.household.members} facts={balanceFacts} label="Balances" />
-        </div>
+        <CurrentBalanceFacts household={props.household} />
       </div>
       <PayrollOverview members={props.household.members} summaries={props.payrollSummaries} />
     </FinanceCard>
+  );
+}
+
+/**
+ * Uses one plan-matched projection for current facts and withholds stale manual replacements.
+ * @param props Saved household used for member labels and manual-only balances.
+ * @param props.household Saved household with stable member identities.
+ * @returns Current per-member balances or an explicit pending notice.
+ */
+function CurrentBalanceFacts(props: { readonly household: Household }) {
+  const connections = useConnectionData();
+  const balances = connections.data?.connections.length ? connections.balances?.members : undefined;
+  const facts: ReadonlyArray<PlanFact> = balances
+    ? [
+        { label: 'Checking', read: (member) => balances[member.id].checkingCents },
+        { label: 'Savings', read: (member) => balances[member.id].savingsCents },
+        { label: 'Investments', read: (member) => balances[member.id].investmentsCents },
+        { label: 'Health savings', read: (member) => balances[member.id].hsaCents },
+        { label: 'Manual debt', read: (member) => member.debtCents },
+      ]
+    : BALANCE_FACTS;
+  return (
+    <div>
+      <BalanceAvailability scope={HOUSEHOLD_SCOPE} />
+      {connections.balances && (
+        <FactTable members={props.household.members} facts={facts} label="Balances" />
+      )}
+    </div>
   );
 }

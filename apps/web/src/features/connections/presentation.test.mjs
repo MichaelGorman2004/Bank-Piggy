@@ -5,7 +5,6 @@ import {
   hasMissingCurrentBalance,
   connectionNotice,
   disconnectFeedback,
-  syncTime,
   UNVERIFIED_REMOVAL_NOTICE,
 } from './presentation.ts';
 
@@ -17,12 +16,6 @@ test('connected balances distinguish missing data, zero, negative balances, and 
   assert.equal(connectedMoney(12345, undefined), 'Currency unavailable');
   assert.equal(connectedMoney(1.5, 'USD'), 'Balance unavailable');
   assert.equal(connectedMoney(Number.MAX_SAFE_INTEGER + 1, 'USD'), 'Balance unavailable');
-});
-
-test('sync timestamps do not imply a successful update when missing or invalid', () => {
-  assert.equal(syncTime(undefined), 'Not yet');
-  assert.equal(syncTime('invalid'), 'Unavailable');
-  assert.match(syncTime('2026-11-11T12:34:00Z'), /Nov 11, 2026/);
 });
 
 test('local pending closure never claims verified provider revocation', () => {

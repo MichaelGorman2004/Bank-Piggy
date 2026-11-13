@@ -10,7 +10,7 @@ type StatusBrowser = Pick<
 >;
 
 /**
- * Keeps an open Accounts view current with stored server snapshots, without provider refreshes.
+ * Keeps financial views current with stored server snapshots, without provider refreshes.
  * @param reload Stable connection read that owns its own request-error feedback.
  */
 export function useAccountStatusUpdates(reload: ReloadAccounts): void {
