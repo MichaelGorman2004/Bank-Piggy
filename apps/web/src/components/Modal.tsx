@@ -9,30 +9,52 @@ interface ModalProps {
   readonly onClose: () => void;
   readonly busy?: boolean;
   readonly wide?: boolean;
+  readonly suspended?: boolean;
 }
 
 /**
  * Opens the native dialog and restores its connected opening control on unmount.
+ * @param suspended Whether an external consent dialog temporarily owns focus.
  * @returns Dialog element reference.
  */
-function useModalFocus() {
+function useModalFocus(suspended: boolean) {
   const ref = useRef<HTMLDialogElement>(null);
+  const pausedFocus = useRef<HTMLElement | null>(null);
   useEffect(() => {
     const dialog = ref.current;
     const previous = document.activeElement;
-    dialog?.showModal();
-    dialog
-      ?.querySelector<HTMLElement>(
-        'input:not(:disabled), select:not(:disabled), textarea:not(:disabled)',
-      )
-      ?.focus({ preventScroll: true });
     return () => {
       dialog?.close();
       if (previous instanceof HTMLElement && previous.isConnected)
         previous.focus({ preventScroll: true });
     };
   }, []);
+  useEffect(() => {
+    const dialog = ref.current;
+    if (suspended) {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && dialog?.contains(active)) pausedFocus.current = active;
+      dialog?.close();
+      return;
+    }
+    dialog?.showModal();
+    focusDialog(dialog, pausedFocus.current);
+  }, [suspended]);
   return ref;
+}
+
+/**
+ * Restores the suspended control or focuses the first editable native field.
+ * @param dialog Mounted native dialog.
+ * @param previous Control that had focus before external provider consent.
+ */
+function focusDialog(dialog: HTMLDialogElement | null, previous: HTMLElement | null) {
+  const target = previous?.isConnected
+    ? previous
+    : dialog?.querySelector<HTMLElement>(
+        'input:not(:disabled), select:not(:disabled), textarea:not(:disabled)',
+      );
+  target?.focus({ preventScroll: true });
 }
 
 /**
@@ -44,6 +66,7 @@ function useModalFocus() {
  * @param root0.onClose Closes the current dialog or drawer.
  * @param root0.busy Whether persistence is in progress.
  * @param root0.wide Whether the dialog uses the wider layout.
+ * @param root0.suspended Whether an external consent dialog temporarily owns focus.
  * @returns Rendered interface.
  */
 export function Modal({
@@ -53,8 +76,9 @@ export function Modal({
   onClose,
   busy = false,
   wide = false,
+  suspended = false,
 }: ModalProps) {
-  const ref = useModalFocus();
+  const ref = useModalFocus(suspended);
   return (
     <dialog
       ref={ref}

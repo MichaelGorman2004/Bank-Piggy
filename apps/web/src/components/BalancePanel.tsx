@@ -7,6 +7,10 @@ import ownStyles from './DashboardRows.module.css';
 import balanceStyles from './BalancePanel.module.css';
 import { FinanceCard } from './FinanceCard';
 import { BalanceCategory } from './BalanceBreakdown';
+import { ConnectedAccounts } from '../features/connections/ConnectedAccounts';
+import { useConnectionData } from '../features/connections/ConnectionsContext';
+import { EffectiveBalances } from '../features/connections/EffectiveBalances';
+import connectionStyles from '../features/connections/Connections.module.css';
 
 interface BalancePanelProps {
   readonly summary: Summary;
@@ -25,32 +29,38 @@ interface BalancePanelProps {
  * @returns Rendered interface.
  */
 export function BalancePanel({ summary, household, scope, onEdit }: BalancePanelProps) {
-  const groups = scopedAccountGroups(household, scope);
+  const connections = useConnectionData();
+  const connected = Boolean(connections.data?.connections.length);
+  const balances = connections.balances;
   return (
     <FinanceCard
       title="Where you stand"
-      description="Current balances · Manually tracked"
+      description={
+        connected && balances
+          ? 'Current balance snapshots · USD'
+          : 'Current balances · Manually tracked'
+      }
       actions={
-        <button className={styles.iconButton} onClick={onEdit} aria-label="Edit balances">
-          <Pencil size={13} />
-        </button>
+        <div className={connectionStyles.balanceActions}>
+          <ConnectedAccounts household={household} />
+          <button className={styles.iconButton} onClick={onEdit} aria-label="Edit balances">
+            <Pencil size={13} />
+          </button>
+        </div>
       }
       footer={
         <p className={ownStyles.balanceFooter}>
-          Balances are entered manually and do not update automatically.
+          {connected && !balances
+            ? 'Connected balances are updating for the saved plan. Showing manual snapshots.'
+            : balanceHelp(Boolean(connections.error), connected)}
         </p>
       }
     >
-      <BalanceCategory
-        group="Savings"
-        totalCents={summary.savingsCents}
-        groups={groups.filter((group) => group.group === 'Savings')}
-      />
-      <BalanceCategory
-        group="Investments"
-        totalCents={summary.investmentsCents}
-        groups={groups.filter((group) => group.group === 'Investments')}
-      />
+      {connected && balances ? (
+        <EffectiveBalances balances={balances} household={household} scope={scope} />
+      ) : (
+        <ManualBalanceCategories household={household} scope={scope} summary={summary} />
+      )}
       <div className={`${ownStyles.balanceRow} ${balanceStyles.debt}`}>
         <span className={ownStyles.balanceLabel}>
           <WalletCards size={18} />
@@ -60,4 +70,41 @@ export function BalancePanel({ summary, household, scope, onEdit }: BalancePanel
       </div>
     </FinanceCard>
   );
+}
+
+/**
+ * Preserves the existing typed manual breakdown when no connection snapshot is available.
+ * @param props Saved manual accounts and server totals.
+ * @returns The savings and investment categories from the manual plan.
+ */
+function ManualBalanceCategories(props: Omit<BalancePanelProps, 'onEdit'>) {
+  const groups = scopedAccountGroups(props.household, props.scope);
+  return (
+    <>
+      <BalanceCategory
+        group="Savings"
+        totalCents={props.summary.savingsCents}
+        groups={groups.filter((group) => group.group === 'Savings')}
+      />
+      <BalanceCategory
+        group="Investments"
+        totalCents={props.summary.investmentsCents}
+        groups={groups.filter((group) => group.group === 'Investments')}
+      />
+    </>
+  );
+}
+
+/**
+ * Describes the visible snapshot source and makes connection failure actionable.
+ * @param failed Whether a connection request failed.
+ * @param connected Whether the household has a connected balance source.
+ * @returns Honest snapshot guidance.
+ */
+function balanceHelp(failed: boolean, connected: boolean): string {
+  if (failed)
+    return 'Connected balances could not load. Showing the last saved view; open Connected accounts to retry.';
+  return connected
+    ? 'Connected snapshots update on a schedule. Manual balances stay separate from your monthly plan.'
+    : 'Manual balances do not update automatically. Connect an institution for scheduled balance snapshots.';
 }

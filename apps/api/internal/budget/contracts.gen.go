@@ -275,3 +275,122 @@ type InvitationPreview struct {
 	MemberName    string `json:"memberName"`
 	ExpiresAt     string `json:"expiresAt"`
 }
+
+// ConnectedAccountType is defined in the canonical OpenAPI contract.
+type ConnectedAccountType string
+
+// ConnectionKind is defined in the canonical OpenAPI contract.
+type ConnectionKind string
+
+// ConnectionState is defined in the canonical OpenAPI contract.
+type ConnectionState string
+
+// AccountOwnership is defined in the canonical OpenAPI contract.
+type AccountOwnership string
+
+// AccountMapping is defined in the canonical OpenAPI contract.
+type AccountMapping struct {
+	Enabled         bool                 `json:"enabled"`
+	Ownership       AccountOwnership     `json:"ownership"`
+	Classification  ConnectedAccountType `json:"classification"`
+	ManualMemberID  *string              `json:"manualMemberId"`
+	ManualAccountID *string              `json:"manualAccountId"`
+}
+
+// AccountMappingRequest is defined in the canonical OpenAPI contract.
+type AccountMappingRequest struct {
+	Revision        int64                `json:"revision"`
+	Enabled         bool                 `json:"enabled"`
+	Ownership       AccountOwnership     `json:"ownership"`
+	Classification  ConnectedAccountType `json:"classification"`
+	ManualMemberID  *string              `json:"manualMemberId,omitempty"`
+	ManualAccountID *string              `json:"manualAccountId,omitempty"`
+}
+
+// ConnectedAccount is defined in the canonical OpenAPI contract.
+type ConnectedAccount struct {
+	ID                    string         `json:"id"`
+	Name                  string         `json:"name"`
+	ProviderType          string         `json:"providerType"`
+	ProviderSubtype       *string        `json:"providerSubtype"`
+	Mask                  *string        `json:"mask"`
+	Currency              *string        `json:"currency"`
+	CurrentBalanceCents   *int64         `json:"currentBalanceCents"`
+	AvailableBalanceCents *int64         `json:"availableBalanceCents"`
+	ProviderUpdatedAt     *string        `json:"providerUpdatedAt"`
+	Active                bool           `json:"active"`
+	Mapping               AccountMapping `json:"mapping"`
+	MappingRevision       int64          `json:"mappingRevision"`
+}
+
+// Connection is defined in the canonical OpenAPI contract.
+type Connection struct {
+	ID                     string             `json:"id"`
+	InstitutionName        string             `json:"institutionName"`
+	ConnectedByMemberID    string             `json:"connectedByMemberId"`
+	Kind                   ConnectionKind     `json:"kind"`
+	State                  ConnectionState    `json:"state"`
+	CanManage              bool               `json:"canManage"`
+	CanReconnect           bool               `json:"canReconnect"`
+	LastSyncedAt           *string            `json:"lastSyncedAt"`
+	NextSyncAt             *string            `json:"nextSyncAt"`
+	ErrorCode              *string            `json:"errorCode"`
+	Accounts               []ConnectedAccount `json:"accounts"`
+	LastCompletedAttemptID *string            `json:"lastCompletedAttemptId"`
+}
+
+// BalanceTotals is defined in the canonical OpenAPI contract.
+type BalanceTotals struct {
+	CheckingCents    int64 `json:"checkingCents"`
+	SavingsCents     int64 `json:"savingsCents"`
+	InvestmentsCents int64 `json:"investmentsCents"`
+	HsaCents         int64 `json:"hsaCents"`
+}
+
+// EffectiveAccount is defined in the canonical OpenAPI contract.
+type EffectiveAccount struct {
+	ID             string               `json:"id"`
+	Name           string               `json:"name"`
+	Ownership      AccountOwnership     `json:"ownership"`
+	Classification ConnectedAccountType `json:"classification"`
+	Source         string               `json:"source"`
+	BalanceCents   *int64               `json:"balanceCents"`
+	Currency       *string              `json:"currency"`
+	Included       bool                 `json:"included"`
+}
+
+// EffectiveBalances is defined in the canonical OpenAPI contract.
+type EffectiveBalances struct {
+	Household BalanceTotals            `json:"household"`
+	Members   map[string]BalanceTotals `json:"members"`
+	Accounts  []EffectiveAccount       `json:"accounts"`
+}
+
+// ConnectionList is defined in the canonical OpenAPI contract.
+type ConnectionList struct {
+	Enabled           bool              `json:"enabled"`
+	Environment       string            `json:"environment"`
+	Connections       []Connection      `json:"connections"`
+	EffectiveBalances EffectiveBalances `json:"effectiveBalances"`
+	PlanRevision      int64             `json:"planRevision"`
+}
+
+// LinkTokenRequest is defined in the canonical OpenAPI contract.
+type LinkTokenRequest struct {
+	Kind         *ConnectionKind `json:"kind,omitempty"`
+	ConnectionID *string         `json:"connectionId,omitempty"`
+}
+
+// LinkTokenResponse is defined in the canonical OpenAPI contract.
+type LinkTokenResponse struct {
+	AttemptID    string `json:"attemptId"`
+	LinkToken    string `json:"linkToken"`
+	ExpiresAt    string `json:"expiresAt"`
+	ConnectionID string `json:"connectionId"`
+}
+
+// ExchangeRequest is defined in the canonical OpenAPI contract.
+type ExchangeRequest struct {
+	AttemptID   string  `json:"attemptId"`
+	PublicToken *string `json:"publicToken,omitempty"`
+}

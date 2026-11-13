@@ -99,4 +99,12 @@ The repository does not configure database encryption, backups, a deployment fir
 - [Account HTTP tests](../../apps/api/internal/server/accounts_test.go) require complete account records, reject noncanonical aggregates, and preserve saved data after invalid writes.
 - [Ordinary progress HTTP tests](../../apps/api/internal/server/savings_targets_test.go) preserve manual progress while keeping account balances and monthly allocations unchanged.
 
-These tests include a simulated identity provider. They do not prove live Google consent, deployed cookie behavior, or access to bank data. No bank tokens or provider synchronization exist in this version.
+These tests include a simulated identity provider. They do not prove live Google consent, deployed cookie behavior, or access to bank data. Optional Plaid credentials and synchronization now have separate trust boundaries. See [Plaid security and lifecycle](plaid.md#ownership-and-trust-boundaries). Local provider simulations do not establish live bank access.
+
+## Plaid provider boundary
+
+Plaid is disabled by default. Enabling it requires explicit environment, server credentials, and a valid AES-256-GCM key ring. Production also requires confirmed Trial access and an approved lifetime reservation budget. The server retains the existing private-mode, session, membership, exact-origin, and CSRF checks. Link attempts bind to the server session and household. Only the connecting member can reconnect or remove a connection.
+
+Access tokens and transient Link credentials stay encrypted on the server. The official Link flow collects institution credentials. A dedicated webhook route verifies ES256, rotating key identity, freshness, and the exact body hash before scheduling work. Fixed endpoints, bounded requests, deadlines, and durable job ownership limit provider work. Disconnect invalidates older worker generations and retains the revocation credential until removal succeeds.
+
+See [Plaid design](plaid.md) for the exact money rules, mapping authorization, exchange failure window, key rotation, recovery procedure, and unverified live paths. These controls are not a security-compliance certification.

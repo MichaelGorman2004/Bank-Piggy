@@ -239,3 +239,107 @@ export type InvitationPreview = {
   memberName: string;
   expiresAt: string;
 };
+
+export type ConnectedAccountType = "traditional_401k" | "roth_401k" | "traditional_ira" | "roth_ira" | "brokerage" | "high_yield_savings" | "savings" | "other_investment" | "checking" | "hsa" | "unclassified";
+
+export type ConnectionKind = "depository" | "investment";
+
+export type ConnectionState = "pending" | "connected" | "reconnect" | "delayed" | "disconnecting" | "disconnected";
+
+export type AccountOwnership = "member-1" | "member-2" | "shared";
+
+export type AccountMapping = {
+  enabled: boolean;
+  ownership: AccountOwnership;
+  classification: ConnectedAccountType;
+  manualMemberId: string | null;
+  manualAccountId: string | null;
+};
+
+export type AccountMappingRequest = {
+  revision: number;
+  enabled: boolean;
+  ownership: AccountOwnership;
+  classification: ConnectedAccountType;
+  manualMemberId?: string;
+  manualAccountId?: string;
+};
+
+export type ConnectedAccount = {
+  id: string;
+  name: string;
+  providerType: string;
+  providerSubtype: string | null;
+  mask: string | null;
+  currency: string | null;
+  currentBalanceCents: number | null;
+  availableBalanceCents: number | null;
+  providerUpdatedAt: string | null;
+  active: boolean;
+  mapping: AccountMapping;
+  mappingRevision: number;
+};
+
+export type Connection = {
+  id: string;
+  institutionName: string;
+  connectedByMemberId: string;
+  kind: ConnectionKind;
+  state: ConnectionState;
+  canManage: boolean;
+  canReconnect: boolean;
+  lastSyncedAt: string | null;
+  nextSyncAt: string | null;
+  errorCode: string | null;
+  accounts: Array<ConnectedAccount>;
+  lastCompletedAttemptId: string | null;
+};
+
+export type BalanceTotals = {
+  checkingCents: number;
+  savingsCents: number;
+  investmentsCents: number;
+  hsaCents: number;
+};
+
+export type EffectiveAccount = {
+  id: string;
+  name: string;
+  ownership: AccountOwnership;
+  classification: ConnectedAccountType;
+  source: "manual" | "plaid";
+  balanceCents: number | null;
+  currency: string | null;
+  included: boolean;
+};
+
+export type EffectiveBalances = {
+  household: BalanceTotals;
+  members: Record<string, BalanceTotals>;
+  accounts: Array<EffectiveAccount>;
+};
+
+export type ConnectionList = {
+  enabled: boolean;
+  environment: "disabled" | "sandbox" | "production";
+  connections: Array<Connection>;
+  effectiveBalances: EffectiveBalances;
+  planRevision: number;
+};
+
+export type LinkTokenRequest = {
+  kind?: ConnectionKind;
+  connectionId?: string;
+};
+
+export type LinkTokenResponse = {
+  attemptId: string;
+  linkToken: string;
+  expiresAt: string;
+  connectionId: string;
+};
+
+export type ExchangeRequest = {
+  attemptId: string;
+  publicToken?: string;
+};

@@ -16,7 +16,7 @@ interface DashboardProps {
   readonly summary: Summary;
   readonly scope: string;
   readonly factor: number;
-  readonly view: View;
+  readonly view: Exclude<View, 'accounts' | 'todos'>;
   readonly onExpense: (expense?: Expense, initialKind?: Expense['kind']) => void;
   readonly onGoal: (goal?: Goal) => void;
   readonly onPlan: () => void;

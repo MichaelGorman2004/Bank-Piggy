@@ -7,6 +7,7 @@ import { WorkspaceBar } from './WorkspaceChrome';
 import { WorkspaceContent } from './WorkspaceContent';
 import { useWorkspace } from './useWorkspace';
 import styles from './Workspace.module.css';
+import { plaidReturn } from './features/connections/oauthReturn';
 
 export interface WorkspaceProps {
   readonly session: Session;
@@ -32,7 +33,7 @@ export function Workspace(props: WorkspaceProps) {
   const ui = useWorkspace({
     conflict: props.conflict || props.loading,
     onClearError: props.onClearError,
-    blank: isBlankPlan(props.data),
+    blank: isBlankPlan(props.data) && !plaidReturn(),
   });
   const sharing = useWorkspaceSharing(props, ui);
   return (

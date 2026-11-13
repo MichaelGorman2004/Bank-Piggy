@@ -950,6 +950,481 @@
         }
       },
       "description": "A limited invitation preview without financial data. Preparing does not consume the invitation or create membership."
+    },
+    "ConnectedAccountType": {
+      "type": "string",
+      "enum": [
+        "traditional_401k",
+        "roth_401k",
+        "traditional_ira",
+        "roth_ira",
+        "brokerage",
+        "high_yield_savings",
+        "savings",
+        "other_investment",
+        "checking",
+        "hsa",
+        "unclassified"
+      ]
+    },
+    "ConnectionKind": {
+      "type": "string",
+      "enum": ["depository", "investment"]
+    },
+    "ConnectionState": {
+      "type": "string",
+      "enum": ["pending", "connected", "reconnect", "delayed", "disconnecting", "disconnected"]
+    },
+    "AccountOwnership": {
+      "type": "string",
+      "enum": ["member-1", "member-2", "shared"]
+    },
+    "AccountMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "ownership", "classification", "manualMemberId", "manualAccountId"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "ownership": {
+          "$ref": "#/$defs/AccountOwnership"
+        },
+        "classification": {
+          "$ref": "#/$defs/ConnectedAccountType"
+        },
+        "manualMemberId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "manualAccountId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "description": "Explicit household balance selection. A manual mapping replaces that manual snapshot in effective balances only. The editable plan is unchanged. Shared ownership counts once and splits reconciled cents in personal views."
+    },
+    "AccountMappingRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "enabled", "ownership", "classification"],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ownership": {
+          "$ref": "#/$defs/AccountOwnership"
+        },
+        "classification": {
+          "$ref": "#/$defs/ConnectedAccountType"
+        },
+        "manualMemberId": {
+          "anyOf": [
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Omit when absent. Explicit null is invalid."
+        },
+        "manualAccountId": {
+          "anyOf": [
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Omit when absent. Explicit null is invalid."
+        }
+      }
+    },
+    "ConnectedAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "providerType",
+        "providerSubtype",
+        "mask",
+        "currency",
+        "currentBalanceCents",
+        "availableBalanceCents",
+        "providerUpdatedAt",
+        "active",
+        "mapping",
+        "mappingRevision"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "providerType": {
+          "type": "string"
+        },
+        "providerSubtype": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mask": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currentBalanceCents": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "availableBalanceCents": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "providerUpdatedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "mapping": {
+          "$ref": "#/$defs/AccountMapping"
+        },
+        "mappingRevision": {
+          "type": "integer"
+        }
+      },
+      "description": "Server-owned account ID and provider snapshot. Missing amounts and amounts with unsupported fractional-cent precision remain null; amounts are never rounded. Only supported USD current balances enter effective totals after explicit selection."
+    },
+    "Connection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "institutionName",
+        "connectedByMemberId",
+        "kind",
+        "state",
+        "canManage",
+        "canReconnect",
+        "lastSyncedAt",
+        "nextSyncAt",
+        "errorCode",
+        "accounts",
+        "lastCompletedAttemptId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "institutionName": {
+          "type": "string"
+        },
+        "connectedByMemberId": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ConnectionKind"
+        },
+        "state": {
+          "$ref": "#/$defs/ConnectionState"
+        },
+        "canManage": {
+          "type": "boolean"
+        },
+        "canReconnect": {
+          "type": "boolean"
+        },
+        "lastSyncedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextSyncAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConnectedAccount"
+          }
+        },
+        "lastCompletedAttemptId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Server-owned completion proof for a Link attempt. Existing connection state alone does not prove reconnect completion."
+        }
+      }
+    },
+    "BalanceTotals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkingCents", "savingsCents", "investmentsCents", "hsaCents"],
+      "properties": {
+        "checkingCents": {
+          "type": "integer"
+        },
+        "savingsCents": {
+          "type": "integer"
+        },
+        "investmentsCents": {
+          "type": "integer"
+        },
+        "hsaCents": {
+          "type": "integer"
+        }
+      }
+    },
+    "EffectiveAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "ownership",
+        "classification",
+        "source",
+        "balanceCents",
+        "currency",
+        "included"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "ownership": {
+          "$ref": "#/$defs/AccountOwnership"
+        },
+        "classification": {
+          "$ref": "#/$defs/ConnectedAccountType"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["manual", "plaid"]
+        },
+        "balanceCents": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "included": {
+          "type": "boolean"
+        }
+      }
+    },
+    "EffectiveBalances": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["household", "members", "accounts"],
+      "properties": {
+        "household": {
+          "$ref": "#/$defs/BalanceTotals"
+        },
+        "members": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/BalanceTotals"
+          }
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EffectiveAccount"
+          }
+        }
+      },
+      "description": "Independent server projection. Manual snapshots count unless explicitly replaced by an eligible selected connection snapshot. It does not alter income, plan revisions, goals, or task completion."
+    },
+    "ConnectionList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "environment", "connections", "effectiveBalances", "planRevision"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["disabled", "sandbox", "production"]
+        },
+        "connections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Connection"
+          }
+        },
+        "effectiveBalances": {
+          "$ref": "#/$defs/EffectiveBalances"
+        },
+        "planRevision": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "LinkTokenRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConnectionKind"
+            }
+          ],
+          "description": "Omit when absent. Explicit null is invalid."
+        },
+        "connectionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Omit when absent. Explicit null is invalid."
+        }
+      }
+    },
+    "LinkTokenResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attemptId", "linkToken", "expiresAt", "connectionId"],
+      "properties": {
+        "attemptId": {
+          "type": "string"
+        },
+        "linkToken": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "connectionId": {
+          "type": "string"
+        }
+      },
+      "description": "Ephemeral Link credentials bound to the current session, member and household. Never persist them in browser storage or URLs."
+    },
+    "ExchangeRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attemptId"],
+      "properties": {
+        "attemptId": {
+          "type": "string"
+        },
+        "publicToken": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 1024
+            }
+          ],
+          "description": "Omit when absent. Explicit null is invalid."
+        }
+      }
     }
   }
 }

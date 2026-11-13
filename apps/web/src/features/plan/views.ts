@@ -1,6 +1,7 @@
 /** Names each focused workspace view and its primary action. */
 export const VIEW_DETAILS = {
   overview: { label: 'Overview', title: 'Your household plan.', actionLabel: 'Edit plan' },
+  accounts: { label: 'Accounts', title: 'Accounts', actionLabel: 'Connect accounts' },
   flow: { label: 'Money flow', title: 'Money flow', actionLabel: 'Adjust plan' },
   todos: { label: 'To-do', title: 'Your pay-period To-do.', actionLabel: 'Edit pay plan' },
   expenses: { label: 'Expenses', title: 'Your expenses.', actionLabel: 'Add expense' },

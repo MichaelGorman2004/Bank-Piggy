@@ -10,7 +10,7 @@ interface DashboardHeaderProps {
   readonly members: ReadonlyArray<Member>;
   readonly scope: string;
   readonly period: Period;
-  readonly view: View;
+  readonly view: Exclude<View, 'accounts'>;
   readonly onScope: (scope: string) => void;
   readonly onPeriod: (period: Period) => void;
   readonly onAdd: () => void;

@@ -288,16 +288,57 @@ These stories describe the implemented first version. Acceptance criteria state 
 - A stale plan revision or unavailable source rejects a checkbox write. A failed request does not discard a newer choice.
 - Checking a task does not execute a payment or update goal savings. Earlier periods remain reachable by date; unfinished earlier tasks do not automatically carry forward.
 
+## 23. Connect accounts without changing my plan
+
+**As a member, I want automatic balance snapshots so I can reduce manual balance entry.**
+
+- The Overview balance area opens compact connected-account management in the existing product theme.
+- Manual planning remains available when Plaid is disabled or unavailable. Production starts empty.
+- Official Link handles institution consent. The application never asks for bank passwords or verification codes.
+- New linking and reconnect attempts bind to the current session, member, and household. Expired or repeated exchange attempts fail.
+- The operator must verify actual Trial eligibility and remaining team capacity before enabling production. A new Link reserves local lifetime capacity. Removing an Item never restores it.
+- Bank and investment connections use separate minimal product flows. The application does not fetch transaction history or execute financial actions.
+- An imported account starts excluded. A member explicitly chooses ownership, classification, and inclusion. Traditional, Roth, and high-yield status are not guessed from names.
+- Mapping a selected eligible account to a manual snapshot replaces that snapshot in effective totals only. Conflicting mappings fail. The saved plan and its revision stay unchanged.
+- A shared account counts once in the household and divides exact cents between personal views. Duplicate copies through another login must remain excluded.
+- Missing, unsupported, inactive, or non-USD balances stay explicit. Missing values do not become zero. Current balance determines totals; available balance is separate.
+- The view shows connection state, successful synchronization time, and provider freshness when supplied. Investment reads are cached. Scheduled updates are not described as real time.
+- Both members can read household balances and change account mappings. Only the connecting member can reconnect or disconnect the connection.
+- A stale mapping cannot erase a newer mapping. Failed requests and background reads preserve current editor drafts.
+- Reconnect uses the existing Item. Disconnect must revoke provider access before deleting the credential. A failed revocation remains visible and retryable.
+- A late synchronization cannot restore a disconnected connection or replace newer data. Expired worker leases recover after restart.
+- Provider errors and invalid webhooks reveal no credentials or raw provider payloads.
+- Desktop, narrow, short-screen, and keyboard flows keep controls, focus, and dialog actions reachable.
+
+**Evidence boundary:** isolated provider simulations and PostgreSQL checks prove local application behavior. Official Sandbox, real institution consent, exact account coverage, Trial capacity, and deployed release verification require separate evidence. See [Plaid design](system-design/plaid.md).
+
+## 24. See all linked accounts together
+
+**As a member, I want one Accounts tab with the latest balances returned by my linked institutions.**
+
+- Accounts appears in desktop and mobile navigation. It shows all household accounts without planning-month, period, or personal-share controls.
+- Every returned account remains visible, including excluded, unclassified, inactive, non-USD, credit, and loan accounts. Viewing an account does not silently select it for planning totals.
+- Account names, plain account types, and balances are easy to scan. Native account details expose owner confirmation, provider type, inclusion, manual replacement, and provider data time.
+- Current and available balances remain separate. Credit and loan current balances are amounts owed; credit availability is labeled available credit. The view does not add debts into assets or infer a complete net worth.
+- The direct Connect accounts action opens the bank/investment choice. Continue to Plaid starts the deliberate consent flow. Existing connection management remains available.
+- Plaid is authoritative for displayed linked balances. A valid explicitly mapped snapshot replaces its manual copy once in existing totals. Unmatched manual records, income assumptions, budgets, contribution targets, and saved goal progress remain separate.
+- The view shows successful synchronization and provider freshness separately. Missing amounts stay unavailable, including values that cannot be represented in whole cents. It does not promise instant institution updates.
+- While visible, the view reads stored server snapshots on entry, on foreground changes, and at a bounded interval. Reads share request ownership, preserve revision and mutation reconciliation, and stop scheduling work when the view closes.
+- Reload failures retain earlier rows with clear feedback. Mapping drafts and open account details survive status updates.
+- Empty, populated, error, narrow, short-screen, and keyboard states keep account values, update information, and connection actions reachable.
+
+Monthly spending and net investment contributions require separate activity history. A balance increase is not proof of either spending or contributions. The agreed future contribution metric is cash added minus withdrawals, with trades and market gains separate.
+
 ## Future stories
 
 These are product directions, not implemented or verified features:
 
-| Actor and desired action                                                | Intended value                       | Work still required                                                                             |
-| ----------------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| A member connects a bank or brokerage with consent.                     | Reduce manual entry.                 | Provider selection, secure token storage, live account support, reconnect and revocation flows. |
-| A member reads actual spending and debt activity.                       | Compare the plan with what happened. | Transaction model, transfers, deduplication, corrections, sync, and history.                    |
-| A member automatically tracks contributions toward a target.            | Measure real progress over time.     | Actual contribution records and historical balances.                                            |
-| A member confirms pay dates from a provider.                            | Reconcile expected and received pay. | Payroll or transaction identification and immutable deposit history.                            |
-| A member asks an optional finance assistant about authorized summaries. | Explain their own figures.           | Consent, read-only tools, data boundaries, and grounded answers.                                |
+| Actor and desired action                                                | Intended value                       | Work still required                                                          |
+| ----------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------- |
+| A member reads actual spending and debt activity.                       | Compare the plan with what happened. | Transaction model, transfers, deduplication, corrections, sync, and history. |
+| A member reads monthly net investment contributions.                    | Measure new money invested.          | Investment activity, withdrawals, transfer matching, history, and coverage.  |
+| A member automatically tracks contributions toward a target.            | Measure real progress over time.     | Verified contribution records and deliberate goal reconciliation.            |
+| A member confirms pay dates from a provider.                            | Reconcile expected and received pay. | Payroll or transaction identification and immutable deposit history.         |
+| A member asks an optional finance assistant about authorized summaries. | Explain their own figures.           | Consent, read-only tools, data boundaries, and grounded answers.             |
 
 See [system design](system-design/README.md#verification-boundary) for evidence limits and [design decisions](system-design/decisions.md) for the current tradeoffs.

@@ -7,20 +7,25 @@
   color: var(--walnut-soft);
 }
 .dateControl label {
+  flex: 0 1 12rem;
+  width: 12rem;
+  max-width: 100%;
   min-width: 0;
   font-size: 11px;
 }
 .dateControl input {
+  min-width: 0;
   padding: 8px 10px;
-  min-height: 40px;
+  min-height: 44px;
   margin-top: 3px;
 }
 .dateControl button {
+  flex-shrink: 0;
   border: 1px solid var(--line);
   border-radius: 9px;
   background: var(--glass);
   padding: 9px 13px;
-  min-height: 40px;
+  min-height: 44px;
 }
 .dateControl p {
   flex: 1 1 200px;

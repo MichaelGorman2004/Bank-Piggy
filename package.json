@@ -37,7 +37,8 @@
     "providers:generate": "node scripts/generate-provider-icons.mjs",
     "providers:check": "node scripts/generate-provider-icons.mjs --check",
     "audit:npm": "npm audit --audit-level=moderate",
-    "audit:go": "cd apps/api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./..."
+    "audit:go": "cd apps/api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...",
+    "start:local": "node scripts/start-local.mjs"
   },
   "devDependencies": {
     "@babel/core": "^8.1.2",

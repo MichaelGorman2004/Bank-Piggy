@@ -3,6 +3,7 @@ import {
   ChartNoAxesCombined,
   ListChecks,
   House,
+  Landmark,
   LogOut,
   Plane,
   Sprout,
@@ -30,6 +31,7 @@ const NAVIGATION: ReadonlyArray<{
   readonly icon: typeof House;
 }> = [
   { id: 'overview', icon: House },
+  { id: 'accounts', icon: Landmark },
   { id: 'flow', icon: ChartNoAxesCombined },
   { id: 'todos', icon: ListChecks },
   { id: 'expenses', icon: Wallet },
