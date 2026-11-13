@@ -31,12 +31,12 @@ const NAVIGATION: ReadonlyArray<{
   readonly icon: typeof House;
 }> = [
   { id: 'overview', icon: House },
-  { id: 'accounts', icon: Landmark },
   { id: 'flow', icon: ChartNoAxesCombined },
   { id: 'todos', icon: ListChecks },
   { id: 'expenses', icon: Wallet },
   { id: 'goals', icon: Sprout },
   { id: 'targets', icon: Plane },
+  { id: 'accounts', icon: Landmark },
 ];
 
 /**
