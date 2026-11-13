@@ -12,7 +12,7 @@ import (
 )
 
 const ProviderTimeout = 15 * time.Second
-const SyncInterval = 24 * time.Hour
+const SyncInterval = 30 * time.Minute
 const LeaseDuration = 2 * time.Minute
 const MaxFailures = 5
 const AttemptLifetime = 30 * time.Minute

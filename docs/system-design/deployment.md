@@ -66,7 +66,7 @@ After deployment, record the Railway deployment ID and source commit. Confirm th
 - A new private household opens with one person and an empty plan. A manual edit survives reload and a service restart. Add a second profile, then verify its sign-in, both member views, and a conflicting edit in two windows. Preserve existing two-person plans.
 - Check mobile, keyboard, empty, populated, and error flows on the deployed origin. Keep personal amounts, email addresses, session cookies, and secrets out of screenshots and logs.
 
-Local tests with a signed provider simulate Google. A successful image build does not prove live sign-in, deployed persistence, or backups. Bank feeds are outside this release.
+Local tests with a signed provider simulate Google. A successful image build does not prove live sign-in, deployed persistence, or backups. Plaid has separate [release evidence](plaid-verification.md); Sandbox evidence does not establish real-bank coverage.
 
 Pending operational followups: configure external request limits for public routes, with specific limits for sign-in and callback requests. Add continuous uptime checks and alerts for `/healthz`, plus database capacity alerts. Railway's deployment health check alone does not provide these controls.
 
@@ -80,7 +80,7 @@ Review the workspace audit log for unexpected billing, membership, SSH-key, work
 
 ## Data safety and recovery
 
-The current Railway Hobby project has no backups. Its Backups page requires Pro to create new backups, set schedules, or enable point-in-time recovery. Native backup creation and restore verification remain pending. Before entering real financial data, use an approved Pro plan or an independent backup solution and verify a restore into a separate database. Record the backup time, application deployment ID, and source commit together. PostgreSQL volume storage alone is not a backup. [Railway backups](https://docs.railway.com/volumes/backups)
+The Railway Hobby project's Backups page requires Pro to create native backups, set schedules, or enable point-in-time recovery. No paid plan change was made. On 2026-11-12, a manual PostgreSQL backup was created through the private console and downloaded with Michael's approval. Restore into isolated PostgreSQL 18 and the actual application migration preserved all pre-existing records. See [backup evidence](plaid-verification.md#production-release-preparation). Scheduled backups and off-device recovery remain unconfigured. Keep the encryption key ring separately from database backups, and keep fresh recovery copies after importing real bank data. PostgreSQL volume storage alone is not a backup. [Railway backups](https://docs.railway.com/volumes/backups)
 
 The app applies schema and account upgrades in one PostgreSQL transaction at startup. It does not replace an existing plan. Back up the database before a release that changes stored data. Do not run destructive migration or reset commands on the private household.
 

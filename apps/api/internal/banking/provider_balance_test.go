@@ -27,9 +27,9 @@ func TestDepositoryReadSuppliesBoundedCachedBalanceFreshness(t *testing.T) {
 		requested <- *request.Options.MinLastUpdatedDatetime
 		writeProviderFixture(t, w, http.StatusOK, `{"accounts":[{"account_id":"simulated-account","name":"Simulated","type":"depository","balances":{"current":0.29,"available":null,"iso_currency_code":"USD"}}],"item":{},"request_id":"simulated"}`)
 	})
-	before := time.Now().UTC().Add(-maximumCachedBalanceAge).Truncate(time.Second)
+	before := time.Now().UTC().Add(-24 * time.Hour).Truncate(time.Second)
 	snapshot, err := provider.Accounts(t.Context(), "simulated-token", "depository")
-	after := time.Now().UTC().Add(-maximumCachedBalanceAge).Truncate(time.Second)
+	after := time.Now().UTC().Add(-24 * time.Hour).Truncate(time.Second)
 	if err != nil || len(snapshot.Accounts) != 1 || snapshot.Accounts[0].Account.CurrentBalanceCents == nil || *snapshot.Accounts[0].Account.CurrentBalanceCents != 29 {
 		t.Fatal("required freshness option did not permit the complete exact snapshot", err)
 	}
@@ -39,7 +39,7 @@ func TestDepositoryReadSuppliesBoundedCachedBalanceFreshness(t *testing.T) {
 func assertCachedFreshnessBound(t *testing.T, oldest, before, after time.Time) {
 	t.Helper()
 	if oldest.Before(before) || oldest.After(after) || oldest.Nanosecond() != 0 || oldest.Location() != time.UTC {
-		t.Fatal("cached balance bound did not follow the scheduled update interval")
+		t.Fatal("cached balance bound did not preserve the independent 24-hour freshness limit")
 	}
 }
 

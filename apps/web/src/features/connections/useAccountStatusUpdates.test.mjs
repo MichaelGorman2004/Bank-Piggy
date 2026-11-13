@@ -4,6 +4,8 @@ import { test } from 'node:test';
 import { setImmediate } from 'node:timers/promises';
 import { startAccountStatusUpdates } from './useAccountStatusUpdates.ts';
 
+const STATUS_INTERVAL = 30 * 60_000;
+
 /** Gives each test control of visibility, focus, and timer advancement. */
 function surfaces(context, visibilityState = 'visible') {
   context.mock.timers.enable({ apis: ['setInterval'] });
@@ -26,7 +28,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-test('reads on entry and every 30 seconds without an earlier timer read', async (context) => {
+test('reads on entry and every 30 minutes without an earlier timer read', async (context) => {
   const { page, browser } = surfaces(context);
   let reads = 0;
   const stop = startAccountStatusUpdates(
@@ -40,13 +42,13 @@ test('reads on entry and every 30 seconds without an earlier timer read', async 
   context.after(stop);
   await setImmediate();
   assert.equal(reads, 1);
-  context.mock.timers.tick(29_999);
+  context.mock.timers.tick(STATUS_INTERVAL - 1);
   await setImmediate();
   assert.equal(reads, 1);
   context.mock.timers.tick(1);
   await setImmediate();
   assert.equal(reads, 2);
-  context.mock.timers.tick(30_000);
+  context.mock.timers.tick(STATUS_INTERVAL);
   await setImmediate();
   assert.equal(reads, 3);
 });
@@ -67,7 +69,7 @@ test('focus, visibility, and timer triggers cannot overlap an unfinished read', 
   await setImmediate();
   browser.dispatchEvent(new Event('focus'));
   page.dispatchEvent(new Event('visibilitychange'));
-  context.mock.timers.tick(90_000);
+  context.mock.timers.tick(3 * STATUS_INTERVAL);
   await setImmediate();
   assert.equal(reads, 1);
   first.resolve(null);
@@ -91,7 +93,7 @@ test('a hidden page waits for visibility and pauses again when hidden', async (c
   );
   context.after(stop);
   browser.dispatchEvent(new Event('focus'));
-  context.mock.timers.tick(60_000);
+  context.mock.timers.tick(2 * STATUS_INTERVAL);
   await setImmediate();
   assert.equal(reads, 0);
   page.visibilityState = 'visible';
@@ -100,7 +102,7 @@ test('a hidden page waits for visibility and pauses again when hidden', async (c
   assert.equal(reads, 1);
   page.visibilityState = 'hidden';
   page.dispatchEvent(new Event('visibilitychange'));
-  context.mock.timers.tick(30_000);
+  context.mock.timers.tick(STATUS_INTERVAL);
   await setImmediate();
   assert.equal(reads, 1);
   page.visibilityState = 'visible';
@@ -149,7 +151,7 @@ test('a rejected read releases the lock and retains feedback owned by the callba
   context.after(stop);
   await setImmediate();
   assert.equal(feedback, 'Account status could not load.');
-  context.mock.timers.tick(30_000);
+  context.mock.timers.tick(STATUS_INTERVAL);
   await setImmediate();
   assert.equal(reads, 2);
   assert.equal(feedback, 'Account status could not load.');
@@ -176,7 +178,7 @@ test('immediate cleanup removes resources and cancels the queued entry read', as
   );
   assert.equal(getEventListeners(page, 'visibilitychange').length, 0);
   assert.equal(getEventListeners(browser, 'focus').length, 0);
-  context.mock.timers.tick(90_000);
+  context.mock.timers.tick(3 * STATUS_INTERVAL);
   browser.dispatchEvent(new Event('focus'));
   page.dispatchEvent(new Event('visibilitychange'));
   await setImmediate();
@@ -202,7 +204,7 @@ test('cleanup during a read cannot schedule more work after that read finishes',
   await setImmediate();
   browser.dispatchEvent(new Event('focus'));
   page.dispatchEvent(new Event('visibilitychange'));
-  context.mock.timers.tick(60_000);
+  context.mock.timers.tick(2 * STATUS_INTERVAL);
   await setImmediate();
   assert.equal(reads, 1);
 });

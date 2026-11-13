@@ -1,6 +1,6 @@
 # Plaid local verification
 
-Verification dates: 2026-11-11 and 2026-11-12. Changes are local and uncommitted on `codex/plaid-read-only`. No push, merge, production deployment, live consent, or paid-plan change was performed.
+Verification dates: 2026-11-11 and 2026-11-12. The development sections record the original local verification boundary. Production release evidence is recorded at the end of this document. No live bank consent or paid-plan change was performed by the agent.
 
 ## Automated checks
 
@@ -142,3 +142,27 @@ The final Linux AMD64 production container built successfully with the same `ind
 A custom PostgreSQL backup was created through the existing Railway private database console. After Michael explicitly approved the payload and local destination, the backup was downloaded to this Mac and protected with owner-only permissions. Its SHA-256 is `19dd5514a64cce889aa0c324d89b30d0efed40a350cca95329ae44668fa6048b`. A restore into a new, isolated local PostgreSQL 18 database succeeded. Running the application's actual store migration added all five banking tables. Hashes of every row in the six pre-existing application tables matched before and after migration. The temporary migration-check executable source was removed. No financial values, session credentials, or backup contents were logged or added to Git.
 
 This is a manual release backup and verified restore. It does not configure scheduled backups or off-device recovery. Railway still requires Pro for new native backups; no plan change was made. Runtime enabling, the deployed code, and live provider acceptance remain separate steps.
+
+## Production activation
+
+PR #16 was merged as `991e611918f8b71942af3e3c80d0dae91a2f5429`. Both pull-request checks and the merged main-branch quality workflow passed, including the production Docker build and dependency audits. Railway's configuration deployment `a124019b-3a46-4834-9a19-a569fe88bf72` became active with the expected `index-BPoxlMqi.js` asset.
+
+The two credential placeholders were replaced by Michael. Browser checks validated only presence and format without displaying the credential values. The encryption key decoded to 32 bytes. `PLAID_ENABLED=true` and `PLAID_PRODUCTION_APPROVED=true` were verified; production mode and the initial one-connection reservation budget were retained. Existing Google and database settings were preserved. No credential, backup, or mascot output file was included in the release commit.
+
+The exact HTTPS redirect `https://bank-piggy-production.up.railway.app/plaid-return` was saved in Plaid after the existing Google identity was verified. The localhost Sandbox redirect was retained. Plaid's Account Verification page had no Auth rule override configured. No verification methods, paid products, or new account permissions were added.
+
+On the deployed origin, `/healthz` returned 200, unauthenticated household and connection reads returned 401, the demo-session endpoint returned 404, and a malformed webhook signature returned 401. Safari resumed the existing authorized household session and opened Accounts. The empty production view and direct bank/investment choice worked without a Sandbox notice. The agent did not select Continue to Plaid, reserve a production Link attempt, create an Item, or complete bank consent. Actual institution balances, signed webhook delivery, OAuth bank return, and reconnect/revocation still need the member's first live connection.
+
+Michael then requested Accounts as the last navigation tab. The shared desktop/mobile order was changed to place it below Trips & purchases. A Sol 6.1 medium agent made the one-line move; the root reviewed the exact diff. The full root gate passed again. Local browser checks verified the desktop order, the 390-pixel mobile drawer, and keyboard activation without horizontal overflow. The temporary browser tab and viewport override were removed.
+
+PR #17 merged as `d485334054d95fe1fd92a6779d4c08441c8009f6`. Both PR checks and the main-branch quality workflow passed. Railway deployment `5f7d147a-4bd8-4a23-bfc5-21999d990562` became active with `index-4Fgy-DXQ.js`. The public asset matched the locally built asset. Safari reloaded the production origin, confirmed Accounts after Trips & purchases, and opened the enabled bank/investment choice without a Sandbox notice. The dialog was closed without creating a Link attempt. The production view showed zero linked accounts and was left open in Safari. The final proof screenshot is `/tmp/bank-piggy-plaid-review/accounts-bottom-production-safari.jpg`; the local mobile screenshot is `accounts-bottom-mobile-local.jpg` in the same directory.
+
+Post-release checks retained healthy PostgreSQL, private API access, an unavailable demo endpoint, and rejection of an invalid webhook signature. No real-bank consent was completed by the agent. The remaining bank-specific acceptance starts with the member's first institution. These final acceptance notes and guide corrections are local documentation changes after the source releases; the deployed application code is the merged PR #17 state. Unrelated mascot output remains untouched.
+
+## First real institution and cadence follow-up
+
+A member completed the first real depository connection. A read-only production check confirmed completed consent, a saved connection, imported accounts with present current balances, and no synchronization failure. The deployment logs showed no application crash. Institution identity, account counts, financial values, credentials, and raw provider responses are excluded from this repository evidence. This establishes the first real consent, token exchange, and balance import; it does not establish other institutions or all account types.
+
+The initial one-institution application reservation limit was consumed. A second new institution is rejected before Plaid Link starts, with no second attempt or Item saved by Bank Piggy. Actual remaining free Trial capacity was checked before permitting the next distinct institution with a limit of two. The existing reservation is not refunded or hidden. Brokerage accounts require the Investments choice; their actual consent and import remain unverified.
+
+Michael requested a 30-minute cadence. The former 30-second Accounts status polling is now 30 minutes. Bank reads change from daily to every 30 minutes, with the same minimum interval after failed or interrupted reads. Manual refresh and ordinary balance webhooks cannot bypass the saved deadline. Consent repair and first import remain immediate. Revocation cleanup keeps its prior faster retry behavior, and Capital One's supported cache-age bound stays 24 hours independently of polling. A second independent read-only audit found no unresolved code issue. Existing healthy production rows need a guarded one-time change from their exact old 24-hour deadline after the new worker is deployed; active leases, failure retries, and newer schedules must be preserved.

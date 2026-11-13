@@ -123,14 +123,14 @@ Each integration test creates and removes its own schema. The test database user
 
 The audit command checks npm advisories and runs the pinned official Go vulnerability checker. Weekly dependency-update configuration covers npm, Go modules, and GitHub Actions. The workflow and update configuration become active after the repository changes are pushed.
 
-| Evidence                       | Boundary                                                                                                                                      |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Go calculation and HTTP tests  | Split conservation, payment dates, 12-month forecasts, target projections, validation, sessions, and API behavior.                            |
-| Node regression tests          | Draft conversion, inclusive payment terms, exact cents, month links, and local provider assets.                                               |
-| PostgreSQL integration tests   | Real persistence, identity binding, expiry, and competing revisions.                                                                          |
-| Local signed identity provider | Signature and claim verification, nonce, PKCE, and callback replay checks. This simulates Google.                                             |
-| Browser review                 | Local sample data and manual plans. See the current verification note in [system design](docs/system-design/README.md#verification-boundary). |
-| Live services                  | Private Railway deployment, HTTPS, PostgreSQL health, and one invited Google login. No connected bank account or verified backup restore.     |
+| Evidence                       | Boundary                                                                                                                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Go calculation and HTTP tests  | Split conservation, payment dates, 12-month forecasts, target projections, validation, sessions, and API behavior.                                                                |
+| Node regression tests          | Draft conversion, inclusive payment terms, exact cents, month links, and local provider assets.                                                                                   |
+| PostgreSQL integration tests   | Real persistence, identity binding, expiry, and competing revisions.                                                                                                              |
+| Local signed identity provider | Signature and claim verification, nonce, PKCE, and callback replay checks. This simulates Google.                                                                                 |
+| Browser review                 | Local sample data and manual plans. See the current verification note in [system design](docs/system-design/README.md#verification-boundary).                                     |
+| Live services                  | Private Railway deployment, HTTPS, PostgreSQL health, invited Google access, and production Plaid controls. Manual backup restore verified; real-bank consent remains unverified. |
 
 ## Optional Plaid balances
 
