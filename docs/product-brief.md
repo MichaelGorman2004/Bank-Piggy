@@ -26,6 +26,8 @@ Prioritize iPhone use. Keep controls readable at narrow widths, use comfortable 
 
 Payment icon colors follow the payment type and stay consistent after filtering or sorting.
 
+Keep pointer clicks and taps free of focus outlines across the app. Keyboard navigation retains a compact focus indicator, and scrollable cards retain their keyboard title underline. Keep native focus, text editing, and dialog focus restoration intact.
+
 Use household labels consistently: Our household, the current member names, Household member, and Household plan. The local entry action is Open household plan. New households start empty. Populated examples belong in tests and documentation, outside the running application. These labels do not change runtime access rules.
 
 ## Onboarding and the first monthly plan

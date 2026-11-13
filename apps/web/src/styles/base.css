@@ -60,14 +60,12 @@ button:disabled {
 a {
   color: inherit;
 }
-button,
-input,
-select,
-a {
-  outline-offset: 4px;
-}
 :focus-visible {
-  outline: 3px solid var(--orange-dark);
+  outline: 2px solid var(--orange-dark);
+  outline-offset: 2px;
+}
+:where(:root[data-pointer-focus]) :focus {
+  outline: none;
 }
 button {
   color: inherit;
