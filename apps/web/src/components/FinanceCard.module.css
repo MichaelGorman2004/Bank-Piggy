@@ -57,7 +57,7 @@
   overflow: visible;
   scrollbar-gutter: auto;
 }
-.card:has(> .body:focus-visible) .heading h2 {
+:where(:root:not([data-pointer-focus])) .card:has(> .body:focus-visible) .heading h2 {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;

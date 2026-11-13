@@ -2,6 +2,7 @@ import { JoinPage } from './features/sharing/JoinPage';
 import { Welcome } from './components/Welcome';
 import { Workspace } from './Workspace';
 import { useBankPiggy } from './useBankPiggy';
+import { useFocusVisibility } from './useFocusVisibility';
 
 /**
  * Opens the household only after both cookie authentication and plan loading succeed.
@@ -51,5 +52,6 @@ function HouseholdApp() {
  * @returns The invitation page or the authorized household application.
  */
 export function App() {
+  useFocusVisibility();
   return window.location.pathname === '/join' ? <JoinPage /> : <HouseholdApp />;
 }
