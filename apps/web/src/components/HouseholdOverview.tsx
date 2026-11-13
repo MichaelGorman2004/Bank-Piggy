@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { plaidReturn } from '../features/connections/oauthReturn';
 import type { Household, Summary, PayrollSummary } from '@bank-piggy/contracts';
 import { BalancePanel } from './BalancePanel';
 import { FinanceCard } from './FinanceCard';
@@ -26,7 +27,7 @@ const SECTIONS = [
  * @returns Household cards whose bodies scroll independently of the page.
  */
 export function HouseholdOverview(props: HouseholdOverviewProps) {
-  const [active, setActive] = useState('details');
+  const [active, setActive] = useState(() => (plaidReturn() ? 'balances' : 'details'));
   return (
     <div className={styles.overview}>
       <div className={styles.sections} role="group" aria-label="Household plan section">

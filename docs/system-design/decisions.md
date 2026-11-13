@@ -10,7 +10,7 @@ The first version optimizes for a correct, reviewable plan for one person or a c
 
 **Tradeoff.** Backend responsibilities still need feature boundaries. Go packages separate budget rules, persistence, and server orchestration. Development uses two processes and a Vite proxy. Runtime deployment does not require two services.
 
-**Revisit when.** A measured workload needs separate execution, such as long-running provider synchronization. That workload does not exist yet.
+**Revisit when.** A measured workload needs separate execution, such as long-running provider synchronization. The optional Plaid worker now uses durable PostgreSQL leases inside the same process. Separate infrastructure still requires a measured need.
 
 ## 2. A canonical contract with generated types and runtime validation
 
@@ -94,7 +94,7 @@ The first version optimizes for a correct, reviewable plan for one person or a c
 
 **Reason.** One account list supports separate retirement and savings types without duplicated totals drifting apart. Legacy amounts lack account-type evidence, so migration uses generic Savings and Other investments. Users supply more specific types when known.
 
-**Tradeoff.** Balances remain manual snapshots with no provider reconciliation or joint-account model. Startup can change an affected plan's revision. Row locks, matching JSON/row revisions, idempotent predicates, and transaction rollback preserve coherent saved state. Group bounds limit totals as well as individual accounts.
+**Tradeoff.** Manual balances remain editable snapshots. Optional Plaid snapshots and joint ownership now use a separate projection; they do not rewrite these records. Startup can change an affected plan's revision. Row locks, matching JSON/row revisions, idempotent predicates, and transaction rollback preserve coherent saved state. Group bounds limit totals as well as individual accounts.
 
 ## 12. Start with one person and add the partner explicitly
 
@@ -105,3 +105,11 @@ The first version optimizes for a correct, reviewable plan for one person or a c
 **Tradeoff.** The product still has at most two people and has no profile removal operation. The row-locked save rejects member removal. Login invitations stay in server configuration; adding a financial profile does not grant access. A second invited account cannot sign in until its profile exists. Existing saved profiles remain intact, including a second member with no income.
 
 See [user stories](../user-stories.md) for observable behavior, [data rules](data-model.md) for numerical examples, and [security](security.md) for trust boundaries and rejection paths.
+
+## 13. Read-only balances with independent provider state
+
+**Decision.** Use the official Plaid Go SDK and Link. Keep encrypted credentials, provider snapshots, mappings, and durable job ownership outside the editable JSON plan. Use Auth plus scheduled Balance reads for banks, and Investments plus cached account reads for investment accounts. Do not initialize Transactions.
+
+**Reason.** Balance alone cannot initialize Link. Separate purposes avoid requiring institutions to support unrelated products. Provider refreshes must not overwrite income, goals, task completion, or newer drafts. Explicit mapping prevents a manual and connected snapshot from entering totals twice.
+
+**Tradeoff.** Auth has broader consent than balance display, and Balance is billed per successful request outside the approved Trial. Investment snapshots are cached. A lifetime local Item budget cannot account for other applications on the same team. Cross-login account identity remains user-confirmed. Provider exchange and database persistence have a documented crash window. Production remains gated pending actual account eligibility and capacity checks. See [Plaid alternatives and failure recovery](plaid.md).

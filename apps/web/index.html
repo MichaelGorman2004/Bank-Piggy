@@ -12,6 +12,18 @@
           return value;
         };
       }
+      if (
+        window.location.pathname === '/plaid-return' &&
+        new URLSearchParams(window.location.search).has('oauth_state_id')
+      ) {
+        let redirect = window.location.href;
+        window.history.replaceState(null, '', '/');
+        window.consumeBankPiggyPlaidReturn = () => {
+          const value = redirect;
+          redirect = null;
+          return value;
+        };
+      }
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />

@@ -359,6 +359,217 @@
           }
         }
       }
+    },
+    "/api/connections": {
+      "get": {
+        "operationId": "getConnections",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionList"
+                }
+              }
+            }
+          }
+        },
+        "description": "Requires a current household session. Returns no provider credentials or provider identifiers."
+      }
+    },
+    "/api/connections/link-token": {
+      "post": {
+        "operationId": "createConnectionLinkToken",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkTokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkTokenRequest"
+              }
+            }
+          }
+        },
+        "description": "Requires session, exact origin and CSRF. New linking reserves a configured production budget slot. Update mode reuses the existing Item."
+      }
+    },
+    "/api/connections/link-token/pending": {
+      "get": {
+        "operationId": "getPendingConnectionLink",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkTokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Recover the current session-bound Link attempt after an institution OAuth redirect. Returns 404 when absent or expired."
+      }
+    },
+    "/api/connections/exchange": {
+      "post": {
+        "operationId": "exchangeConnectionToken",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionList"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeRequest"
+              }
+            }
+          }
+        },
+        "description": "One-use session-bound exchange. Public token is required for new Items and omitted for reconnect. Requires session, origin and CSRF."
+      }
+    },
+    "/api/connections/{id}/refresh": {
+      "post": {
+        "operationId": "refreshConnection",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionList"
+                }
+              }
+            }
+          }
+        },
+        "description": "Queue a bounded durable refresh. Does not promise real-time balances. Requires session, origin and CSRF.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/connections/{id}": {
+      "delete": {
+        "operationId": "disconnectConnection",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionList"
+                }
+              }
+            }
+          }
+        },
+        "description": "Connecting member only. Revocation must succeed before credentials are deleted. Failed revocation retains encrypted recovery credentials. Requires session, origin and CSRF.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/connections/{id}/accounts/{accountId}/mapping": {
+      "put": {
+        "operationId": "mapConnectedAccount",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionList"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountMappingRequest"
+              }
+            }
+          }
+        },
+        "description": "Requires current household membership, origin, CSRF and mapping revision. Manual IDs must reference the current household and an account cannot replace two manual snapshots.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/plaid/webhook": {
+      "post": {
+        "operationId": "plaidWebhook",
+        "description": "Dedicated provider endpoint. Bounded body, ES256 signature, approved rotating verification key, freshness and exact body SHA-256 are required before durable scheduling. Duplicate notifications are safe. No browser session or CSRF applies.",
+        "responses": {
+          "204": {
+            "description": "Verified notification accepted"
+          },
+          "400": {
+            "description": "Invalid body"
+          },
+          "401": {
+            "description": "Invalid signature, key, time or body hash"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1312,6 +1523,481 @@
           }
         },
         "description": "A limited invitation preview without financial data. Preparing does not consume the invitation or create membership."
+      },
+      "ConnectedAccountType": {
+        "type": "string",
+        "enum": [
+          "traditional_401k",
+          "roth_401k",
+          "traditional_ira",
+          "roth_ira",
+          "brokerage",
+          "high_yield_savings",
+          "savings",
+          "other_investment",
+          "checking",
+          "hsa",
+          "unclassified"
+        ]
+      },
+      "ConnectionKind": {
+        "type": "string",
+        "enum": ["depository", "investment"]
+      },
+      "ConnectionState": {
+        "type": "string",
+        "enum": ["pending", "connected", "reconnect", "delayed", "disconnecting", "disconnected"]
+      },
+      "AccountOwnership": {
+        "type": "string",
+        "enum": ["member-1", "member-2", "shared"]
+      },
+      "AccountMapping": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["enabled", "ownership", "classification", "manualMemberId", "manualAccountId"],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "ownership": {
+            "$ref": "#/components/schemas/AccountOwnership"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/ConnectedAccountType"
+          },
+          "manualMemberId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "manualAccountId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "description": "Explicit household balance selection. A manual mapping replaces that manual snapshot in effective balances only. The editable plan is unchanged. Shared ownership counts once and splits reconciled cents in personal views."
+      },
+      "AccountMappingRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision", "enabled", "ownership", "classification"],
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "ownership": {
+            "$ref": "#/components/schemas/AccountOwnership"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/ConnectedAccountType"
+          },
+          "manualMemberId": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Omit when absent. Explicit null is invalid."
+          },
+          "manualAccountId": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Omit when absent. Explicit null is invalid."
+          }
+        }
+      },
+      "ConnectedAccount": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "providerType",
+          "providerSubtype",
+          "mask",
+          "currency",
+          "currentBalanceCents",
+          "availableBalanceCents",
+          "providerUpdatedAt",
+          "active",
+          "mapping",
+          "mappingRevision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "providerType": {
+            "type": "string"
+          },
+          "providerSubtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mask": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currentBalanceCents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "availableBalanceCents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "providerUpdatedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "mapping": {
+            "$ref": "#/components/schemas/AccountMapping"
+          },
+          "mappingRevision": {
+            "type": "integer"
+          }
+        },
+        "description": "Server-owned account ID and provider snapshot. Missing amounts and amounts with unsupported fractional-cent precision remain null; amounts are never rounded. Only supported USD current balances enter effective totals after explicit selection."
+      },
+      "Connection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "institutionName",
+          "connectedByMemberId",
+          "kind",
+          "state",
+          "canManage",
+          "canReconnect",
+          "lastSyncedAt",
+          "nextSyncAt",
+          "errorCode",
+          "accounts",
+          "lastCompletedAttemptId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "connectedByMemberId": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ConnectionKind"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ConnectionState"
+          },
+          "canManage": {
+            "type": "boolean"
+          },
+          "canReconnect": {
+            "type": "boolean"
+          },
+          "lastSyncedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nextSyncAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConnectedAccount"
+            }
+          },
+          "lastCompletedAttemptId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Server-owned completion proof for a Link attempt. Existing connection state alone does not prove reconnect completion."
+          }
+        }
+      },
+      "BalanceTotals": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["checkingCents", "savingsCents", "investmentsCents", "hsaCents"],
+        "properties": {
+          "checkingCents": {
+            "type": "integer"
+          },
+          "savingsCents": {
+            "type": "integer"
+          },
+          "investmentsCents": {
+            "type": "integer"
+          },
+          "hsaCents": {
+            "type": "integer"
+          }
+        }
+      },
+      "EffectiveAccount": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "ownership",
+          "classification",
+          "source",
+          "balanceCents",
+          "currency",
+          "included"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ownership": {
+            "$ref": "#/components/schemas/AccountOwnership"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/ConnectedAccountType"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["manual", "plaid"]
+          },
+          "balanceCents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "included": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EffectiveBalances": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["household", "members", "accounts"],
+        "properties": {
+          "household": {
+            "$ref": "#/components/schemas/BalanceTotals"
+          },
+          "members": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BalanceTotals"
+            }
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EffectiveAccount"
+            }
+          }
+        },
+        "description": "Independent server projection. Manual snapshots count unless explicitly replaced by an eligible selected connection snapshot. It does not alter income, plan revisions, goals, or task completion."
+      },
+      "ConnectionList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["enabled", "environment", "connections", "effectiveBalances", "planRevision"],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "environment": {
+            "type": "string",
+            "enum": ["disabled", "sandbox", "production"]
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Connection"
+            }
+          },
+          "effectiveBalances": {
+            "$ref": "#/components/schemas/EffectiveBalances"
+          },
+          "planRevision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "LinkTokenRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [],
+        "properties": {
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionKind"
+              }
+            ],
+            "description": "Omit when absent. Explicit null is invalid."
+          },
+          "connectionId": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Omit when absent. Explicit null is invalid."
+          }
+        }
+      },
+      "LinkTokenResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["attemptId", "linkToken", "expiresAt", "connectionId"],
+        "properties": {
+          "attemptId": {
+            "type": "string"
+          },
+          "linkToken": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "connectionId": {
+            "type": "string"
+          }
+        },
+        "description": "Ephemeral Link credentials bound to the current session, member and household. Never persist them in browser storage or URLs."
+      },
+      "ExchangeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["attemptId"],
+        "properties": {
+          "attemptId": {
+            "type": "string"
+          },
+          "publicToken": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 10,
+                "maxLength": 1024
+              }
+            ],
+            "description": "Omit when absent. Explicit null is invalid."
+          }
+        }
       }
     }
   }

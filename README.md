@@ -13,6 +13,7 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Share a one-use household invitation link. The recipient joins through Google and keeps access on later sign-ins.
 - Record Traditional and Roth 401(k) percentages, tiered employer matching, or an entered employer contribution. Show these estimates separately from take-home pay.
 - Track named savings, retirement, and investment accounts by type. Derive savings and investment totals from those snapshots.
+- Optionally link read-only Plaid balances, confirm account ownership and type, and reconcile manual snapshots. Start in Sandbox; live eligibility and exact account coverage need separate checks.
 - Switch between the household view and the signed-in member's allocated share.
 - Divide shared expenses evenly, by custom percentage, or by annual base salary. Record the payer separately.
 - Add, edit, and remove expenses and goals. Keep several goals active in the same budget.
@@ -27,11 +28,12 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Save plans in PostgreSQL. Detect concurrent edits instead of overwriting another window's changes.
 - Run an explicit loopback-only demo, or configure private access for one or two invited Google accounts.
 
-Each navigation view has one task. Financial views share the household scope, period, and planning month. To-do uses the same household scope and its own As-of date.
+Each navigation view has one task. Planning views share the household scope, period, and planning month. To-do uses the same household scope and its own As-of date. Accounts shows full linked balances for the household with its own update times.
 
 | View               | Content                                                            |
 | ------------------ | ------------------------------------------------------------------ |
 | Overview (default) | Plan totals, recorded inputs, and balance snapshots.               |
+| Accounts           | All returned linked accounts, latest balances, and update times.   |
 | Money flow         | Sankey of income and planned allocations.                          |
 | Expenses           | Bills, subscriptions, regular costs, and loans with type filters.  |
 | Goals              | Ordinary savings, investment, and debt contributions.              |
@@ -40,7 +42,7 @@ Each navigation view has one task. Financial views share the household scope, pe
 
 The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance shows the saved members in compact income and balance tables. Narrow or short layouts show one section at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
 
-New households start with one person and empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Invited members can read and edit the complete household plan. Adding a profile offers a link after the plan is saved; a verified Google sign-in must accept the link before access is granted. Bank connections, transaction history, service cancellation, loan repayment, and investment advice are outside this version.
+New households start with one person and empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Invited members can read and edit the complete household plan. Adding a profile offers a link after the plan is saved; a verified Google sign-in must accept the link before access is granted. Optional Plaid connections add read-only balance snapshots. Transaction history, service cancellation, loan repayment, and investment advice remain outside this version.
 
 Take-home pay is entered after taxes and automatic payroll investments. Payroll estimates do not reduce it again. To-do checkboxes record acknowledgments; they do not move money or change balances. Manual bills need a due day. Automatic subscriptions stay out of the checklist by default. See the [sharing, payroll, and To-do design](docs/system-design/sharing-payroll-todos.md) for transaction boundaries and calculation examples.
 
@@ -50,7 +52,7 @@ Take-home pay is entered after taxes and automatic payroll investments. Payroll 
 
 ## Run locally
 
-Use Node.js 24 or later, Go 1.26 or later, Python 3, and PostgreSQL 17. The quality workflow uses Go 1.27.4. Docker with Compose can provide PostgreSQL. Install `golangci-lint` 2.15.0 on your `PATH` to run the complete checks.
+Use Node.js 24 or later, Go 1.26 or later, Python 3, and PostgreSQL. Release checks require a disposable PostgreSQL 18 database. The existing local Compose file uses PostgreSQL 17 and preserves its named volume. The quality workflow uses Go 1.27.4. Install `golangci-lint` 2.15.0 on your `PATH` to run the complete checks.
 
 ```sh
 npm ci
@@ -97,16 +99,22 @@ Startup upgrades older saved balance totals to generic Savings and Other investm
 
 ## Validate changes
 
-Create a disposable test database once:
+Create an isolated PostgreSQL 18 test container. Keep the local planner database separate:
 
 ```sh
-docker compose exec -T db createdb -U bankpiggy bankpiggy_test
+docker run --detach --rm --name bank-piggy-check-db \
+  --publish 127.0.0.1:55432:5432 \
+  --env POSTGRES_USER=bankpiggy --env POSTGRES_PASSWORD=bankpiggy \
+  --env POSTGRES_DB=bankpiggy_test postgres:18-alpine
+docker exec bank-piggy-check-db pg_isready -U bankpiggy -d bankpiggy_test
 ```
+
+Wait until readiness succeeds before the check. This container uses disposable test data and no saved planner volume.
 
 Run the complete quality gate with real PostgreSQL integration tests:
 
 ```sh
-TEST_DATABASE_URL='postgresql://bankpiggy:bankpiggy@127.0.0.1:5432/bankpiggy_test?sslmode=disable' npm run check
+TEST_DATABASE_URL='postgresql://bankpiggy:bankpiggy@127.0.0.1:55432/bankpiggy_test?sslmode=disable' npm run check
 ```
 
 Each integration test creates and removes its own schema. The test database user must have permission to create schemas. Without `TEST_DATABASE_URL`, database-backed tests skip; a passing command alone then does not prove persistence behavior.
@@ -123,6 +131,12 @@ The audit command checks npm advisories and runs the pinned official Go vulnerab
 | Local signed identity provider | Signature and claim verification, nonce, PKCE, and callback replay checks. This simulates Google.                                             |
 | Browser review                 | Local sample data and manual plans. See the current verification note in [system design](docs/system-design/README.md#verification-boundary). |
 | Live services                  | Private Railway deployment, HTTPS, PostgreSQL health, and one invited Google login. No connected bank account or verified backup restore.     |
+
+## Optional Plaid balances
+
+For the prepared local setup, follow [Try Plaid locally](docs/plaid-local-setup.md). It lists the exact Dashboard links, private `.env` fields, startup command, and steps for real-bank mode.
+
+Plaid is disabled by default. It uses official Link, server-encrypted access tokens, separate balance snapshots, explicit manual-account mapping, and scheduled updates. Start in Sandbox. Production requires a verified eligible Trial plan and a configured remaining lifetime Item budget. No live account or institution coverage is implied. See [Plaid setup and design](docs/system-design/plaid.md) and [deployment settings](docs/system-design/deployment.md#plaid-configuration).
 
 ## Read the design
 

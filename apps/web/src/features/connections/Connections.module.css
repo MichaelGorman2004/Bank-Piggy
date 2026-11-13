@@ -1,0 +1,143 @@
+.section {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.toolbar,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.toolbar {
+  justify-content: space-between;
+}
+.toolbar button,
+.actions button {
+  min-height: 44px;
+}
+.connection {
+  min-width: 0;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 18px;
+}
+.connection h3,
+.account h4 {
+  overflow-wrap: anywhere;
+}
+.connection h3 {
+  margin-bottom: 8px;
+}
+.meta {
+  color: var(--walnut-soft);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.connection > .actions {
+  margin-top: 12px;
+}
+.accounts {
+  display: grid;
+  gap: 14px;
+  padding-top: 14px;
+}
+.account {
+  min-width: 0;
+  border-radius: 12px;
+  background: var(--glass-light);
+  padding: 14px;
+}
+.account summary {
+  cursor: pointer;
+  padding-block: 4px;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+}
+.account summary strong {
+  font-weight: 600;
+}
+.account summary span {
+  display: block;
+  color: var(--walnut-soft);
+  font-size: 12px;
+  margin-left: 16px;
+}
+.account form {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.fields label {
+  min-width: 0;
+}
+.fields select {
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.checkbox input {
+  appearance: auto;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--orange-dark);
+}
+.notice {
+  color: var(--walnut-soft);
+  font-size: 12px;
+  border-left: 2px solid var(--taupe);
+  padding-left: 10px;
+}
+.confirm {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.balanceAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  border-radius: 9px;
+  padding: 6px 9px;
+  background: var(--clear);
+  font-size: 12px;
+}
+.balanceAction:hover {
+  background: var(--orange-wash);
+}
+.balanceActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+.linkPanel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+}
+@media (max-width: 500px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .toolbar {
+    align-items: flex-start;
+  }
+}

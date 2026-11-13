@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"bankpiggy/api/internal/banking"
 	"bankpiggy/api/internal/budget"
 )
 
@@ -22,6 +23,7 @@ type Config struct {
 	GoogleClientSecret string
 	WebDistDir         string
 	Invites            []string
+	Banking            banking.Config
 }
 
 // LoadConfig defaults to private mode and rejects incomplete private deployments.
@@ -51,6 +53,11 @@ func LoadConfig() (Config, error) {
 	for i := range c.Invites {
 		c.Invites[i] = strings.TrimSpace(c.Invites[i])
 	}
+	bankConfig, err := banking.LoadConfig(c.BaseURL)
+	if err != nil {
+		return c, err
+	}
+	c.Banking = bankConfig
 	return c, c.Validate()
 }
 
@@ -101,6 +108,9 @@ func validateInvites(invites []string) error {
 
 // Validate enforces demo isolation and the private household's invitation boundary.
 func (c Config) Validate() error {
+	if err := c.validateBanking(); err != nil {
+		return err
+	}
 	if c.Mode != "demo" && c.Mode != "private" {
 		return errors.New("APP_MODE must be demo or private")
 	}
@@ -122,4 +132,11 @@ func (c Config) Validate() error {
 		return nil
 	}
 	return c.validatePrivate(base)
+}
+
+func (c Config) validateBanking() error {
+	if c.Mode == "demo" && c.Banking.Enabled && c.Banking.Environment == "production" {
+		return errors.New("demo mode cannot use production Plaid")
+	}
+	return c.Banking.Validate()
 }

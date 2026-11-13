@@ -1,10 +1,12 @@
 import { Users } from 'lucide-react';
 import type { Household, Member, PayrollSummary } from '@bank-piggy/contracts';
 import { accountTotals } from '../features/accounts/accountTypes';
-import { money } from '../features/plan/format';
+import { HOUSEHOLD_SCOPE, money } from '../features/plan/format';
 import { PayrollOverview } from './PayrollOverview';
 import { FinanceCard } from './FinanceCard';
 import styles from './PlanDetails.module.css';
+import { BalanceAvailability } from '../features/connections/BalanceAvailability';
+import { useConnectionData } from '../features/connections/ConnectionsContext';
 
 interface PlanFact {
   readonly label: string;
@@ -108,6 +110,26 @@ export function PlanDetails(props: {
   readonly household: Household;
   readonly payrollSummaries: readonly PayrollSummary[];
 }) {
+  const connections = useConnectionData();
+  const balances = connections.data?.connections.length ? connections.balances?.members : undefined;
+  const balanceFacts: ReadonlyArray<PlanFact> = balances
+    ? [
+        {
+          label: 'Checking',
+          read: (member) => balances[member.id].checkingCents,
+        },
+        { label: 'Savings', read: (member) => balances[member.id].savingsCents },
+        {
+          label: 'Investments',
+          read: (member) => balances[member.id].investmentsCents,
+        },
+        {
+          label: 'Health savings',
+          read: (member) => balances[member.id].hsaCents,
+        },
+        { label: 'Debt (manual)', read: (member) => member.debtCents },
+      ]
+    : BALANCE_FACTS;
   const split = { salary: 'Base salary', equal: 'Equal shares', custom: 'Custom percentage' };
   return (
     <FinanceCard
@@ -125,7 +147,10 @@ export function PlanDetails(props: {
     >
       <div className={styles.tables}>
         <FactTable members={props.household.members} facts={INCOME_FACTS} label="Income" />
-        <FactTable members={props.household.members} facts={BALANCE_FACTS} label="Balances" />
+        <div>
+          <BalanceAvailability scope={HOUSEHOLD_SCOPE} />
+          <FactTable members={props.household.members} facts={balanceFacts} label="Balances" />
+        </div>
       </div>
       <PayrollOverview members={props.household.members} summaries={props.payrollSummaries} />
     </FinanceCard>

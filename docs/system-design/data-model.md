@@ -219,3 +219,9 @@ The [store update](../../apps/api/internal/store/store.go) runs four steps in on
 If two browsers save revision 4, one save commits revision 5. The other save sees revision 5 after acquiring the lock and returns `409`. It cannot silently overwrite the accepted plan. Deferred rollback releases the transaction on failure. Cleanup uses a separate bounded context and does not replace the original failure.
 
 A lost successful response leaves the browser uncertain whether its write committed. Repeating the old revision cannot duplicate or overwrite the plan; the server returns a conflict. The user can reload the accepted version. This is safe conflict detection, not automatic merge or request-level exactly-once delivery.
+
+## Connected balance records
+
+The optional provider feature adds connection, Link-attempt, account-snapshot, mapping, lifetime-budget, and webhook-receipt tables. It leaves `households.plan` and `todo_completions` unchanged. Provider identifiers and encrypted credentials remain server-owned. An account keeps its stable internal ID and mapping revision across balance updates.
+
+`ConnectionList.effectiveBalances` is a separate read projection. It starts from the current manual plan, replaces explicitly mapped eligible snapshots once, and adds selected connected accounts. Shared ownership counts once in household totals and uses reconciled personal cents. Missing values stay absent. Only supported USD current balances enter USD totals. Checking, savings, investments, and HSA totals remain distinct. See [Plaid records and transaction boundaries](plaid.md#snapshots-mapping-and-totals).

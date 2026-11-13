@@ -12,6 +12,8 @@ import type { useWorkspace } from './useWorkspace';
 import type { ActiveDialog } from './features/plan/PlanDialogs';
 import { VIEW_DETAILS, type View } from './features/plan/views';
 import styles from './Workspace.module.css';
+import { ConnectionsProvider } from './features/connections/ConnectionsContext';
+import { AccountsDashboard } from './features/connections/AccountsDashboard';
 
 interface WorkspaceContentProps {
   readonly app: WorkspaceProps;
@@ -45,20 +47,25 @@ export function WorkspaceContent({ app, ui }: WorkspaceContentProps) {
     ui.scope === HOUSEHOLD_SCOPE ? data.summary.household : data.summary.members[ui.scope];
   const factor = periodFactor(period, member);
   return (
-    <main id="main" className={styles.main} tabIndex={-1}>
-      <WorkspaceFilters app={app} ui={ui} period={period} />
-      <ReloadNotice conflict={app.conflict} error={app.error} onReload={app.onReload} />
-      {ui.view !== 'todos' && (
-        <PlanCompleteness
-          incomeCents={app.data.summary.household.monthlyTakeHomeCents}
-          expenseCount={app.data.household.expenses.length}
-          onEdit={() => {
-            ui.open({ type: 'plan' });
-          }}
-        />
-      )}
-      <WorkspaceView app={app} ui={ui} data={data} summary={summary} factor={factor} />
-    </main>
+    <ConnectionsProvider
+      revision={app.data.household.revision}
+      csrfToken={app.session.csrfToken ?? ''}
+    >
+      <main id="main" className={styles.main} tabIndex={-1}>
+        <WorkspaceFilters app={app} ui={ui} period={period} />
+        <ReloadNotice conflict={app.conflict} error={app.error} onReload={app.onReload} />
+        {ui.view !== 'todos' && ui.view !== 'accounts' && (
+          <PlanCompleteness
+            incomeCents={app.data.summary.household.monthlyTakeHomeCents}
+            expenseCount={app.data.household.expenses.length}
+            onEdit={() => {
+              ui.open({ type: 'plan' });
+            }}
+          />
+        )}
+        <WorkspaceView app={app} ui={ui} data={data} summary={summary} factor={factor} />
+      </main>
+    </ConnectionsProvider>
   );
 }
 
@@ -98,6 +105,7 @@ function WorkspaceTask(
   },
 ) {
   const { ui, data, summary, factor } = props;
+  if (ui.view === 'accounts') return <AccountsDashboard household={data.household} />;
   return ui.view === 'todos' ? (
     <TodoPanel
       household={data.household}
@@ -143,6 +151,8 @@ function WorkspaceTask(
  */
 function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Period }) {
   const { app, ui, period } = props;
+  const view = ui.view;
+  if (view === 'accounts') return null;
   return (
     <div className={styles.filters}>
       <div className={styles.headingArea}>
@@ -151,11 +161,11 @@ function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Peri
           members={app.data.household.members}
           scope={ui.scope}
           period={period}
-          view={ui.view}
+          view={view}
           onScope={ui.changeScope}
           onPeriod={ui.setPeriod}
           onAdd={() => {
-            ui.open(newRecordDialog(ui.view));
+            ui.open(newRecordDialog(view));
           }}
         />
       </div>
@@ -181,7 +191,7 @@ function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Peri
  * @param view Selected finance task.
  * @returns A draft dialog with the appropriate new-record defaults.
  */
-function newRecordDialog(view: View): ActiveDialog {
+function newRecordDialog(view: Exclude<View, 'accounts'>): ActiveDialog {
   if (view === 'overview' || view === 'flow' || view === 'todos') return { type: 'plan' };
   if (view === 'goals' || view === 'targets')
     return { type: 'goal', initialKind: view === 'targets' ? 'trip' : 'goal' };

@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"bankpiggy/api/internal/banking"
 	"bankpiggy/api/internal/budget"
 	"bankpiggy/api/internal/store"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -29,6 +30,7 @@ type Server struct {
 	oauth      oauth2.Config
 	verifier   *oidc.IDTokenVerifier
 	publicAuth publicAuthLimiter
+	banking    *banking.Service
 }
 
 // New initializes the Google verifier only in explicitly configured private mode.
@@ -36,7 +38,11 @@ func New(ctx context.Context, c Config, s *store.Store) (*Server, error) {
 	if err := c.Validate(); err != nil {
 		return nil, err
 	}
-	app := &Server{config: c, store: s}
+	bankService, err := banking.New(c.Banking, s, nil)
+	if err != nil {
+		return nil, err
+	}
+	app := &Server{config: c, store: s, banking: bankService}
 	if c.Mode == "private" {
 		providerContext := oidc.ClientContext(ctx, &http.Client{Timeout: 10 * time.Second})
 		provider, err := oidc.NewProvider(providerContext, "https://accounts.google.com")
@@ -77,6 +83,14 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/household/invitation", s.createInvitation)
 	mux.HandleFunc("DELETE /api/household/invitation", s.revokeInvitation)
 	mux.HandleFunc("POST /api/household/invitation/prepare", s.prepareInvitation)
+	mux.HandleFunc("GET /api/connections", s.getConnections)
+	mux.HandleFunc("POST /api/connections/link-token", s.createBankLink)
+	mux.HandleFunc("GET /api/connections/link-token/pending", s.pendingBankLink)
+	mux.HandleFunc("POST /api/connections/exchange", s.exchangeBankLink)
+	mux.HandleFunc("POST /api/connections/{id}/refresh", s.refreshBankConnection)
+	mux.HandleFunc("DELETE /api/connections/{id}", s.disconnectBankConnection)
+	mux.HandleFunc("PUT /api/connections/{id}/accounts/{accountId}/mapping", s.mapBankAccount)
+	mux.HandleFunc("POST /api/plaid/webhook", s.plaidWebhook)
 	mux.HandleFunc("GET /api/todos", s.getTodos)
 	mux.HandleFunc("PUT /api/todos/{id}", s.putTodo)
 	mux.HandleFunc("GET /auth/google", s.googleStart)

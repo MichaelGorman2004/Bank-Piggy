@@ -4,6 +4,8 @@ Bank Piggy turns one saved household plan into consistent household and personal
 
 These documents describe the implemented first version. Update the diagrams when routes, state ownership, or transaction boundaries change. The [product brief](../product-brief.md) includes future work that is outside this implementation.
 
+See [read-only Plaid connections](plaid.md) for account linking, balance projection, durable synchronization, encryption, reconnect, and disconnect.
+
 See [household sharing, payroll, and pay-period tasks](sharing-payroll-todos.md) for invitation claims, contribution estimates, expected dates, reminder allocation, and completion transactions.
 
 See Overview on [desktop](images/overview.png) or [mobile](images/mobile.png), Money flow on [desktop](images/money-flow.png) or [mobile](images/mobile-money-flow.png), Expenses on [desktop](images/expenses.png) or [mobile](images/mobile-expenses.png), and Goals on [desktop](images/goals.png) or [mobile](images/mobile-goals.png). The previews use fictional local reference data.
@@ -17,8 +19,10 @@ flowchart LR
     HTTP["Go HTTP server<br/>Session, origin, CSRF, input checks"]
     Budget["Budget feature<br/>Account totals, allocations, schedules, target rules"]
     Store["PostgreSQL store<br/>Scoped queries and revision transaction"]
-    DB[("PostgreSQL<br/>Plans, identities, sessions, sign-in attempts, invitations, task completion")]
+    DB[("PostgreSQL<br/>Plans, sessions, encrypted bank credentials, snapshots, leases")]
     Google["Google OpenID Connect<br/>Private mode only"]
+    Banking["Optional banking feature<br/>Independent balances and durable work"]
+    Plaid["Plaid Link and read-only APIs<br/>Fixed provider endpoints"]
 
     Member -->|"View or edit a plan"| Browser
     Browser -->|"Same-origin API requests with month"| HTTP
@@ -29,9 +33,13 @@ flowchart LR
     Browser -->|"Private sign-in redirect"| Google
     Google -->|"Authorization callback via browser"| HTTP
     HTTP -->|"Code exchange and identity verification"| Google
+    HTTP -->|"Session-bound connection actions"| Banking
+    Banking -->|"Encrypted credentials, leases, snapshots"| DB
+    Banking -->|"Bounded SDK calls"| Plaid
+    Plaid -->|"Verified signed notification"| HTTP
 ```
 
-There is one Go process and one PostgreSQL database. The built Go process can serve the frontend and API from the same origin. During development, Vite serves the frontend and proxies API and sign-in paths to Go. No queue, background sync worker, cache service, or bank provider participates in this version.
+There is one Go process and one PostgreSQL database. The built Go process can serve the frontend and API from the same origin. During development, Vite serves the frontend and proxies API and sign-in paths to Go. An optional Plaid worker runs inside this process. PostgreSQL stores its due times, leases, encrypted credentials, and independent snapshots. No external queue or cache service is required. See [read-only Plaid connections](plaid.md) for its trust boundaries and sequence diagrams.
 
 Before the listener starts, [Store.Open](../../apps/api/internal/store/store.go) applies schema creation and the account upgrade in one transaction. A failed upgrade stops startup. See the [account upgrade](data-model.md#account-upgrade) for preservation and revision rules.
 
@@ -51,7 +59,7 @@ Before the listener starts, [Store.Open](../../apps/api/internal/store/store.go)
 
 Overview is the default and renders [HouseholdOverview](../../apps/web/src/components/HouseholdOverview.tsx): Plan totals, At a glance, and Balances. [At a glance](../../apps/web/src/components/PlanDetails.tsx) shows the saved members in compact income and balance tables. New plans start with one person; setup can append an optional second profile. Large display values keep their exact amounts in accessible labels and hover text. Balances shows scoped account-type breakdowns; plan setup manages individual account records. Money flow renders the Sankey. Expenses combines every payment type. Goals selects ordinary contributions with optional saved progress; Trips & purchases selects dated trip and purchase goals. These views share one saved plan.
 
-Financial views keep scope, period, and planning month above the active view. To-do keeps scope and uses its own As-of date. [Record selectors](../../apps/web/src/features/plan/viewRecords.ts) preserve ownership and leave the plan unchanged. Expenses filters All types, Subscriptions, Bills & costs, or Loans, then sorts the selected scope and period's canonical allocations from largest to smallest. Ties retain saved order. Upcoming, ended, and zero-share records remain reachable. The card's add actions inherit its filter; All types and the header's Add expense default to a bill. The [view registry](../../apps/web/src/features/plan/views.ts) owns the six navigation labels and header actions.
+Planning views keep scope, period, and planning month above the active view. To-do keeps scope and uses its own As-of date. Accounts shows all linked provider snapshots, including returned credit and loan accounts, with update times and no planning multipliers. It uses the shared connection request owner and never calculates new asset/debt totals in the browser. [Record selectors](../../apps/web/src/features/plan/viewRecords.ts) preserve ownership and leave the plan unchanged. Expenses filters All types, Subscriptions, Bills & costs, or Loans, then sorts the selected scope and period's canonical allocations from largest to smallest. Ties retain saved order. Upcoming, ended, and zero-share records remain reachable. The card's add actions inherit its filter; All types and the header's Add expense default to a bill. The [view registry](../../apps/web/src/features/plan/views.ts) owns the seven navigation labels and header actions.
 
 The frame uses `100dvh`, the browser's dynamic viewport height. The document, `.main`, and `.view` remain still. [FinanceCard](../../apps/web/src/components/FinanceCard.tsx) allocates one scrollable body below fixed headers, actions, and optional filters, with an optional fixed footer. Each body is a named region with keyboard focus. The Money flow chart uses the same boundary through the `flowBody` region in [Dashboard](../../apps/web/src/components/Dashboard.tsx). See [workspace layout](../../apps/web/src/Workspace.module.css) and [card layout](../../apps/web/src/components/FinanceCard.module.css).
 
@@ -154,6 +162,8 @@ The generator supports the schema features used by this contract. It is a small 
 
 ## Verification boundary
 
+The latest optional bank-balance work has a separate [Plaid verification record](plaid-verification.md). It includes PostgreSQL 18 checks, independent reviews, and explicit provider and deployment limits. The earlier manual-planner evidence below keeps its original scope.
+
 The installed quality hook passed contract and provider drift checks, formatting, 159 authored files within size limits, strict lint with zero issues, types, unused checks, 44 Node regressions, Go race tests with real PostgreSQL, and both builds. The local database is PostgreSQL 14.15. GitHub checks also passed for the [API layer](https://github.com/MichaelGorman2004/Bank-Piggy/actions/runs/43041241482) and [dashboard layer](https://github.com/MichaelGorman2004/Bank-Piggy/actions/runs/43043309580) using PostgreSQL 17 and Node.js 24.
 
 The repository checks cover these contracts:
@@ -184,6 +194,6 @@ Populated application browser evidence uses isolated local reference data. Priva
 
 1. Isolate emulated viewport and device profiles in separate browser contexts.
 2. Use the actual window with `viewport: null` and the compiled Go app for handoff. Reload and check measured frame bounds before screenshots.
-3. Test all six views, typed-account edits and grouped totals, targeted and untargeted goal rows, compact At a glance tables, expense filters, named card-body scrolling, calendar bounds, keyboard focus, and short-screen placement.
+3. Test all seven views, linked account rows and freshness, typed-account edits and grouped totals, targeted and untargeted goal rows, compact At a glance tables, expense filters, named card-body scrolling, calendar bounds, keyboard focus, and short-screen placement.
 
 Continue with the [data model](data-model.md), [security model](security.md), [design decisions](decisions.md), or [user stories](../user-stories.md).

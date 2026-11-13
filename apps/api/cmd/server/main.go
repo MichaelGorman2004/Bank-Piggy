@@ -34,6 +34,9 @@ func run() error {
 	listener := &http.Server{Addr: config.ListenAddr, Handler: app.Handler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 20 * time.Second, IdleTimeout: 60 * time.Second}
 	signals, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	workerDone := make(chan struct{})
+	go func() { defer close(workerDone); app.RunBankWorker(signals) }()
+	defer func() { stop(); <-workerDone }()
 	stopped := make(chan error, 1)
 	go func() {
 		slog.Info("Bank Piggy listening", "address", config.ListenAddr, "mode", config.Mode)
