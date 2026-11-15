@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import type { ActivityResponse, Expense, Goal, HouseholdResponse } from '@bank-piggy/contracts';
+import type { ActivityResponse, HouseholdResponse } from '@bank-piggy/contracts';
 import { FinanceCard } from '../../components/FinanceCard';
 import { ChartBoundary } from '../../components/ChartBoundary';
 import { useActivityData } from '../activity/ActivityContext';
@@ -24,9 +24,7 @@ interface ActualReportsProps {
   readonly view: ActualView;
   readonly plan: HouseholdResponse;
   readonly scope: string;
-  readonly onExpense: (expense: Expense) => void;
-  readonly onGoal: (goal: Goal) => void;
-  readonly onReview: () => void;
+  readonly onActivity: () => void;
 }
 
 /** Presents one server-owned actual projection across flow, expenses, and investments.
@@ -56,11 +54,11 @@ export function ActualReports(props: ActualReportsProps) {
             {state.loading ? 'Loading…' : 'Reload'}
           </button>
         }
-        footer={<ActualReportFooter onReview={props.onReview} />}
+        footer={<ActualReportFooter onActivity={props.onActivity} />}
       >
         {state.error && (
           <p className={styles.error} role="alert">
-            {state.error} Your saved plan and unsaved review choices are kept.
+            {state.error} Your saved plan and account choices are kept.
           </p>
         )}
         {state.loading && (
@@ -82,25 +80,25 @@ export function ActualReports(props: ActualReportsProps) {
 }
 
 /** Keeps activity access reachable outside the scrolling report body.
- * @param props Explicit navigation to transaction review and source settings.
- * @param props.onReview Opens the existing Activity workspace.
- * @returns The saved-data cadence and persistent review action.
+ * @param props Explicit navigation to monthly totals and source settings.
+ * @param props.onActivity Opens the existing Activity workspace.
+ * @returns The saved-data cadence and monthly summary action.
  */
-function ActualReportFooter(props: { readonly onReview: () => void }) {
+function ActualReportFooter(props: { readonly onActivity: () => void }) {
   return (
     <div className={styles.footer}>
       <p className={styles.note}>Saved activity checked every 30 minutes.</p>
-      <button type="button" className={styles.action} onClick={props.onReview}>
-        Activity & matches
+      <button type="button" className={styles.action} onClick={props.onActivity}>
+        Monthly totals
       </button>
     </div>
   );
 }
 
 /** Selects presentation only; every monetary amount comes from the same recorded snapshot.
- * @param props Coherent monthly actuals and explicit review/edit actions.
- * @param props.data Current month, scope, saved plan revision, and full-ledger comparisons.
- * @returns Recorded cash flow or matched expense/investment comparisons.
+ * @param props Coherent monthly actuals and explicit summary navigation.
+ * @param props.data Current month, scope, saved plan revision, and aggregate comparisons.
+ * @returns Aggregate cash flow, spending, or investment comparisons.
  */
 function ActualReportContent(props: ActualReportsProps & { readonly data: ActivityResponse }) {
   return (
@@ -114,12 +112,6 @@ function ActualReportContent(props: ActualReportsProps & { readonly data: Activi
       {props.data.environment === 'sandbox' && (
         <p className={styles.notice}>Plaid Sandbox · Sample data.</p>
       )}
-      {props.scope !== 'household' && (
-        <p className={styles.note}>
-          Matched activity uses the split saved with that match. Unmatched activity follows account
-          ownership.
-        </p>
-      )}
       {props.view === 'flow' ? (
         <ChartBoundary>
           <Suspense fallback={<p role="status">Loading recorded money flow…</p>}>
@@ -127,19 +119,9 @@ function ActualReportContent(props: ActualReportsProps & { readonly data: Activi
           </Suspense>
         </ChartBoundary>
       ) : props.view === 'expenses' ? (
-        <ExpenseActuals
-          data={props.data}
-          household={props.plan.household}
-          onExpense={props.onExpense}
-          onReview={props.onReview}
-        />
+        <ExpenseActuals data={props.data} />
       ) : (
-        <InvestmentActuals
-          data={props.data}
-          household={props.plan.household}
-          onGoal={props.onGoal}
-          onReview={props.onReview}
-        />
+        <InvestmentActuals data={props.data} />
       )}
     </>
   );

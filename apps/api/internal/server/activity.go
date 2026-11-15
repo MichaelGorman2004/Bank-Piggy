@@ -35,7 +35,7 @@ func activityQuery(r *http.Request, allowed ...string) (url.Values, error) {
 		for _, name := range allowed {
 			valid = valid || key == name
 		}
-		if !valid || len(entries) != 1 || (entries[0] == "" && key != "cursor") {
+		if !valid || len(entries) != 1 || entries[0] == "" {
 			return nil, banking.ErrInvalid
 		}
 	}
@@ -47,7 +47,7 @@ func (s *Server) getActivity(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	query, err := activityQuery(r, "month", "scope", "cursor")
+	query, err := activityQuery(r, "month", "scope")
 	if err != nil {
 		activityFailure(w, err)
 		return
@@ -61,7 +61,7 @@ func (s *Server) getActivity(w http.ResponseWriter, r *http.Request) {
 	if scope == "" {
 		scope = "household"
 	}
-	result, err := s.banking.MonthlyActivity(r.Context(), bankingIdentity(r, session), month, scope, query.Get("cursor"))
+	result, err := s.banking.MonthlyActivity(r.Context(), bankingIdentity(r, session), month, scope)
 	if err != nil {
 		activityFailure(w, err)
 		return
@@ -80,24 +80,6 @@ func (s *Server) putActivitySettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := s.banking.SetActivitySettings(r.Context(), bankingIdentity(r, session), r.PathValue("id"), request)
-	if err != nil {
-		activityFailure(w, err)
-		return
-	}
-	writeJSON(w, 200, result)
-}
-
-func (s *Server) putActivityRecord(w http.ResponseWriter, r *http.Request) {
-	session, ok := s.requireMutation(w, r)
-	if !ok {
-		return
-	}
-	var request budget.ActivityReviewRequest
-	if err := decodeJSON(w, r, &request); err != nil {
-		activityFailure(w, banking.ErrInvalid)
-		return
-	}
-	result, err := s.banking.ReviewActivity(r.Context(), bankingIdentity(r, session), r.PathValue("id"), request)
 	if err != nil {
 		activityFailure(w, err)
 		return

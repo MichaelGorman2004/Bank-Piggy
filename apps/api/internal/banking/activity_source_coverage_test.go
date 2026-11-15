@@ -28,7 +28,7 @@ func TestRevokedSelectedAccountRemainsAnUnavailableCoverageObligation(t *testing
 	execSQL(t, s, `UPDATE bank_activity_jobs SET history_complete=true,history_start='2026-10-01',history_end=CURRENT_DATE WHERE connection_id=$1`, connection.ID)
 	execSQL(t, s, `DELETE FROM bank_accounts WHERE id=$1`, connection.Accounts[0].ID)
 	month := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
-	result, err := s.MonthlyActivity(t.Context(), identity, month, "household", "")
+	result, err := s.MonthlyActivity(t.Context(), identity, month, "household")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestRevokedSelectedAccountRemainsAnUnavailableCoverageObligation(t *testing
 	if _, err := s.SetActivitySettings(t.Context(), identity, connection.ID, request); err != nil {
 		t.Fatal(err)
 	}
-	result, err = s.MonthlyActivity(t.Context(), identity, month, "household", "")
+	result, err = s.MonthlyActivity(t.Context(), identity, month, "household")
 	if err != nil {
 		t.Fatal(err)
 	}

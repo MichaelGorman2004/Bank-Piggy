@@ -23,7 +23,7 @@ func servicePaycheckFixture(t *testing.T) (*Service, Identity, budget.PaycheckSu
 			r.DetailedCategory = "INCOME_WAGES"
 		})
 	}
-	projection, err := s.MonthlyActivity(t.Context(), identity, today, "household", "")
+	projection, err := s.MonthlyActivity(t.Context(), identity, today, "household")
 	if err != nil {
 		t.Fatal(err)
 	}

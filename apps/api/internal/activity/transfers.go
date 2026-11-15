@@ -1,7 +1,6 @@
 package activity
 
 import (
-	"math"
 	"sort"
 	"time"
 
@@ -17,7 +16,7 @@ type transferKey struct {
 }
 
 // Reconcile identifies possible investment transfers across month boundaries without asserting identity.
-// Explicit pairs remain visible; ambiguous unreviewed funding is excluded until reviewed.
+// Legacy explicit pairs remain classified; ambiguous funding stays excluded.
 func Reconcile(records []budget.ActivityRecord) []budget.ActivityRecord {
 	result := make([]budget.ActivityRecord, len(records))
 	byID := make(map[string]budget.ActivityRecord, len(records))
@@ -93,7 +92,7 @@ func addTransferCandidates(record *budget.ActivityRecord, byID map[string]budget
 		return record.TransferCandidates[i].RecordID < record.TransferCandidates[j].RecordID
 	})
 	if len(record.TransferCandidates) > 0 && !record.IsReviewed {
-		*record = reason(*record, "review", "This may be a transfer between investment accounts. Confirm it before counting new funding.")
+		*record = reason(*record, "review", "This may be a transfer between investment accounts. It is excluded from new funding because its type is uncertain.")
 	}
 }
 
@@ -122,20 +121,4 @@ func appendNearbyCandidates(record *budget.ActivityRecord, candidates []budget.A
 
 func transferCandidate(record budget.ActivityRecord) budget.ActivityTransferCandidate {
 	return budget.ActivityTransferCandidate{RecordID: record.ID, Revision: record.Revision, Date: record.Date, AccountName: record.AccountName, AmountCents: absolute(*record.AmountCents)}
-}
-
-// ValidTransferPair accepts opposite funding legs only; equal amount/date alone never confirms a pair.
-func ValidTransferPair(first, second budget.ActivityRecord) bool {
-	if first.ID == second.ID || first.AccountID == second.AccountID || first.AmountCents == nil || second.AmountCents == nil {
-		return false
-	}
-	first.IsReviewed, second.IsReviewed = false, false
-	first, second = Classify(first), Classify(second)
-	return transferEligible(first) && transferEligible(second) && transferDatesMatch(first.Date, second.Date) && transferDirection(first) != transferDirection(second) && absolute(*first.AmountCents) == absolute(*second.AmountCents)
-}
-
-func transferDatesMatch(first, second budget.CalendarDate) bool {
-	a, aErr := time.Parse(time.DateOnly, string(first))
-	b, bErr := time.Parse(time.DateOnly, string(second))
-	return aErr == nil && bErr == nil && math.Abs(a.Sub(b).Hours()) <= transferWindowDays*24
 }

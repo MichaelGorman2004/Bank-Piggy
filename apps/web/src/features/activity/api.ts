@@ -1,7 +1,5 @@
 import type {
-  ActivityRecord,
   ActivityResponse,
-  ActivityReviewRequest,
   ActivitySettingsRequest,
   ActivitySource,
   ApplyPaycheckRequest,
@@ -11,22 +9,16 @@ import { contractValidator, request } from '../../api';
 
 const isActivity = contractValidator<ActivityResponse>('ActivityResponse');
 const isSource = contractValidator<ActivitySource>('ActivitySource');
-const isRecord = contractValidator<ActivityRecord>('ActivityRecord');
 const isHousehold = contractValidator<HouseholdResponse>('HouseholdResponse');
 
 /**
  * Reads recorded monthly activity without requesting provider history.
- * @param query Selected month, scope, and optional next-page cursor.
+ * @param query Selected month and scope.
  * @param query.month Selected calendar month.
  * @param query.scope Authorized household or personal scope.
- * @param query.cursor Optional next-page cursor.
- * @returns Validated full-month totals and one activity page.
+ * @returns Validated monthly totals, pay estimates, and source settings.
  */
-export function loadActivity(query: {
-  month: string;
-  scope: string;
-  cursor?: string;
-}): Promise<ActivityResponse> {
+export function loadActivity(query: { month: string; scope: string }): Promise<ActivityResponse> {
   return request(`/api/activity?${new URLSearchParams(query).toString()}`, isActivity);
 }
 
@@ -45,25 +37,6 @@ export function saveActivitySource(
   return request(
     `/api/connections/${encodeURIComponent(id)}/activity`,
     isSource,
-    mutation('PUT', input, csrfToken),
-  );
-}
-
-/**
- * Saves one classification or an atomic transfer pair with both saved revisions.
- * @param id Server-owned activity record identity.
- * @param input Explicit classification and optional transfer partner.
- * @param csrfToken Current session mutation token.
- * @returns Authoritative reviewed activity record.
- */
-export function reviewActivity(
-  id: string,
-  input: ActivityReviewRequest,
-  csrfToken: string,
-): Promise<ActivityRecord> {
-  return request(
-    `/api/activity/records/${encodeURIComponent(id)}`,
-    isRecord,
     mutation('PUT', input, csrfToken),
   );
 }

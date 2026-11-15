@@ -6,17 +6,16 @@ import (
 	"bankpiggy/api/internal/budget"
 )
 
-func plannedComparison(plan budget.Household, month time.Time, scope string) budget.ActivityComparison {
+func plannedComparison(plan budget.Household, month time.Time, scope string) (budget.ActivityComparison, error) {
 	response := budget.Response(plan, month)
-	result := budget.ActivityComparison{
-		Expenses: []budget.ActivityExpenseComparison{}, InvestmentGoals: []budget.ActivityGoalComparison{},
-	}
-	for index, expense := range plan.Expenses {
-		share := response.Summary.ExpenseShares[index]
-		result.Expenses = append(result.Expenses, budget.ActivityExpenseComparison{
-			ExpenseID: expense.ID, Name: expense.Name, Category: expense.Category,
-			BudgetCents: selectedShare(plan, scope, share.FirstMemberCents, share.SecondMemberCents),
-		})
+	var result budget.ActivityComparison
+	var err error
+	for _, share := range response.Summary.ExpenseShares {
+		amount := selectedShare(plan, scope, share.FirstMemberCents, share.SecondMemberCents)
+		result.ExpenseBudgetCents, err = addCents(result.ExpenseBudgetCents, amount)
+		if err != nil {
+			return result, err
+		}
 	}
 	for index, goal := range plan.Goals {
 		if !budget.IsInvestmentGoal(goal) {
@@ -24,17 +23,22 @@ func plannedComparison(plan budget.Household, month time.Time, scope string) bud
 		}
 		share := response.Summary.GoalShares[index]
 		amount := selectedShare(plan, scope, share.FirstMemberCents, share.SecondMemberCents)
-		result.InvestmentGoals = append(result.InvestmentGoals, budget.ActivityGoalComparison{
-			GoalID: goal.ID, Name: goal.Name, BudgetCents: amount,
-		})
-		result.InvestmentGoalBudgetCents += amount
+		result.InvestmentGoalBudgetCents, err = addCents(result.InvestmentGoalBudgetCents, amount)
+		if err != nil {
+			return result, err
+		}
 	}
 	for _, row := range response.PayrollSummaries {
 		if scope == "household" || scope == row.MemberID {
-			result.PayrollBudgetCents += row.Traditional401KMonthlyCents + row.Roth401KMonthlyCents + row.EmployerMonthlyCents
+			amount := row.Traditional401KMonthlyCents + row.Roth401KMonthlyCents + row.EmployerMonthlyCents
+			result.PayrollBudgetCents, err = addCents(result.PayrollBudgetCents, amount)
+			if err != nil {
+				return result, err
+			}
 		}
 	}
-	return result
+	result.InvestmentBudgetCents, err = addCents(result.InvestmentGoalBudgetCents, result.PayrollBudgetCents)
+	return result, err
 }
 
 func selectedShare(plan budget.Household, scope string, first, second int64) int64 {
@@ -45,30 +49,6 @@ func selectedShare(plan budget.Household, scope string, first, second int64) int
 		return first
 	}
 	return second
-}
-
-func scopeExpenseComparisons(comparison *budget.ActivityComparison, plan budget.Household, scope string) {
-	rows := comparison.Expenses[:0]
-	for index, row := range comparison.Expenses {
-		if inScope(plan.Expenses[index].OwnerID, scope) || row.BudgetCents != 0 || row.RecordCount > 0 {
-			rows = append(rows, row)
-		}
-	}
-	comparison.Expenses = rows
-}
-
-func scopeGoalComparisons(comparison *budget.ActivityComparison, plan budget.Household, scope string) {
-	owners := make(map[string]string, len(plan.Goals))
-	for _, goal := range plan.Goals {
-		owners[goal.ID] = goal.OwnerID
-	}
-	rows := comparison.InvestmentGoals[:0]
-	for _, row := range comparison.InvestmentGoals {
-		if inScope(owners[row.GoalID], scope) || row.BudgetCents != 0 || row.RecordCount > 0 {
-			rows = append(rows, row)
-		}
-	}
-	comparison.InvestmentGoals = rows
 }
 
 // historyAvailable distinguishes a recorded zero from missing monthly history.

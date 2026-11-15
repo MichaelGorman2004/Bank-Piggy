@@ -112,14 +112,8 @@ function WorkspaceTask(
         view={ui.view}
         plan={props.app.data}
         scope={ui.scope}
-        onExpense={(expense) => {
-          ui.open({ type: 'expense', expense, initialKind: expense.kind ?? 'bill' });
-        }}
-        onGoal={(goal) => {
-          ui.open({ type: 'goal', goal, initialKind: 'goal' });
-        }}
-        onReview={() => {
-          ui.setActivitySection('review');
+        onActivity={() => {
+          ui.setActivitySection('summary');
           ui.setView('activity');
         }}
       />

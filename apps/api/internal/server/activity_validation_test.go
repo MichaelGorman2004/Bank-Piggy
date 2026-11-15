@@ -25,10 +25,6 @@ func TestActivityHTTPRejectsMalformedBodies(t *testing.T) {
 		{"PUT", "/api/connections/foreign/activity", `{}`},
 		{"PUT", "/api/connections/foreign/activity", `{"expectedRevision":0,"enabled":true}`},
 		{"PUT", "/api/connections/foreign/activity", `{"expectedRevision":0,"enabled":true,"accounts":null}`},
-		{"PUT", "/api/activity/records/foreign", `{}`},
-		{"PUT", "/api/activity/records/foreign", `{"expectedRevision":1,"category":null,"transferPeerId":null}`},
-		{"PUT", "/api/activity/records/foreign", `{"expectedRevision":null,"category":null,"transferPeerId":null,"expectedPeerRevision":null,"expectedPlanRevision":1,"expenseId":null,"goalId":null}`},
-		{"PUT", "/api/activity/records/foreign", `{"expectedRevision":1,"category":null,"transferPeerId":null,"expectedPeerRevision":null,"expectedPlanRevision":1,"expenseId":null,"goalId":null,"unknown":true}`},
 		{"POST", "/api/activity/paychecks/foreign/apply", `{"memberId":"member-1"}`},
 		{"POST", "/api/activity/paychecks/foreign/apply", `{"expectedPlanRevision":1,"memberId":null}`},
 		{"POST", "/api/activity/paychecks/foreign/apply", `null`},
@@ -38,9 +34,10 @@ func TestActivityHTTPRejectsMalformedBodies(t *testing.T) {
 	}
 }
 
-func TestActivityHTTPAcceptsRequiredNullableReviewFields(t *testing.T) {
+func TestActivityHTTPRemovesIndividualRecordRoute(t *testing.T) {
 	client, _ := newBankHTTPClient(t)
 	client.signIn(t)
-	body := []byte(`{"expectedRevision":1,"category":null,"transferPeerId":null,"expectedPeerRevision":null,"expectedPlanRevision":1,"expenseId":null,"goalId":null}`)
-	requireStatus(t, client.request("PUT", "/api/activity/records/foreign", body, testOrigin, client.csrf), 404)
+	body := []byte(`{"expectedRevision":1,"category":"spending"}`)
+	requireStatus(t, client.request("PUT", "/api/activity/records/record", body, testOrigin, client.csrf), 404)
+	requireStatus(t, client.request("GET", "/api/activity?cursor=", nil, "", ""), 400)
 }

@@ -112,26 +112,3 @@ func absolute(cents int64) int64 {
 func usableCents(cents *int64) bool {
 	return cents != nil && *cents <= maxSafeCents && *cents >= -maxSafeCents
 }
-
-func reviewableFacts(record budget.ActivityRecord) bool {
-	return !record.Pending && !record.Cancelled && usableCents(record.AmountCents) && record.Currency != nil && *record.Currency == "USD"
-}
-
-// ValidReview restricts manual categories to the account data that can support them.
-func ValidReview(record budget.ActivityRecord, category budget.ActivityCategory) bool {
-	if !reviewableFacts(record) {
-		return false
-	}
-	switch category {
-	case "review", "excluded", "transfer":
-		return true
-	case "paycheck", "income":
-		return record.Kind == "bank"
-	case "spending":
-		return record.Kind == "bank" || record.ActivityType == "fee"
-	case "contribution", "withdrawal", "trade", "investment_income":
-		return record.Kind == "investment"
-	default:
-		return false
-	}
-}

@@ -14,7 +14,7 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Record Traditional and Roth 401(k) percentages, tiered employer matching, or an entered employer contribution. Show these estimates separately from take-home pay.
 - Track named savings, retirement, and investment accounts by type. Derive savings and investment totals from those snapshots.
 - Optionally link read-only Plaid balances, review automatic account defaults, and match existing manual snapshots. Start in Sandbox; live eligibility and exact account coverage need separate checks.
-- Opt existing connections into monthly Activity after operator approval and history consent. Review posted income, spending, net investment contributions, and possible investment transfers separately from the plan.
+- Opt existing connections into monthly Activity after operator approval and history consent. Show monthly income, spending, and net investment contribution totals separately from the plan.
 - Review regular net-deposit pay suggestions from the last 180 days. Confirm a member before updating only that member's take-home estimate, pay frequency, and pay calendar.
 - Switch between the household view and the signed-in member's allocated share.
 - Divide shared expenses evenly, by custom percentage, or by annual base salary. Record the payer separately.
@@ -26,26 +26,26 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Create a personal Roth IRA goal with an entered annual target, contribution year, and progress.
 - Anchor a pay schedule to an actual payday. Use To-do for goal contributions and manual bills, with persisted checkboxes and due dates.
 - Switch Money flow between Planned allocations and recorded calendar-month Actual cash flow.
-- Compare monthly expense Budget, Matched spent, and Remaining amounts. Match activity to an expense or investment goal explicitly.
-- Compare investment goals and payroll estimates with recorded net investment contributions. Keep saved goal progress manual.
+- Compare aggregate monthly expense Budget, Spent, and Remaining amounts.
+- Compare the aggregate investment plan, including payroll estimates, with recorded net investment contributions. Keep saved goal progress manual.
 - Change the planning month to update the forecast automatically. View its next 12 months with payment schedules or an average paycheck estimate for a member with regular pay frequency.
 - Save plans in PostgreSQL. Detect concurrent edits instead of overwriting another window's changes.
 - Run an explicit loopback-only demo, or configure private access for one or two invited Google accounts.
 
 Each navigation view has one task. Planning views share the household scope, period, and planning month. To-do uses the same household scope and its own As-of date. Accounts shows full linked balances for the household with one amount per account. Activity and Actual comparisons share one monthly saved-data snapshot across Activity, Money flow, Expenses, and Goals. Actual uses the selected calendar month and household or personal scope without yearly or paycheck multipliers.
 
-| View               | Content                                                                        |
-| ------------------ | ------------------------------------------------------------------------------ |
-| Overview (default) | Plan totals, recorded inputs, and balance snapshots.                           |
-| Accounts           | All returned linked accounts and their latest balances.                        |
-| Activity           | Recorded monthly actuals, review choices, source consent, and pay suggestions. |
-| Money flow         | Planned allocations or recorded monthly Actual cash flow.                      |
-| Expenses           | Expense plans, matched monthly spending, and remaining budgets.                |
-| Goals              | Goal plans and investment net-contribution comparisons.                        |
-| Trips & purchases  | Manual targets, saved progress, deadlines, and saving suggestions.             |
-| To-do              | Pay-period goal contributions and manual bills with due dates.                 |
+| View               | Content                                                                  |
+| ------------------ | ------------------------------------------------------------------------ |
+| Overview (default) | Plan totals, recorded inputs, and balance snapshots.                     |
+| Accounts           | All returned linked accounts and their latest balances.                  |
+| Activity           | Monthly actual totals, source consent, and confirmed pay estimates.      |
+| Money flow         | Planned allocations or recorded monthly Actual cash flow.                |
+| Expenses           | Expense plans and aggregate monthly Budget, Spent, and Remaining totals. |
+| Goals              | Goal plans and investment net-contribution comparisons.                  |
+| Trips & purchases  | Manual targets, saved progress, deadlines, and saving suggestions.       |
+| To-do              | Pay-period goal contributions and manual bills with due dates.           |
 
-The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance shows the saved members in compact income and balance tables. Narrow or short layouts show one section at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
+The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance shows the saved members in compact income and balance tables. Narrow or short layouts show one section at a time. The Planned Money flow chart groups smaller categories when needed and preserves their full amount.
 
 New households start with one person and empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Invited members can read and edit the complete household plan. Adding a profile offers a link after the plan is saved; a verified Google sign-in must accept the link before access is granted. Optional Plaid balances and Activity remain separate from the plan. Service cancellation, moving money, automatic goal progress, and investment advice remain outside this version.
 
@@ -147,7 +147,7 @@ Activity adds two approvals, both false by default: `PLAID_BANK_ACTIVITY_APPROVE
 
 Opening Activity or Sources reads saved data only. Background provider reads have separate balance and history jobs, with at least 30 minutes between ordinary attempts. Provider updates can arrive later; this is not real-time data. Missing history is not zero. Account choices control totals; history returned for other eligible consented accounts can still be stored. Trades, dividends, and market gains are separate from net contributions. Activity never overwrites expense budgets, balances, or goal progress. Pay suggestions cannot establish gross pay, taxes, 401(k) splits, or employer matching.
 
-Expense and investment matches freeze the agreed personal shares at review time. Later plan edits do not rewrite those shares. Removed targets leave recorded money unmatched. Actual cash flow uses server-calculated bank amounts; its balancing gap or surplus is not an account balance or proof of borrowing. Investment contributions stay separate because payroll and employer contributions can occur outside take-home cash. These comparison changes are local and uncommitted; live behavior remains unverified.
+The browser receives aggregate actuals, source settings, and pay estimates. It receives no transaction list, spending categories, individual deposit evidence, or per-expense or per-goal matched comparisons. There is no record-review or manual-match API. Existing frozen allocations remain in server records; new and unmatched records use account ownership, with equal shared shares. Ambiguous records stay excluded and coverage stays incomplete. Actual cash flow uses aggregate server-calculated bank amounts; its balancing gap or surplus is not an account balance or proof of borrowing. Investment contributions stay separate because payroll and employer contributions can occur outside take-home cash. The aggregate Activity increment has no deployed verification yet.
 
 See [Plaid setup and design](docs/system-design/plaid.md), [deployment settings](docs/system-design/deployment.md#plaid-configuration), and the separate [Activity verification record](docs/system-design/activity-verification.md). Local code and provider simulations do not establish deployed behavior or live history coverage.
 

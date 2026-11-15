@@ -47,7 +47,7 @@ func TestClassificationKeepsFundingSeparateFromTradesAndBankActuals(t *testing.T
 	}
 }
 
-func TestUnsupportedFactsCannotBeReviewedIntoTotals(t *testing.T) {
+func TestUnsupportedFactsCannotEnterTotals(t *testing.T) {
 	base := bankRecord("x", "2026-11-01", 123, "FOOD_AND_DRINK", "")
 	cases := []struct {
 		name     string
@@ -63,8 +63,8 @@ func TestUnsupportedFactsCannotBeReviewedIntoTotals(t *testing.T) {
 	for _, tc := range cases {
 		r := base
 		tc.change(&r)
-		if got := Classify(r); got.Category != tc.category || ValidReview(r, "income") {
-			t.Errorf("%s was counted or reviewable", tc.name)
+		if got := Classify(r); got.Category != tc.category {
+			t.Errorf("%s entered supported totals", tc.name)
 		}
 	}
 	base.IsReviewed, base.Category = true, "excluded"

@@ -2,12 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   hasActivityHistory,
-  reviewCategories,
-  canReviewActivity,
-  activityAmount,
-  fullActivityAmount,
+  isCurrentPaycheck,
+  activityDate,
+  sourceState,
 } from './presentation.ts';
-import { activityResponse, activityComparison, activityRecord } from './activityTestHelpers.mjs';
+import { activityResponse, activityComparison } from './activityTestHelpers.mjs';
 
 test('actual availability uses the authoritative comparison flags for each provider kind', () => {
   const data = activityResponse({ comparison: activityComparison({ bankAvailable: true }) });
@@ -18,48 +17,30 @@ test('actual availability uses the authoritative comparison flags for each provi
   assert.equal(hasActivityHistory(data, 'investment'), true);
 });
 
-test('bank records cannot be recast as investment contributions and investment records cannot be payroll', () => {
-  const bank = reviewCategories(activityRecord());
-  const investment = reviewCategories(activityRecord({ kind: 'investment' }));
-  assert.ok(bank.includes('paycheck'));
-  assert.ok(!bank.includes('contribution'));
-  assert.ok(!bank.includes('withdrawal'));
-  assert.ok(investment.includes('contribution'));
-  assert.ok(!investment.includes('paycheck'));
-});
-
-test('a personal view can have matched spending from another payer without owning the account', () => {
+test('personal totals use server availability without requiring client-side records', () => {
   const data = activityResponse({
     scope: 'member-2',
     comparison: activityComparison({ bankAvailable: true }),
-    records: [
-      activityRecord({ ownership: 'member-1', expenseId: 'rent', scopeAmountCents: 50_000 }),
-    ],
   });
   assert.equal(hasActivityHistory(data, 'depository'), true);
   assert.equal(hasActivityHistory(activityResponse(), 'depository'), false);
 });
 
-test('pending, cancelled, unavailable amounts, and unsupported currencies cannot be manually counted', () => {
-  assert.equal(canReviewActivity(activityRecord()), true);
-  for (const patch of [
-    { pending: true },
-    { cancelled: true },
-    { amountCents: null },
-    { currency: null },
-    { currency: 'EUR' },
-  ]) {
-    assert.equal(canReviewActivity(activityRecord(patch)), false);
-  }
-  assert.equal(activityAmount(activityRecord({ currency: 'EUR' })), 'EUR · Not included');
-  assert.equal(activityAmount(activityRecord({ amountCents: null })), 'Amount unavailable');
-  assert.equal(activityAmount(activityRecord({ amountCents: 0 })), '$0.00');
+test('pay confirmation requires the suggestion from the selected month, scope, and saved plan', () => {
+  const query = { month: '2026-11', scope: 'household' };
+  const data = activityResponse({ suggestions: [{ id: 'pay-estimate' }] });
+  assert.equal(isCurrentPaycheck(data, query, 3, 'pay-estimate'), true);
+  assert.equal(isCurrentPaycheck(null, query, 3, 'pay-estimate'), false);
+  assert.equal(isCurrentPaycheck(data, { ...query, month: '2026-12' }, 3, 'pay-estimate'), false);
+  assert.equal(isCurrentPaycheck(data, { ...query, scope: 'member-1' }, 3, 'pay-estimate'), false);
+  assert.equal(isCurrentPaycheck(data, query, 4, 'pay-estimate'), false);
+  assert.equal(isCurrentPaycheck(data, query, 3, 'removed-estimate'), false);
 });
 
-test('scoped amounts never substitute the full provider transaction for a missing share', () => {
-  const record = activityRecord({ amountCents: 101, scopeAmountCents: 67 });
-  assert.equal(activityAmount(record), '$0.67');
-  assert.equal(fullActivityAmount(record), '$1.01');
-  assert.equal(activityAmount({ ...record, scopeAmountCents: 0 }), '$0.00');
-  assert.equal(activityAmount({ ...record, scopeAmountCents: null }), 'Share unavailable');
+test('source status and history dates use safe labels and calendar dates', () => {
+  assert.equal(sourceState('consent_required'), 'Permission needed');
+  assert.equal(sourceState('reconnect'), 'Reconnect needed');
+  assert.equal(sourceState('unsupported'), 'History unavailable');
+  assert.equal(activityDate('2026-11-01'), 'Nov 1, 2026');
+  assert.equal(activityDate('2026-11-01T01:30:00Z'), 'Nov 1, 2026');
 });

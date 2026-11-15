@@ -2,7 +2,6 @@ package activity
 
 import (
 	"errors"
-	"sort"
 	"strings"
 	"time"
 
@@ -27,31 +26,23 @@ func Project(plan budget.Household, records []budget.ActivityRecord, sources []b
 			result.Suggestions = append(result.Suggestions, suggestion)
 		}
 	}
-	var err error
-	result.Records, result.ReviewCount, err = monthlyRecords(reconciled, included, plan, result.Month, scope, now)
+	monthly, unresolved, err := monthlyRecords(reconciled, included, plan, result.Month, scope, now)
 	if err != nil {
 		return result, err
 	}
-	sort.Slice(result.Records, func(i, j int) bool {
-		if result.Records[i].Date == result.Records[j].Date {
-			return result.Records[i].ID > result.Records[j].ID
-		}
-		return result.Records[i].Date > result.Records[j].Date
-	})
-	result.TotalRecordCount = int64(len(result.Records))
-	if err := totalRecords(&result, plan); err != nil {
+	if err := totalRecords(&result.Totals, monthly); err != nil {
 		return result, err
 	}
 	if err := compareMonth(&result, plan, month); err != nil {
 		return result, err
 	}
-	result.Coverage, result.Notice = coverage(sources, month, "household", now, result.ReviewCount > 0 || unsupportedCurrency(result.Records))
+	result.Coverage, result.Notice = coverage(sources, month, "household", now, unresolved || unsupportedCurrency(monthly))
 	return result, nil
 }
 
-func monthlyRecords(records []budget.ActivityRecord, included map[string]budget.ActivityAccount, plan budget.Household, month, scope string, now time.Time) ([]budget.ActivityRecord, int64, error) {
+func monthlyRecords(records []budget.ActivityRecord, included map[string]budget.ActivityAccount, plan budget.Household, month, scope string, now time.Time) ([]budget.ActivityRecord, bool, error) {
 	result := []budget.ActivityRecord{}
-	var reviews int64
+	unresolved := false
 	for _, record := range records {
 		account, exists := included[record.AccountID]
 		if !exists || !strings.HasPrefix(string(record.Date), month+"-") {
@@ -61,7 +52,7 @@ func monthlyRecords(records []budget.ActivityRecord, included map[string]budget.
 		var err error
 		record, err = allocateRecord(record, scope, plan)
 		if err != nil {
-			return nil, 0, err
+			return nil, false, err
 		}
 		if !inScope(recordOwnership(record), scope) {
 			continue
@@ -71,16 +62,15 @@ func monthlyRecords(records []budget.ActivityRecord, included map[string]budget.
 		}
 		result = append(result, record)
 		if record.Category == "review" {
-			reviews++
+			unresolved = true
 		}
 	}
-	return result, reviews, nil
+	return result, unresolved, nil
 }
 
 func emptyResponse(plan budget.Household, month time.Time, scope string, sources []budget.ActivitySource) budget.ActivityResponse {
 	return budget.ActivityResponse{Month: month.Format("2006-01"), Scope: scope, PlanRevision: plan.Revision,
-		Sources: sources, Records: []budget.ActivityRecord{}, Categories: []budget.ActivityCategoryTotal{},
-		Contributions: []budget.ActivityContribution{}, Suggestions: []budget.PaycheckSuggestion{}}
+		Sources: sources, Suggestions: []budget.PaycheckSuggestion{}}
 }
 
 // IncludedAccounts selects available accounts only after source consent and operator approval.
@@ -138,9 +128,9 @@ func coverage(sources []budget.ActivitySource, month time.Time, scope string, no
 		return "disabled", "Enable history for the accounts you want in monthly totals."
 	}
 	if !complete || unresolved {
-		return "incomplete", "Recorded activity is incomplete. Missing history, unsupported values, and transactions that need review are not included."
+		return "incomplete", "Recorded activity is incomplete. Missing history, unsupported values, and activity with an uncertain type are not included."
 	}
-	return "ready", "Posted activity from selected accounts. Coverage uses all selected household accounts; matched costs use their recorded split. Other accounts are not included."
+	return "ready", "Posted activity from selected accounts. Coverage uses all selected household accounts. Existing saved shares remain fixed; other activity follows account ownership. Other accounts are not included."
 }
 
 func unsupportedCurrency(records []budget.ActivityRecord) bool {

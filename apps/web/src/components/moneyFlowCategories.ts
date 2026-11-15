@@ -8,13 +8,11 @@ export interface FlowCategory {
  * Fits category labels into the available rows without dropping any allocated cents.
  * @param categories Exact expense totals in their original display order.
  * @param capacity Maximum visible category rows; at least one row is retained.
- * @param combinedLabel Display label for a combined category row.
  * @returns Original rows when they fit, or largest categories and an explicit remainder.
  */
 export function compactFlowCategories(
   categories: ReadonlyArray<FlowCategory>,
   capacity: number,
-  combinedLabel = 'Other costs',
 ): FlowCategory[] {
   const limit = Math.max(1, Math.floor(capacity));
   if (categories.length <= limit) return [...categories];
@@ -25,7 +23,7 @@ export function compactFlowCategories(
     ...visible,
     {
       id: 'grouped-expenses',
-      label: `${combinedLabel} (${String(remainder.length)})`,
+      label: `Other costs (${String(remainder.length)})`,
       amount: remainder.reduce((sum, category) => sum + category.amount, 0),
     },
   ];

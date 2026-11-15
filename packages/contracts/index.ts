@@ -429,16 +429,6 @@ export type ActivityRecord = {
   scopeAmountCents: number | null;
 };
 
-export type ActivityReviewRequest = {
-  expectedRevision: number;
-  category: ActivityCategory | null;
-  transferPeerId: string | null;
-  expectedPeerRevision: number | null;
-  expectedPlanRevision: number;
-  expenseId: string | null;
-  goalId: string | null;
-};
-
 export type ActivityTotals = {
   incomeCents: number;
   spendingCents: number;
@@ -447,25 +437,6 @@ export type ActivityTotals = {
   netInvestmentContributionsCents: number;
   investmentIncomeCents: number;
   investmentFeesCents: number;
-};
-
-export type ActivityCategoryTotal = {
-  name: string;
-  amountCents: number;
-};
-
-export type ActivityContribution = {
-  accountId: string;
-  accountName: string;
-  ownership: "member-1" | "member-2" | "shared";
-  depositsCents: number;
-  withdrawalsCents: number;
-  netContributionsCents: number;
-};
-
-export type PaycheckDeposit = {
-  date: CalendarDate;
-  amountCents: number;
 };
 
 export type PaycheckSuggestion = {
@@ -481,7 +452,6 @@ export type PaycheckSuggestion = {
   paySchedule: PaySchedule;
   nextPayDate: CalendarDate | null;
   variableAmount: boolean;
-  deposits: Array<PaycheckDeposit>;
 };
 
 export type ApplyPaycheckRequest = {
@@ -497,12 +467,6 @@ export type ActivityResponse = {
   coverage: "disabled" | "not_connected" | "incomplete" | "ready";
   notice: string;
   totals: ActivityTotals;
-  categories: Array<ActivityCategoryTotal>;
-  contributions: Array<ActivityContribution>;
-  records: Array<ActivityRecord>;
-  reviewCount: number;
-  totalRecordCount: number;
-  nextCursor: string | null;
   suggestions: Array<PaycheckSuggestion>;
   sources: Array<ActivitySource>;
   comparison: ActivityComparison;
@@ -511,25 +475,6 @@ export type ActivityResponse = {
 export type ActivityAllocation = {
   ownership: "member-1" | "member-2" | "shared";
   firstMemberCents: number;
-};
-
-export type ActivityExpenseComparison = {
-  expenseId: string;
-  name: string;
-  category: string;
-  budgetCents: number;
-  spentCents: number;
-  remainingCents: number;
-  recordCount: number;
-};
-
-export type ActivityGoalComparison = {
-  goalId: string;
-  name: string;
-  budgetCents: number;
-  netContributionsCents: number;
-  remainingCents: number;
-  recordCount: number;
 };
 
 export type ActivityFlowAmount = {
@@ -547,14 +492,11 @@ export type ActivityBankFlow = {
 export type ActivityComparison = {
   bankAvailable: boolean;
   investmentAvailable: boolean;
-  expenses: Array<ActivityExpenseComparison>;
-  investmentGoals: Array<ActivityGoalComparison>;
-  unmatchedSpendingCents: number;
-  unmatchedSpendingCount: number;
-  unmatchedInvestmentNetCents: number;
   investmentGoalBudgetCents: number;
   payrollBudgetCents: number;
   investmentBudgetCents: number;
   investmentRemainingCents: number;
   bankFlow: ActivityBankFlow;
+  expenseBudgetCents: number;
+  expenseRemainingCents: number;
 };

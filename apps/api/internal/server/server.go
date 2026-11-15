@@ -85,7 +85,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/household/invitation/prepare", s.prepareInvitation)
 	mux.HandleFunc("GET /api/activity", s.getActivity)
 	mux.HandleFunc("PUT /api/connections/{id}/activity", s.putActivitySettings)
-	mux.HandleFunc("PUT /api/activity/records/{id}", s.putActivityRecord)
 	mux.HandleFunc("POST /api/activity/paychecks/{id}/apply", s.applyActivityPaycheck)
 	mux.HandleFunc("GET /api/connections", s.getConnections)
 	mux.HandleFunc("POST /api/connections/link-token", s.createBankLink)

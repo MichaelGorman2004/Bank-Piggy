@@ -21,20 +21,18 @@ test('accepted source saves retain newer account edits and advance only the subm
   assert.equal(acceptActivityDraft(submitted, submitted, 5), null);
 });
 
-test('accepted reviews preserve a later category and captured transfer revision without changing a newer draft owner', () => {
+test('accepted source saves preserve newer consent edits without changing a newer revision owner', () => {
   const submitted = {
     expectedRevision: 2,
     edit: 1,
-    category: 'income',
-    transferPeerId: null,
-    expectedPeerRevision: null,
+    enabled: true,
+    accounts: [{ accountId: 'bank-account', enabled: true, ownership: 'member-1' }],
   };
   const editedDuringSave = {
     ...submitted,
     edit: 2,
-    category: 'transfer',
-    transferPeerId: 'peer',
-    expectedPeerRevision: 7,
+    enabled: false,
+    accounts: [{ accountId: 'bank-account', enabled: false, ownership: 'shared' }],
   };
   assert.deepEqual(acceptActivityDraft(editedDuringSave, submitted, 3), {
     ...editedDuringSave,

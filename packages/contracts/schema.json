@@ -1849,80 +1849,7 @@
           ]
         }
       },
-      "description": "Normalized read-only activity, with server classification and separately stored review choices. Bank amounts use debit-positive signs. Investment contribution subtypes take precedence over cash direction and trade type. Pending, cancelled, unsupported and unresolved rows do not silently become confirmed totals. Matched expense or investment allocations are frozen at explicit review. scopeAmountCents is the server-selected allocated raw amount. Missing targets remain actual money and appear unmatched in comparisons."
-    },
-    "ActivityReviewRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "expectedRevision",
-        "category",
-        "transferPeerId",
-        "expectedPeerRevision",
-        "expectedPlanRevision",
-        "expenseId",
-        "goalId"
-      ],
-      "properties": {
-        "expectedRevision": {
-          "type": "integer"
-        },
-        "category": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ActivityCategory"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "transferPeerId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "expectedPeerRevision": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "expectedPlanRevision": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "expenseId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "goalId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      },
-      "description": "Null category restores automatic classification. A confirmed investment transfer pairs two same-household records atomically with both expected revisions. All writes also require the current plan revision. Expense matches require bank spending; goal matches require investment funding and an explicitly identified investment goal. Matches and transfer pairs are mutually exclusive. An unchanged target retains its frozen allocation; clear then rematch to recalculate. Matching never changes plan allocations or saved goal progress."
+      "description": "Internal normalized provider activity retained on the server for classification, aggregate totals, and pay estimates. Bank amounts use debit-positive signs. Investment contribution subtypes take precedence over cash direction and trade type. Pending, cancelled, unsupported and unresolved rows do not silently become confirmed totals. Legacy saved classifications and allocations remain valid until material provider facts change. scopeAmountCents is the server-selected allocated raw amount."
     },
     "ActivityTotals": {
       "type": "object",
@@ -1974,75 +1901,6 @@
         }
       }
     },
-    "ActivityCategoryTotal": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "amountCents"],
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "amountCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        }
-      }
-    },
-    "ActivityContribution": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "accountId",
-        "accountName",
-        "ownership",
-        "depositsCents",
-        "withdrawalsCents",
-        "netContributionsCents"
-      ],
-      "properties": {
-        "accountId": {
-          "type": "string"
-        },
-        "accountName": {
-          "type": "string"
-        },
-        "ownership": {
-          "type": "string",
-          "enum": ["member-1", "member-2", "shared"]
-        },
-        "depositsCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        },
-        "withdrawalsCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        },
-        "netContributionsCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        }
-      }
-    },
-    "PaycheckDeposit": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["date", "amountCents"],
-      "properties": {
-        "date": {
-          "$ref": "#/$defs/CalendarDate"
-        },
-        "amountCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        }
-      }
-    },
     "PaycheckSuggestion": {
       "type": "object",
       "additionalProperties": false,
@@ -2058,8 +1916,7 @@
         "frequency",
         "paySchedule",
         "nextPayDate",
-        "variableAmount",
-        "deposits"
+        "variableAmount"
       ],
       "properties": {
         "id": {
@@ -2118,12 +1975,6 @@
         },
         "variableAmount": {
           "type": "boolean"
-        },
-        "deposits": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/PaycheckDeposit"
-          }
         }
       },
       "description": "A reviewable deposit-pattern estimate, not employer-confirmed gross pay. Applying it requires the current suggestion fingerprint, an explicit member, and the current plan revision."
@@ -2153,12 +2004,6 @@
         "coverage",
         "notice",
         "totals",
-        "categories",
-        "contributions",
-        "records",
-        "reviewCount",
-        "totalRecordCount",
-        "nextCursor",
         "suggestions",
         "sources",
         "comparison"
@@ -2186,40 +2031,6 @@
         "totals": {
           "$ref": "#/$defs/ActivityTotals"
         },
-        "categories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ActivityCategoryTotal"
-          }
-        },
-        "contributions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ActivityContribution"
-          }
-        },
-        "records": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ActivityRecord"
-          }
-        },
-        "reviewCount": {
-          "type": "integer"
-        },
-        "totalRecordCount": {
-          "type": "integer"
-        },
-        "nextCursor": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
         "suggestions": {
           "type": "array",
           "items": {
@@ -2236,7 +2047,7 @@
           "$ref": "#/$defs/ActivityComparison"
         }
       },
-      "description": "Monthly actuals are independent of the saved financial plan. Coverage describes selected linked accounts, never the complete household. Totals require posted supported-currency classified records. Unresolved activity remains visible for review; absence of coverage is not zero activity."
+      "description": "Aggregate calendar-month actuals are independent of the saved financial plan. Coverage describes selected linked accounts, never the complete household. Totals require posted supported-currency classified records. Uncertain activity is excluded and makes coverage incomplete; absence of coverage is not zero activity. Individual activity records remain server-side."
     },
     "ActivityAllocation": {
       "type": "object",
@@ -2253,91 +2064,7 @@
           "maximum": 9007199254740991
         }
       },
-      "description": "Immutable allocation captured at explicit matching. The first member share keeps the raw provider amount sign; the second share is raw amount minus the first. Account ownership remains separate payer information. Clearing and rematching explicitly recalculates this allocation."
-    },
-    "ActivityExpenseComparison": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "expenseId",
-        "name",
-        "category",
-        "budgetCents",
-        "spentCents",
-        "remainingCents",
-        "recordCount"
-      ],
-      "properties": {
-        "expenseId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "budgetCents": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        },
-        "spentCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        },
-        "remainingCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        },
-        "recordCount": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        }
-      }
-    },
-    "ActivityGoalComparison": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "goalId",
-        "name",
-        "budgetCents",
-        "netContributionsCents",
-        "remainingCents",
-        "recordCount"
-      ],
-      "properties": {
-        "goalId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "budgetCents": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        },
-        "netContributionsCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        },
-        "remainingCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        },
-        "recordCount": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        }
-      }
+      "description": "Legacy immutable allocation retained from an earlier explicit match. The first member share keeps the raw provider amount sign; the second share is raw amount minus the first. Account ownership remains separate payer information. Aggregate reads preserve this allocation after plan changes or target deletion."
     },
     "ActivityFlowAmount": {
       "type": "object",
@@ -2380,7 +2107,7 @@
           "maximum": 9007199254740991
         }
       },
-      "description": "Balanced nonnegative recorded bank flows. Refunds are inflows and income reversals are outflows. The balancing gap or surplus does not establish borrowing or a cash balance. Investment contributions never enter this flow."
+      "description": "Balanced nonnegative aggregate bank flows. Net refunds are inflows and income reversals are outflows. Spending is one aggregate edge. The balancing gap or surplus does not establish borrowing or a cash balance. Investment contributions never enter this flow."
     },
     "ActivityComparison": {
       "type": "object",
@@ -2388,16 +2115,13 @@
       "required": [
         "bankAvailable",
         "investmentAvailable",
-        "expenses",
-        "investmentGoals",
-        "unmatchedSpendingCents",
-        "unmatchedSpendingCount",
-        "unmatchedInvestmentNetCents",
         "investmentGoalBudgetCents",
         "payrollBudgetCents",
         "investmentBudgetCents",
         "investmentRemainingCents",
-        "bankFlow"
+        "bankFlow",
+        "expenseBudgetCents",
+        "expenseRemainingCents"
       ],
       "properties": {
         "bankAvailable": {
@@ -2405,33 +2129,6 @@
         },
         "investmentAvailable": {
           "type": "boolean"
-        },
-        "expenses": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ActivityExpenseComparison"
-          }
-        },
-        "investmentGoals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ActivityGoalComparison"
-          }
-        },
-        "unmatchedSpendingCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
-        },
-        "unmatchedSpendingCount": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        },
-        "unmatchedInvestmentNetCents": {
-          "type": "integer",
-          "minimum": -9007199254740991,
-          "maximum": 9007199254740991
         },
         "investmentGoalBudgetCents": {
           "type": "integer",
@@ -2455,9 +2152,19 @@
         },
         "bankFlow": {
           "$ref": "#/$defs/ActivityBankFlow"
+        },
+        "expenseBudgetCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expenseRemainingCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
         }
       },
-      "description": "Calendar-month actuals compared with the current monthly plan, before record pagination. Actual spending follows frozen matched expense allocation; unmatched spending and investment funding follow account ownership with equal shared-account splits. Availability and coverage conservatively use all selected household sources because a payer account can fund another member share. Investment planning includes entered monthly investment goals and payroll estimates without changing existing contribution-year behavior or inferring actual payroll attribution."
+      "description": "Aggregate calendar-month actuals compared with the current monthly plan. Legacy saved allocations remain frozen; other activity follows account ownership with equal shared-account splits. Availability and coverage use selected household sources because a payer account can fund another member share. Investment planning includes entered monthly investment goals and payroll estimates without changing manual progress or inferring actual payroll attribution."
     }
   }
 }

@@ -5,7 +5,7 @@ import { useActivity } from './useActivity';
 type ActivityData = ReturnType<typeof useActivity>;
 const Context = createContext<ActivityData | null>(null);
 
-/** Shares one monthly activity reader and mutation owner across reports and review forms.
+/** Shares one monthly activity reader and mutation owner across reports and source forms.
  * @param props Saved month, scope, plan revision, and the financial workspace.
  * @param props.month Selected calendar month.
  * @param props.scope Household or personal share.

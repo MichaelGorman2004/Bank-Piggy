@@ -24,12 +24,6 @@
   min-height: 0;
   min-width: 0;
 }
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
 .action {
   border: 1px solid var(--line);
 }
@@ -52,27 +46,6 @@
 }
 .section {
   margin-block: 0 20px;
-}
-.section h3 {
-  font-size: 15px;
-  margin-bottom: 10px;
-}
-.row {
-  padding-block: 16px;
-  border-bottom: 1px solid var(--line);
-  min-width: 0;
-}
-.rowHeading {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.rowHeading h3,
-.rowHeading h4 {
-  font-size: 14px;
-  overflow-wrap: anywhere;
 }
 .amounts {
   display: grid;

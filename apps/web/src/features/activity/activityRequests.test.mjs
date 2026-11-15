@@ -1,12 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readActivity, mutateActivity } from './activityRequests.ts';
-import {
-  activityOwner,
-  activityResponse,
-  activityRecord,
-  deferred,
-} from './activityTestHelpers.mjs';
+import { activityOwner, activityResponse, deferred } from './activityTestHelpers.mjs';
 
 test('an older month cannot replace a newer month after controlled out-of-order reads', async () => {
   const first = deferred();
@@ -27,47 +22,23 @@ test('an older month cannot replace a newer month after controlled out-of-order 
   assert.equal(state.loading, false);
 });
 
-test('pagination uses latest full-month totals, updates duplicate revisions, and does not sum totals', async () => {
-  const first = activityResponse({
-    records: [activityRecord()],
-    nextCursor: 'next',
-    totalRecordCount: 2,
-  });
-  const second = activityResponse({
-    records: [activityRecord({ revision: 2 }), activityRecord({ id: 'record-2' })],
-    totals: { ...first.totals, incomeCents: 100_000 },
-    totalRecordCount: 2,
-  });
-  const { owner, state } = activityOwner(async (query) => (query.cursor ? second : first));
-  await readActivity(owner);
-  await readActivity(owner, 'next');
-  assert.deepEqual(
-    state.data.records.map((record) => [record.id, record.revision]),
-    [
-      ['record-1', 2],
-      ['record-2', 1],
-    ],
+test('a response from the previous scope cannot replace the current monthly selection', async () => {
+  const household = deferred();
+  const personal = deferred();
+  const { owner, state } = activityOwner((query) =>
+    query.scope === 'household' ? household.promise : personal.promise,
   );
-  assert.equal(state.data.totals.incomeCents, 100_000);
-  assert.equal(state.data.nextCursor, null);
-  assert.equal(await readActivity(owner, 'next'), null);
-});
-
-test('pagination cannot append an old scope page after a new selection', async () => {
-  const page = deferred();
-  const { owner, state } = activityOwner(async (query) =>
-    query.cursor ? page.promise : activityResponse({ nextCursor: 'next' }),
-  );
-  await readActivity(owner);
-  const pending = readActivity(owner, 'next');
+  const older = readActivity(owner);
   owner.query = { month: '2026-11', scope: 'member-1' };
   owner.generation += 1;
-  owner.load = async () => activityResponse({ scope: 'member-1' });
-  await readActivity(owner);
-  page.resolve(activityResponse({ records: [activityRecord()] }));
-  assert.equal(await pending, null);
-  assert.equal(state.data.scope, 'member-1');
-  assert.equal(state.data.records.length, 0);
+  const newer = readActivity(owner);
+  const accepted = activityResponse({ scope: 'member-1' });
+  personal.resolve(accepted);
+  assert.equal(await newer, accepted);
+  household.resolve(activityResponse());
+  assert.equal(await older, null);
+  assert.equal(state.data, accepted);
+  assert.equal(state.loading, false);
 });
 
 test('writes are serialized and a selection changed during the write is reloaded afterward', async () => {
@@ -77,7 +48,7 @@ test('writes are serialized and a selection changed during the write is reloaded
     queries.push(query);
     return activityResponse(query);
   });
-  const saved = mutateActivity(owner, () => operation.promise, 'Review saved.');
+  const saved = mutateActivity(owner, () => operation.promise, 'History settings saved.');
   let competingWrites = 0;
   assert.equal(
     await mutateActivity(
@@ -104,14 +75,14 @@ test('a write invalidates a previously dispatched read before recording the upda
   const older = deferred();
   const operation = deferred();
   let reads = 0;
-  const next = activityResponse({ reviewCount: 0 });
+  const next = activityResponse({ totals: { ...activityResponse().totals, incomeCents: 25_000 } });
   const { owner, state } = activityOwner(() => {
     reads += 1;
     return reads === 1 ? older.promise : Promise.resolve(next);
   });
   const pendingRead = readActivity(owner);
   const pendingWrite = mutateActivity(owner, () => operation.promise, 'Saved.');
-  older.resolve(activityResponse({ reviewCount: 5 }));
+  older.resolve(activityResponse({ totals: { ...next.totals, incomeCents: 99_000 } }));
   assert.equal(await pendingRead, null);
   operation.resolve({ revision: 2 });
   await pendingWrite;
@@ -120,17 +91,17 @@ test('a write invalidates a previously dispatched read before recording the upda
 });
 
 test('failed writes retain their original error across successful and failed reconciliation reads', async () => {
-  const previous = activityResponse({ records: [activityRecord()] });
+  const previous = activityResponse({ notice: 'Previously recorded monthly totals.' });
   const { owner, state } = activityOwner(async () => previous);
   await readActivity(owner);
   await mutateActivity(
     owner,
     async () => {
-      throw new Error('Review changed in another window.');
+      throw new Error('Settings changed in another window.');
     },
     'Saved.',
   );
-  assert.equal(state.error, 'Review changed in another window.');
+  assert.equal(state.error, 'Settings changed in another window.');
   assert.equal(state.data, previous);
   owner.load = async () => {
     throw new Error('Reload failed.');
@@ -146,24 +117,22 @@ test('failed writes retain their original error across successful and failed rec
   assert.equal(state.data, previous);
 });
 
-test('reload refreshes the previously visible page window instead of removing later-page forms', async () => {
-  const queries = [];
-  const first = activityResponse({ records: [activityRecord()], nextCursor: 'page-2' });
-  const { owner, state } = activityOwner(async (query) => {
-    queries.push(query);
-    return query.cursor
-      ? activityResponse({ records: [activityRecord({ id: 'record-2' })] })
-      : first;
-  });
+test('reload failure retains recorded aggregates and a later successful read replaces them', async () => {
+  const previous = activityResponse({ notice: 'Previously recorded monthly totals.' });
+  const { owner, state } = activityOwner(async () => previous);
   await readActivity(owner);
-  await readActivity(owner, 'page-2');
-  queries.length = 0;
-  await readActivity(owner);
-  assert.equal(state.data.records.length, 2);
-  assert.deepEqual(queries, [
-    { month: '2026-11', scope: 'household' },
-    { month: '2026-11', scope: 'household', cursor: 'page-2' },
-  ]);
+  owner.load = async () => {
+    throw new Error('Monthly reload failed.');
+  };
+  assert.equal(await readActivity(owner), null);
+  assert.equal(state.data, previous);
+  assert.equal(state.error, 'Monthly reload failed.');
+  assert.equal(state.loading, false);
+  const next = activityResponse({ planRevision: 4 });
+  owner.load = async () => next;
+  assert.equal(await readActivity(owner), next);
+  assert.equal(state.data, next);
+  assert.equal(state.error, null);
 });
 
 test('unmount prevents pending reads and writes from publishing or starting reconciliation', async () => {
@@ -182,4 +151,17 @@ test('unmount prevents pending reads and writes from publishing or starting reco
   assert.equal(await readActivity(owner), null);
   assert.equal(state.changes, changes);
   assert.equal(reads, 0);
+});
+
+test('unmount prevents a pending aggregate read from publishing state', async () => {
+  const pending = deferred();
+  const { owner, state } = activityOwner(() => pending.promise);
+  const read = readActivity(owner);
+  owner.mounted = false;
+  owner.generation += 1;
+  const changes = state.changes;
+  pending.resolve(activityResponse());
+  assert.equal(await read, null);
+  assert.equal(state.data, null);
+  assert.equal(state.changes, changes);
 });

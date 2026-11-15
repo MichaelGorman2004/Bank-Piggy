@@ -1,26 +1,8 @@
-import type {
-  ActivityCategory,
-  ActivityRecord,
-  ActivityResponse,
-  ConnectionKind,
-} from '@bank-piggy/contracts';
-import { money } from '../plan/format.ts';
-
-export const ACTIVITY_CATEGORIES: Readonly<Record<ActivityCategory, string>> = {
-  paycheck: 'Paycheck',
-  income: 'Other income',
-  spending: 'Spending',
-  contribution: 'Investment contribution',
-  withdrawal: 'Investment withdrawal',
-  transfer: 'Transfer',
-  trade: 'Investment trade',
-  investment_income: 'Investment income',
-  excluded: 'Excluded',
-  review: 'Needs review',
-};
+import type { ActivityResponse, ConnectionKind } from '@bank-piggy/contracts';
+import type { ActivityQuery } from './activityRequests';
 
 /**
- * Uses the server's view-specific availability after source permission and matched-share checks.
+ * Uses the server's view-specific availability after source permission and account checks.
  * @param data Authorized monthly response.
  * @param kind Source kind required by this total.
  * @returns Whether this source kind has available recorded amounts for the selected view.
@@ -32,55 +14,26 @@ export function hasActivityHistory(data: ActivityResponse, kind: ConnectionKind)
 }
 
 /**
- * Restricts review choices to record types that the server can classify.
- * @param record Current provider record.
- * @returns Relevant explicit review categories.
+ * Requires current monthly data before an explicit pay-plan confirmation can run.
+ * @param data Last accepted monthly aggregates, or no current selection.
+ * @param query Selected calendar month and authorized scope.
+ * @param revision Current saved plan revision.
+ * @param id Suggestion identity selected for confirmation.
+ * @returns Whether this suggestion belongs to the selected month, scope, and saved plan.
  */
-export function reviewCategories(record: ActivityRecord): ReadonlyArray<ActivityCategory> {
-  return record.kind === 'bank'
-    ? ['paycheck', 'income', 'spending', 'transfer', 'excluded', 'review']
-    : [
-        'contribution',
-        'withdrawal',
-        'transfer',
-        'trade',
-        'investment_income',
-        'excluded',
-        'review',
-      ];
-}
-
-/**
- * Keeps pending, cancelled, and unsupported amounts outside manual totals review.
- * @param record Provider activity record.
- * @returns Whether a classification can be edited.
- */
-export function canReviewActivity(record: ActivityRecord): boolean {
+export function isCurrentPaycheck(
+  data: ActivityResponse | null,
+  query: ActivityQuery,
+  revision: number,
+  id: string,
+): boolean {
   return (
-    !record.pending && !record.cancelled && record.currency === 'USD' && record.amountCents !== null
+    data !== null &&
+    data.month === query.month &&
+    data.scope === query.scope &&
+    data.planRevision === revision &&
+    data.suggestions.some((suggestion) => suggestion.id === id)
   );
-}
-
-/**
- * Shows the server-calculated share without substituting the full transaction after a save.
- * @param record Provider activity with an optional share for the selected view.
- * @returns Exact scoped amount or explicit share, currency, and availability guidance.
- */
-export function activityAmount(record: ActivityRecord): string {
-  if (record.currency !== 'USD' || record.amountCents === null) return fullActivityAmount(record);
-  return record.scopeAmountCents === null
-    ? 'Share unavailable'
-    : money(record.scopeAmountCents, 1, true);
-}
-
-/** Shows the full provider transaction as evidence, without treating it as a personal share.
- * @param record Provider activity with the original full amount and currency.
- * @returns Exact supported full amount, or explicit currency and availability guidance.
- */
-export function fullActivityAmount(record: ActivityRecord): string {
-  if (record.currency !== 'USD')
-    return `${record.currency ?? 'Currency unavailable'} · Not included`;
-  return record.amountCents === null ? 'Amount unavailable' : money(record.amountCents, 1, true);
 }
 
 /**
