@@ -2,6 +2,7 @@ package banking
 
 import (
 	"bytes"
+	"encoding/base64"
 	"strings"
 	"testing"
 )
@@ -27,8 +28,17 @@ func TestVaultAuthenticationRotationAndConfidentiality(t *testing.T) {
 		t.Fatal("foreign record decrypted")
 	}
 	parts := strings.SplitN(ciphertext, ".", 2)
-	if _, err := vault.Open(parts[0]+"."+"A"+parts[1][1:], "household/a/access"); err == nil {
-		t.Fatal("tampered ciphertext decrypted")
+	sealed, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, index := range []int{0, vault.keys[config.ActiveKeyID].NonceSize(), len(sealed) - 1} {
+		altered := bytes.Clone(sealed)
+		altered[index] ^= 1
+		tampered := parts[0] + "." + base64.RawURLEncoding.EncodeToString(altered)
+		if _, err := vault.Open(tampered, "household/a/access"); err == nil {
+			t.Errorf("tampered byte %d decrypted", index)
+		}
 	}
 }
 
