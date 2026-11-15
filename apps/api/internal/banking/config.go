@@ -23,12 +23,15 @@ type Config struct {
 	Environment, ClientID, Secret, ActiveKeyID, RedirectURI, WebhookURL string
 	Keys                                                                map[string][]byte
 	ProductionApproved                                                  bool
+	BankActivityApproved, InvestmentActivityApproved                    bool
 	LifetimeItemLimit                                                   int
 }
 
 // LoadConfig reads explicit opt-in settings without enabling provider access by default.
 func LoadConfig(baseURL string) (Config, error) {
 	c := Config{Enabled: os.Getenv("PLAID_ENABLED") == "true", Environment: os.Getenv("PLAID_ENV"), ClientID: os.Getenv("PLAID_CLIENT_ID"), Secret: os.Getenv("PLAID_SECRET"), ActiveKeyID: os.Getenv("PLAID_ACTIVE_KEY_ID"), Keys: map[string][]byte{}, ProductionApproved: os.Getenv("PLAID_PRODUCTION_APPROVED") == "true"}
+	c.BankActivityApproved = os.Getenv("PLAID_BANK_ACTIVITY_APPROVED") == "true"
+	c.InvestmentActivityApproved = os.Getenv("PLAID_INVESTMENT_ACTIVITY_APPROVED") == "true"
 	if !c.Enabled {
 		return c, nil
 	}

@@ -15,7 +15,22 @@ type webhookEvent struct {
 	Environment string `json:"environment"`
 }
 
+func lockItemHousehold(ctx context.Context, tx pgx.Tx, event webhookEvent) error {
+	var household string
+	err := tx.QueryRow(ctx, `SELECT household_id FROM bank_connections WHERE item_id=$1 AND environment=$2`, event.ItemID, event.Environment).Scan(&household)
+	if err == pgx.ErrNoRows {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return lockBankHousehold(ctx, tx, household)
+}
+
 func applyItemEvent(ctx context.Context, tx pgx.Tx, event webhookEvent) error {
+	if err := lockItemHousehold(ctx, tx, event); err != nil {
+		return err
+	}
 	if event.Type != "ITEM" {
 		return queueBalanceEvent(ctx, tx, event.ItemID, event.Environment)
 	}
@@ -49,6 +64,9 @@ func reconnectRevokedItem(ctx context.Context, tx pgx.Tx, item, environment stri
 	if err != nil {
 		return err
 	}
+	if err := revokeActivityConsent(ctx, tx, id); err != nil {
+		return err
+	}
 	_, err = tx.Exec(ctx, `UPDATE bank_accounts SET active=false WHERE connection_id=$1`, id)
 	return err
 }
@@ -63,6 +81,9 @@ func removeRevokedAccount(ctx context.Context, tx pgx.Tx, event webhookEvent) er
 		return nil
 	}
 	if err != nil {
+		return err
+	}
+	if err := revokeAccountActivity(ctx, tx, id, event.AccountID); err != nil {
 		return err
 	}
 	_, err = tx.Exec(ctx, `DELETE FROM bank_accounts WHERE connection_id=$1 AND provider_id=$2`, id, event.AccountID)

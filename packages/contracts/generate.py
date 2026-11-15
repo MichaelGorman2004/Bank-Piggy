@@ -59,7 +59,9 @@ def golang(schema):
             field_type = golang(value)
             if key not in required and '$ref' in value:
                 field_type = '*' + field_type
-            fields.append(' ' + go_name(key) + ' ' + field_type + ' `json:"' + tag + '"`')
+            nullable = any(item.get('type') == 'null' for item in value.get('anyOf', []))
+            null_tag = ' nullable:"true"' if nullable else ''
+            fields.append(' ' + go_name(key) + ' ' + field_type + ' `json:"' + tag + '"' + null_tag + '`')
         return 'struct {\n' + '\n'.join(fields) + '\n}'
     return {'integer': 'int64', 'number': 'float64', 'boolean': 'bool', 'string': 'string'}[kind]
 

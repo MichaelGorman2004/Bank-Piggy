@@ -16,6 +16,9 @@ var bankingSchema string
 //go:embed banking_schedule_migration.sql
 var bankingScheduleMigration string
 
+//go:embed banking_activity_migration.sql
+var bankingActivityMigration string
+
 // migrateSchema atomically creates tables and upgrades saved snapshots and schedules.
 func migrateSchema(ctx context.Context, pool *pgxpool.Pool) error {
 	tx, err := pool.Begin(ctx)
@@ -33,6 +36,9 @@ func migrateSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		return err
 	}
 	if _, err = tx.Exec(ctx, bankingScheduleMigration); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, bankingActivityMigration); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)

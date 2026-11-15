@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import {
   ChartNoAxesCombined,
+  ArrowLeftRight,
   ListChecks,
   House,
   Landmark,
@@ -36,6 +37,7 @@ const NAVIGATION: ReadonlyArray<{
   { id: 'expenses', icon: Wallet },
   { id: 'goals', icon: Sprout },
   { id: 'targets', icon: Plane },
+  { id: 'activity', icon: ArrowLeftRight },
   { id: 'accounts', icon: Landmark },
 ];
 

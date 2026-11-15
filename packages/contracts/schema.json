@@ -185,6 +185,11 @@
         },
         "contributionYear": {
           "$ref": "#/$defs/ContributionYear"
+        },
+        "purpose": {
+          "type": "string",
+          "enum": ["investment"],
+          "description": "Explicit investment allocation. Absence keeps an ordinary general goal. Trip and purchase targets cannot use this purpose. Contribution-year goals already identify Roth IRA allocations."
         }
       },
       "not": {
@@ -1383,6 +1388,9 @@
             }
           ],
           "description": "Omit when absent. Explicit null is invalid."
+        },
+        "purpose": {
+          "$ref": "#/$defs/LinkPurpose"
         }
       }
     },
@@ -1402,6 +1410,9 @@
         },
         "connectionId": {
           "type": "string"
+        },
+        "purpose": {
+          "$ref": "#/$defs/LinkPurpose"
         }
       },
       "description": "Ephemeral Link credentials bound to the current session, member and household. Never persist them in browser storage or URLs."
@@ -1425,6 +1436,1028 @@
           "description": "Omit when absent. Explicit null is invalid."
         }
       }
+    },
+    "LinkPurpose": {
+      "type": "string",
+      "enum": ["balances", "activity"]
+    },
+    "ActivityCategory": {
+      "type": "string",
+      "enum": [
+        "paycheck",
+        "income",
+        "spending",
+        "contribution",
+        "withdrawal",
+        "transfer",
+        "trade",
+        "investment_income",
+        "excluded",
+        "review"
+      ]
+    },
+    "ActivityAccountSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accountId", "enabled", "ownership"],
+      "properties": {
+        "accountId": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ownership": {
+          "type": "string",
+          "enum": ["member-1", "member-2", "shared"]
+        }
+      }
+    },
+    "ActivityAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accountId",
+        "name",
+        "providerType",
+        "currency",
+        "available",
+        "enabled",
+        "ownership"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "providerType": {
+          "type": "string"
+        },
+        "currency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ownership": {
+          "type": "string",
+          "enum": ["member-1", "member-2", "shared"]
+        }
+      }
+    },
+    "ActivitySettingsRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expectedRevision", "enabled", "accounts"],
+      "properties": {
+        "expectedRevision": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityAccountSelection"
+          }
+        }
+      },
+      "description": "Activity inclusion is separate from asset balance mapping. Enabling bank history also requires official Plaid consent. The operator must approve product access and cost first."
+    },
+    "ActivitySource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connectionId",
+        "institutionName",
+        "kind",
+        "enabled",
+        "allowed",
+        "canManage",
+        "revision",
+        "needsConsent",
+        "state",
+        "lastSyncedAt",
+        "historyStart",
+        "historyEnd",
+        "errorCode",
+        "accounts"
+      ],
+      "properties": {
+        "connectionId": {
+          "type": "string"
+        },
+        "institutionName": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ConnectionKind"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "allowed": {
+          "type": "boolean"
+        },
+        "canManage": {
+          "type": "boolean"
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "needsConsent": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "disabled",
+            "consent_required",
+            "initializing",
+            "ready",
+            "delayed",
+            "reconnect",
+            "unsupported"
+          ]
+        },
+        "lastSyncedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "historyStart": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "historyEnd": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityAccount"
+          }
+        }
+      }
+    },
+    "ActivityTransferCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordId", "revision", "date", "accountName", "amountCents"],
+      "properties": {
+        "recordId": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "date": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ActivityRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "connectionId",
+        "accountId",
+        "accountName",
+        "ownership",
+        "kind",
+        "date",
+        "name",
+        "counterparty",
+        "currency",
+        "amountCents",
+        "activityType",
+        "activitySubtype",
+        "primaryCategory",
+        "detailedCategory",
+        "categoryConfidence",
+        "pending",
+        "cancelled",
+        "category",
+        "isReviewed",
+        "reviewReason",
+        "revision",
+        "transferPeerId",
+        "transferCandidates",
+        "expenseId",
+        "goalId",
+        "allocation",
+        "scopeAmountCents"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "connectionId": {
+          "type": "string"
+        },
+        "accountId": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "ownership": {
+          "type": "string",
+          "enum": ["member-1", "member-2", "shared"]
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["bank", "investment"]
+        },
+        "date": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "name": {
+          "type": "string"
+        },
+        "counterparty": {
+          "type": "string"
+        },
+        "currency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "amountCents": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "activityType": {
+          "type": "string"
+        },
+        "activitySubtype": {
+          "type": "string"
+        },
+        "primaryCategory": {
+          "type": "string"
+        },
+        "detailedCategory": {
+          "type": "string"
+        },
+        "categoryConfidence": {
+          "type": "string"
+        },
+        "pending": {
+          "type": "boolean"
+        },
+        "cancelled": {
+          "type": "boolean"
+        },
+        "category": {
+          "$ref": "#/$defs/ActivityCategory"
+        },
+        "isReviewed": {
+          "type": "boolean"
+        },
+        "reviewReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "transferPeerId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "transferCandidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityTransferCandidate"
+          }
+        },
+        "expenseId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "goalId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "allocation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ActivityAllocation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scopeAmountCents": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "description": "Normalized read-only activity, with server classification and separately stored review choices. Bank amounts use debit-positive signs. Investment contribution subtypes take precedence over cash direction and trade type. Pending, cancelled, unsupported and unresolved rows do not silently become confirmed totals. Matched expense or investment allocations are frozen at explicit review. scopeAmountCents is the server-selected allocated raw amount. Missing targets remain actual money and appear unmatched in comparisons."
+    },
+    "ActivityReviewRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expectedRevision",
+        "category",
+        "transferPeerId",
+        "expectedPeerRevision",
+        "expectedPlanRevision",
+        "expenseId",
+        "goalId"
+      ],
+      "properties": {
+        "expectedRevision": {
+          "type": "integer"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ActivityCategory"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "transferPeerId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expectedPeerRevision": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expectedPlanRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "expenseId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "goalId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "description": "Null category restores automatic classification. A confirmed investment transfer pairs two same-household records atomically with both expected revisions. All writes also require the current plan revision. Expense matches require bank spending; goal matches require investment funding and an explicitly identified investment goal. Matches and transfer pairs are mutually exclusive. An unchanged target retains its frozen allocation; clear then rematch to recalculate. Matching never changes plan allocations or saved goal progress."
+    },
+    "ActivityTotals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "incomeCents",
+        "spendingCents",
+        "investmentDepositsCents",
+        "investmentWithdrawalsCents",
+        "netInvestmentContributionsCents",
+        "investmentIncomeCents",
+        "investmentFeesCents"
+      ],
+      "properties": {
+        "incomeCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "spendingCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "investmentDepositsCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "investmentWithdrawalsCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "netInvestmentContributionsCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "investmentIncomeCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "investmentFeesCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ActivityCategoryTotal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "amountCents"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ActivityContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accountId",
+        "accountName",
+        "ownership",
+        "depositsCents",
+        "withdrawalsCents",
+        "netContributionsCents"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "ownership": {
+          "type": "string",
+          "enum": ["member-1", "member-2", "shared"]
+        },
+        "depositsCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "withdrawalsCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "netContributionsCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "PaycheckDeposit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date", "amountCents"],
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "PaycheckSuggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source",
+        "ownership",
+        "memberId",
+        "depositCount",
+        "lastPayDate",
+        "typicalPaycheckCents",
+        "monthlyTakeHomeCents",
+        "frequency",
+        "paySchedule",
+        "nextPayDate",
+        "variableAmount",
+        "deposits"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "ownership": {
+          "type": "string",
+          "enum": ["member-1", "member-2", "shared"]
+        },
+        "memberId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": ["member-1", "member-2"]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "depositCount": {
+          "type": "integer"
+        },
+        "lastPayDate": {
+          "$ref": "#/$defs/CalendarDate"
+        },
+        "typicalPaycheckCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "monthlyTakeHomeCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "frequency": {
+          "type": "string",
+          "enum": ["weekly", "biweekly", "semimonthly", "monthly"]
+        },
+        "paySchedule": {
+          "$ref": "#/$defs/PaySchedule"
+        },
+        "nextPayDate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CalendarDate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "variableAmount": {
+          "type": "boolean"
+        },
+        "deposits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaycheckDeposit"
+          }
+        }
+      },
+      "description": "A reviewable deposit-pattern estimate, not employer-confirmed gross pay. Applying it requires the current suggestion fingerprint, an explicit member, and the current plan revision."
+    },
+    "ApplyPaycheckRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expectedPlanRevision", "memberId"],
+      "properties": {
+        "expectedPlanRevision": {
+          "type": "integer"
+        },
+        "memberId": {
+          "type": "string",
+          "enum": ["member-1", "member-2"]
+        }
+      }
+    },
+    "ActivityResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "month",
+        "scope",
+        "planRevision",
+        "environment",
+        "coverage",
+        "notice",
+        "totals",
+        "categories",
+        "contributions",
+        "records",
+        "reviewCount",
+        "totalRecordCount",
+        "nextCursor",
+        "suggestions",
+        "sources",
+        "comparison"
+      ],
+      "properties": {
+        "month": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "planRevision": {
+          "type": "integer"
+        },
+        "environment": {
+          "type": "string"
+        },
+        "coverage": {
+          "type": "string",
+          "enum": ["disabled", "not_connected", "incomplete", "ready"]
+        },
+        "notice": {
+          "type": "string"
+        },
+        "totals": {
+          "$ref": "#/$defs/ActivityTotals"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityCategoryTotal"
+          }
+        },
+        "contributions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityContribution"
+          }
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityRecord"
+          }
+        },
+        "reviewCount": {
+          "type": "integer"
+        },
+        "totalRecordCount": {
+          "type": "integer"
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaycheckSuggestion"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivitySource"
+          }
+        },
+        "comparison": {
+          "$ref": "#/$defs/ActivityComparison"
+        }
+      },
+      "description": "Monthly actuals are independent of the saved financial plan. Coverage describes selected linked accounts, never the complete household. Totals require posted supported-currency classified records. Unresolved activity remains visible for review; absence of coverage is not zero activity."
+    },
+    "ActivityAllocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ownership", "firstMemberCents"],
+      "properties": {
+        "ownership": {
+          "type": "string",
+          "enum": ["member-1", "member-2", "shared"]
+        },
+        "firstMemberCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "description": "Immutable allocation captured at explicit matching. The first member share keeps the raw provider amount sign; the second share is raw amount minus the first. Account ownership remains separate payer information. Clearing and rematching explicitly recalculates this allocation."
+    },
+    "ActivityExpenseComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expenseId",
+        "name",
+        "category",
+        "budgetCents",
+        "spentCents",
+        "remainingCents",
+        "recordCount"
+      ],
+      "properties": {
+        "expenseId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "budgetCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "spentCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "remainingCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ActivityGoalComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goalId",
+        "name",
+        "budgetCents",
+        "netContributionsCents",
+        "remainingCents",
+        "recordCount"
+      ],
+      "properties": {
+        "goalId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "budgetCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "netContributionsCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "remainingCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ActivityFlowAmount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "amountCents"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ActivityBankFlow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inflows", "outflows", "totalCents"],
+      "properties": {
+        "inflows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityFlowAmount"
+          }
+        },
+        "outflows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityFlowAmount"
+          }
+        },
+        "totalCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "description": "Balanced nonnegative recorded bank flows. Refunds are inflows and income reversals are outflows. The balancing gap or surplus does not establish borrowing or a cash balance. Investment contributions never enter this flow."
+    },
+    "ActivityComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bankAvailable",
+        "investmentAvailable",
+        "expenses",
+        "investmentGoals",
+        "unmatchedSpendingCents",
+        "unmatchedSpendingCount",
+        "unmatchedInvestmentNetCents",
+        "investmentGoalBudgetCents",
+        "payrollBudgetCents",
+        "investmentBudgetCents",
+        "investmentRemainingCents",
+        "bankFlow"
+      ],
+      "properties": {
+        "bankAvailable": {
+          "type": "boolean"
+        },
+        "investmentAvailable": {
+          "type": "boolean"
+        },
+        "expenses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityExpenseComparison"
+          }
+        },
+        "investmentGoals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActivityGoalComparison"
+          }
+        },
+        "unmatchedSpendingCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "unmatchedSpendingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "unmatchedInvestmentNetCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "investmentGoalBudgetCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "payrollBudgetCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "investmentBudgetCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "investmentRemainingCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "bankFlow": {
+          "$ref": "#/$defs/ActivityBankFlow"
+        }
+      },
+      "description": "Calendar-month actuals compared with the current monthly plan, before record pagination. Actual spending follows frozen matched expense allocation; unmatched spending and investment funding follow account ownership with equal shared-account splits. Availability and coverage conservatively use all selected household sources because a payer account can fund another member share. Investment planning includes entered monthly investment goals and payroll estimates without changing existing contribution-year behavior or inferring actual payroll attribution."
     }
   }
 }

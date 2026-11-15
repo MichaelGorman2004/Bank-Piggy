@@ -1,0 +1,299 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.page > section {
+  flex: 1;
+  height: auto;
+}
+.header {
+  flex-shrink: 0;
+}
+.header p,
+.note {
+  color: var(--walnut-soft);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.header p {
+  margin-top: 4px;
+}
+.filters,
+.controls,
+.actions,
+.footer,
+.rowHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.filters {
+  margin-top: 12px;
+  justify-content: space-between;
+}
+.scope {
+  min-width: 150px;
+  font-size: 11px;
+}
+.scope select {
+  margin-top: 4px;
+}
+.controls,
+.footer,
+.rowHeading {
+  justify-content: space-between;
+}
+.controls {
+  padding-bottom: 10px;
+}
+.sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.sections button,
+.reload {
+  min-height: 44px;
+  padding: 9px 12px;
+  background: var(--clear);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 12px;
+}
+.sections button[aria-pressed='true'] {
+  background: var(--orange-wash);
+  color: var(--orange-dark);
+}
+.sections button:hover,
+.reload:hover {
+  background: var(--orange-wash);
+}
+.feedback {
+  display: grid;
+  gap: 10px;
+}
+.feedback:not(:empty) {
+  padding-block: 4px 16px;
+}
+.notice {
+  border-left: 2px solid var(--taupe);
+  padding-left: 10px;
+  color: var(--walnut-soft);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.section {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  padding-block: 8px 22px;
+}
+.section h3,
+.source h3 {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.record {
+  border-bottom: 1px solid var(--line);
+}
+.record summary,
+.suggestion > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 15px;
+  min-height: 60px;
+  padding: 12px 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+.record summary > span {
+  min-width: 0;
+}
+.record summary strong {
+  overflow-wrap: anywhere;
+}
+.record summary > strong {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.record summary small,
+.sourceAccount small,
+.suggestion summary > span {
+  display: block;
+  margin-top: 4px;
+  color: var(--walnut-soft);
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.record summary::before,
+.suggestion > summary::before {
+  content: '+';
+  flex-shrink: 0;
+  color: var(--orange-dark);
+}
+.record[open] > summary::before,
+.suggestion[open] > summary::before {
+  content: '−';
+}
+.record summary > span {
+  flex: 1;
+}
+.recordBody {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 18px;
+}
+.form {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.form label {
+  min-width: 0;
+  font-size: 12px;
+}
+.form select {
+  min-width: 0;
+  margin-top: 5px;
+  text-overflow: ellipsis;
+}
+.actions button,
+.form > button,
+.footer button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.source {
+  padding-block: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.source > p,
+.source > form {
+  margin-top: 10px;
+}
+.state {
+  flex-shrink: 0;
+  font-size: 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: var(--walnut-soft);
+}
+.sourceAccounts {
+  display: grid;
+  gap: 12px;
+}
+.sourceAccount {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.5fr);
+  gap: 16px;
+  padding-block: 12px;
+  border-top: 1px solid var(--line);
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.checkbox input {
+  appearance: auto;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--orange-dark);
+}
+.checkbox span {
+  overflow-wrap: anywhere;
+}
+.suggestion {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding-inline: 14px;
+}
+.suggestion > summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.suggestion > summary > strong,
+.suggestion > summary > span {
+  grid-column: 2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.suggestion > .form {
+  padding-bottom: 16px;
+}
+.evidence {
+  font-size: 12px;
+  color: var(--walnut-soft);
+}
+.evidence summary {
+  min-height: 44px;
+  cursor: pointer;
+  padding-block: 12px;
+}
+.evidence ul {
+  padding-left: 20px;
+  line-height: 1.8;
+}
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding-block: 28px;
+  color: var(--walnut-soft);
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .filters {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .scope {
+    min-width: 0;
+    width: 100%;
+  }
+  .sourceAccount {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .controls {
+    gap: 6px;
+  }
+  .sections {
+    flex: 1;
+  }
+  .sections button {
+    flex: 1;
+    padding-inline: 8px;
+  }
+  .reload {
+    width: 100%;
+  }
+}
+@media (max-height: 700px) {
+  .page {
+    gap: 8px;
+  }
+  .header h1 {
+    font-size: 24px;
+  }
+  .header > div > p {
+    display: none;
+  }
+  .filters {
+    margin-top: 6px;
+  }
+}

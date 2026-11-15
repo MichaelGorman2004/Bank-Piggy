@@ -66,7 +66,7 @@ After deployment, record the Railway deployment ID and source commit. Confirm th
 - A new private household opens with one person and an empty plan. A manual edit survives reload and a service restart. Add a second profile, then verify its sign-in, both member views, and a conflicting edit in two windows. Preserve existing two-person plans.
 - Check mobile, keyboard, empty, populated, and error flows on the deployed origin. Keep personal amounts, email addresses, session cookies, and secrets out of screenshots and logs.
 
-Local tests with a signed provider simulate Google. A successful image build does not prove live sign-in, deployed persistence, or backups. Plaid has separate [release evidence](plaid-verification.md); Sandbox evidence does not establish real-bank coverage.
+Local tests with a signed provider simulate Google. A successful image build does not prove live sign-in, deployed persistence, or backups. Plaid balances have separate [release evidence](plaid-verification.md). New Activity results belong in [Activity verification](activity-verification.md); Sandbox evidence does not establish real-bank or history coverage.
 
 Pending operational followups: configure external request limits for public routes, with specific limits for sign-in and callback requests. Add continuous uptime checks and alerts for `/healthz`, plus database capacity alerts. Railway's deployment health check alone does not provide these controls.
 
@@ -94,16 +94,18 @@ For an invitation release, verify link creation, copy, replacement, revoke, acce
 
 Plaid is optional and disabled by default. Keep every variable below on the Go service. Do not use Vite variables or build arguments. The application uses fixed Sandbox or Production SDK endpoints. No arbitrary provider URL is configurable.
 
-| Variable                    | Purpose                                                                                                                            |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `PLAID_ENABLED`             | Set exactly `true` to enable provider calls. Omit to disable provider calls while keeping the manual planner available.            |
-| `PLAID_ENV`                 | `sandbox` for development. `production` requires the extra approval and budget settings.                                           |
-| `PLAID_CLIENT_ID`           | Plaid team client ID.                                                                                                              |
-| `PLAID_SECRET`              | Secret for the selected environment.                                                                                               |
-| `PLAID_ACTIVE_KEY_ID`       | ID of the current encryption key.                                                                                                  |
-| `PLAID_TOKEN_KEYS`          | Comma-separated `id:base64` key entries. Every decoded key must contain 32 random bytes. Keep old IDs during rotation.             |
-| `PLAID_PRODUCTION_APPROVED` | Set exactly `true` only after checking the team's actual eligible Trial plan and remaining capacity.                               |
-| `PLAID_LIFETIME_ITEM_LIMIT` | Approved remaining local production reservation budget, from 1 through 10. Never increase it to recover deleted or canceled Items. |
+| Variable                             | Purpose                                                                                                                                                                                                  |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PLAID_ENABLED`                      | Set exactly `true` to enable provider calls. Omit to disable provider calls while keeping the manual planner available.                                                                                  |
+| `PLAID_ENV`                          | `sandbox` for development. `production` requires the extra approval and budget settings.                                                                                                                 |
+| `PLAID_CLIENT_ID`                    | Plaid team client ID.                                                                                                                                                                                    |
+| `PLAID_SECRET`                       | Secret for the selected environment.                                                                                                                                                                     |
+| `PLAID_ACTIVE_KEY_ID`                | ID of the current encryption key.                                                                                                                                                                        |
+| `PLAID_TOKEN_KEYS`                   | Comma-separated `id:base64` key entries. Every decoded key must contain 32 random bytes. Keep old IDs during rotation.                                                                                   |
+| `PLAID_PRODUCTION_APPROVED`          | Set exactly `true` only after checking the team's actual eligible Trial plan and remaining capacity.                                                                                                     |
+| `PLAID_LIFETIME_ITEM_LIMIT`          | Approved remaining local production reservation budget. The application accepts 1 through 10; this is a code cap, not proof of the team's actual allowance. Do not refund deleted or uncertain attempts. |
+| `PLAID_BANK_ACTIVITY_APPROVED`       | Defaults to `false`. Set exactly `true` only after checking Transactions access, consent, and costs for the actual plan.                                                                                 |
+| `PLAID_INVESTMENT_ACTIVITY_APPROVED` | Defaults to `false`. Set exactly `true` only after checking separate Investments Transactions access and subscription terms.                                                                             |
 
 Generate encryption keys with an established cryptographic generator. Store them as private runtime secrets, separately from database backups. Do not copy secret output into tickets, screenshots, command logs, or this guide. See [key rotation and recovery](plaid.md#encryption-and-operations).
 
@@ -111,11 +113,13 @@ The server derives the allowlisted OAuth redirect as `APP_BASE_URL/plaid-return`
 
 Before any live Link flow, inspect the actual Plaid Dashboard plan, created-Item count, and product eligibility. Coordinate with other apps on the same team. Configure only the remaining approved allowance. Local counters cannot discover external team usage. Do not upgrade the plan, accept a paid agreement, or create repeated live Items to test. Reconnect existing Items through update mode.
 
-The single Go process runs scheduled balance work. PostgreSQL owns due times, leases, generations, and pending removal state. Keep the current one-replica deployment until overlap and operational checks justify a change. An app restart recovers expired work leases. Shutdown cancels worker work before the database pool closes.
+Activity approvals do not enable any source by themselves. Each existing connection also needs saved opt-in by its linking member. Bank history needs a session-bound activity-purpose update Link with `additional_consented_products=[transactions]`. Investment history uses existing Investments consent, but the first `/investments/transactions/get` can add the separate Transactions subscription. Show that disclosure before saving opt-in. Turning history off stops new reads; it does not end provider billing. Review actual Trial or paid terms before enabling either gate. [Plaid product initialization](https://plaid.com/docs/link/initializing-products/) and [billing](https://plaid.com/docs/account/billing/)
 
-The migration adds provider tables without replacing manual plans. Back up the database and encryption key ring separately before release. Verify restoration into an isolated PostgreSQL 18 database. A Railway volume is not a backup. The prior project's backup limitation still applies; this implementation does not configure or verify backups.
+The single Go process runs separate balance and activity jobs. PostgreSQL owns their independent due times, leases, generations, and failures. Ordinary history and balance attempts reserve at least 30 minutes before another read, including failures and crash recovery. First import and consent repair can run immediately. Provider background updates can arrive later. Opening Activity, Sources, or Accounts reads saved data; it does not force an institution refresh. Keep the current one-replica deployment until overlap and operational checks justify a change. Shutdown cancels worker work before the database pool closes.
 
-For rollback, retain the added tables and keys. Confirm that no active or pending-removal Item loses its worker. Disabling Plaid stops calls; it does not revoke consent. Complete disconnects with a compatible worker or remove Items through the Plaid Dashboard before retiring the feature. Do not delete a credential before provider revocation succeeds.
+The additive activity migration extends Link attempts with a purpose and settings revision. It adds `bank_activity_jobs`, `bank_activity_records`, and `bank_activity_cancellations` without enabling existing sources or replacing manual plans. Back up these tables with the household, connection, account, and review data in one database snapshot. Keep the encryption key ring separately. Verify restoration into isolated PostgreSQL 18 before release. Raw activity retention is 730 days; cancellation identifiers survive removed history windows until account or Item purge. A Railway volume is not a backup. This change does not configure scheduled backups or prove a new restore result.
+
+For rollback, retain the added tables and keys. A previous image can leave activity jobs idle while the provider subscription remains active. Close the activity approval gates and preserve the saved state; do not drop tables or keys as a rollback step. Confirm that pending Item removals still have a compatible worker. Disabling Plaid stops calls; it does not revoke consent or cancel subscriptions. Complete approved disconnects with a compatible worker or arrange Dashboard removal before retiring the feature. Item removal also ends its balance connection. Do not delete the only revocation credential before removal succeeds.
 
 ### Provider release checks
 
@@ -125,5 +129,10 @@ For rollback, retain the added tables and keys. Confirm that no active or pendin
 4. Confirm ownership, classification, mapping, current and missing balances, currency, scheduled updates, freshness labels, OAuth resume, reconnect, and revocation failure/retry.
 5. Deliver a real signed Sandbox webhook before relying on live delivery. Reject a tampered notification. Do not record token-bearing headers or bodies in evidence.
 6. Verify restart recovery, no late synchronization after disconnect, and a restored database with the matching key ring.
+7. Keep both Activity approval flags false for the initial deployment. Confirm that opening Activity/Sources and ordinary balance linking make no history reads and add no history consent.
+8. With separate explicit approval, test bank update-mode history consent and existing-investment opt-in. Check the actual Dashboard product and billing state. Verify that OAuth recovery keeps the exact attempt purpose and never creates a replacement Item.
+9. Check per-source ownership and inclusion, missing history, initializing/delayed/reconnect states, corrections, removals, investment cancellation, ambiguous transfer review, and cross-month paired revisions. Missing data must not appear as confirmed zero.
+10. Confirm that disabling invalidates a held read, revocation/disconnect purges history, and 730-day cleanup removes raw data while keeping cancellation and surviving review state safe. Verify that balance failures do not stop eligible activity jobs.
+11. Review a 180-day net-deposit pay suggestion and explicitly select a member. Confirm that only net pay, frequency, and calendar change. Reject stale evidence or plan revisions. Do not infer gross pay, taxes, 401(k) splits, matching, expense budgets, or goal progress.
 
 Local tests do not establish these deployed or live results. No live Item or paid usage is authorized by a successful local gate.

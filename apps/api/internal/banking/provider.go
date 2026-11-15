@@ -20,6 +20,9 @@ type Provider interface {
 	Accounts(context.Context, string, string) (Snapshot, error)
 	Remove(context.Context, string) error
 	VerificationKey(context.Context, string) ([]byte, error)
+	ActivityLink(context.Context, string, string) (string, time.Time, error)
+	TransactionsSync(context.Context, string, string) (TransactionPage, error)
+	InvestmentTransactions(context.Context, string, string, string, int) (InvestmentPage, error)
 }
 
 type sdkProvider struct {

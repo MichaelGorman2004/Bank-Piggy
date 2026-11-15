@@ -14,12 +14,18 @@ func (s *Service) saveSnapshot(ctx context.Context, job work, snapshot Snapshot)
 		return err
 	}
 	defer rollback(tx)
+	if err := lockBankHousehold(ctx, tx, job.HouseholdID); err != nil {
+		return err
+	}
 	tag, err := tx.Exec(ctx, `UPDATE bank_connections SET state='connected',institution_name=$1,last_synced_at=now(),next_sync_at=now()+$2::interval,failures=0,error_code=CASE WHEN error_code IN ('new_accounts_available','pending_disconnect','pending_expiration') THEN error_code ELSE NULL END,lease_owner=NULL,lease_until=NULL WHERE id=$3 AND generation=$4 AND lease_owner=$5 AND lease_until>now() AND state=$6`, snapshot.InstitutionName, SyncInterval.String(), job.ID, job.Generation, job.Owner, job.State)
 	if err != nil {
 		return err
 	}
 	if tag.RowsAffected() != 1 {
 		return ErrConflict
+	}
+	if err := invalidateExpandedActivityCoverage(ctx, tx, job.ID, snapshot.Accounts); err != nil {
+		return err
 	}
 	if _, err := tx.Exec(ctx, `UPDATE bank_accounts SET active=false WHERE connection_id=$1`, job.ID); err != nil {
 		return err

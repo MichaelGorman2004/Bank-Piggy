@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ExchangeRequest, LinkTokenRequest, LinkTokenResponse } from '@bank-piggy/contracts';
+import type {
+  ExchangeRequest,
+  LinkTokenRequest,
+  LinkTokenResponse,
+  LinkPurpose,
+} from '@bank-piggy/contracts';
 import { createLink, exchangeLink, pendingLink } from './api';
 import { clearPlaidReturn, plaidReturn } from './oauthReturn';
 import { errorMessage } from '../session/errors';
@@ -86,7 +91,8 @@ function useLinkResume(
     if (redirectUri)
       void pendingLink()
         .then((attempt) => {
-          if (version === generation.current) setLink({ attempt, redirectUri, reconnect: false });
+          if (version === generation.current)
+            setLink({ attempt, redirectUri, reconnect: attempt.purpose === 'activity' });
         })
         .catch(() => {
           if (version === generation.current)
@@ -124,7 +130,10 @@ async function startLink(options: StartOptions) {
   try {
     const attempt = await createLink(options.input, options.csrfToken);
     if (version === options.generation.current)
-      options.setLink({ attempt, reconnect: Boolean(options.input.connectionId) });
+      options.setLink({
+        attempt: { ...attempt, purpose: attempt.purpose ?? options.input.purpose ?? 'balances' },
+        reconnect: Boolean(options.input.connectionId),
+      });
   } catch (failure) {
     if (version === options.generation.current) options.data.setError(errorMessage(failure));
   } finally {
@@ -143,6 +152,7 @@ function useLinkCompletion(csrfToken: string, data: ConnectionData) {
   const [pending, setPending] = useState<{
     readonly request: ExchangeRequest;
     readonly connectionId: string;
+    readonly purpose: LinkPurpose;
   } | null>(null);
   /**
    * Completes the server-owned attempt and retains a failed exchange only in memory.
@@ -152,7 +162,7 @@ function useLinkCompletion(csrfToken: string, data: ConnectionData) {
     setPending(input);
     const result = await data.run(
       () => exchangeLink(input.request, csrfToken),
-      'Connection saved. Review and select the accounts to include.',
+      completionMessage(input.purpose),
     );
     if (result) setPending(null);
     clearPlaidReturn();
@@ -162,6 +172,7 @@ function useLinkCompletion(csrfToken: string, data: ConnectionData) {
     save: (link: LinkSession, token: string | null) =>
       send({
         connectionId: link.attempt.connectionId,
+        purpose: link.attempt.purpose ?? 'balances',
         request: {
           attemptId: link.attempt.attemptId,
           ...(!link.reconnect && token ? { publicToken: token } : {}),
@@ -174,8 +185,19 @@ function useLinkCompletion(csrfToken: string, data: ConnectionData) {
       const result = await data.reload();
       if (pending && hasCompletedAttempt(result, pending.connectionId, pending.request.attemptId)) {
         setPending(null);
-        data.setFeedback('The connection is saved. Review and select the accounts to include.');
+        data.setFeedback(completionMessage(pending.purpose));
       }
     },
   };
+}
+
+/**
+ * Directs completed activity permission back to its own monthly review.
+ * @param purpose Server-owned Link purpose, including recovered OAuth attempts.
+ * @returns Safe completion guidance for the relevant product.
+ */
+function completionMessage(purpose: LinkPurpose): string {
+  return purpose === 'activity'
+    ? 'Activity permission saved. Open Activity to review recorded history and account choices.'
+    : 'Connection saved. Review and select the accounts to include.';
 }

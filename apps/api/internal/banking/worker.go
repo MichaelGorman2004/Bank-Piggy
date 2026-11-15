@@ -5,8 +5,6 @@ import (
 	"errors"
 	"log/slog"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 type work struct {
@@ -25,8 +23,11 @@ func (s *Service) RunWorker(ctx context.Context) {
 	defer ticker.Stop()
 	for {
 		err := s.runDueWork(ctx)
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) && !errors.Is(err, ErrConflict) && !errors.Is(err, context.Canceled) {
+		if !ignorableWorkError(err) {
 			slog.Error("bank background work failed", "errorType", "bank_sync")
+		}
+		if err := s.runDueActivity(ctx); !ignorableWorkError(err) {
+			slog.Error("bank background work failed", "errorType", "bank_activity_sync")
 		}
 		select {
 		case <-ctx.Done():

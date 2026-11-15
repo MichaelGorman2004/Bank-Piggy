@@ -11,6 +11,8 @@ import (
 
 type attempt struct {
 	ID, ConnectionID, HouseholdID, MemberID, SessionHash, Kind string
+	Purpose                                                    string
+	ActivityRevision                                           *int64
 	Update                                                     bool
 	ExpiresAt                                                  time.Time
 }
@@ -29,7 +31,7 @@ func (s *Service) CreateLink(ctx context.Context, identity Identity, request bud
 	if err != nil {
 		return budget.LinkTokenResponse{}, err
 	}
-	link, expires, err := s.provider.Link(ctx, identity.HouseholdID+"/"+identity.MemberID, pending.Kind, token)
+	link, expires, err := s.createProviderLink(ctx, identity, pending, token)
 	if err != nil {
 		return budget.LinkTokenResponse{}, s.failLink(pending, err)
 	}
@@ -47,7 +49,7 @@ func (s *Service) CreateLink(ctx context.Context, identity Identity, request bud
 	if tag.RowsAffected() != 1 {
 		return budget.LinkTokenResponse{}, ErrConflict
 	}
-	return budget.LinkTokenResponse{ConnectionID: pending.ConnectionID, AttemptID: pending.ID, LinkToken: link, ExpiresAt: expires.UTC().Format(time.RFC3339)}, nil
+	return budget.LinkTokenResponse{ConnectionID: pending.ConnectionID, AttemptID: pending.ID, LinkToken: link, ExpiresAt: expires.UTC().Format(time.RFC3339), Purpose: activityPurpose(pending.Purpose)}, nil
 }
 
 func (s *Service) reserveAttempt(ctx context.Context, identity Identity, request budget.LinkTokenRequest) (attempt, string, error) {
@@ -55,7 +57,10 @@ func (s *Service) reserveAttempt(ctx context.Context, identity Identity, request
 	if err != nil {
 		return attempt{}, "", err
 	}
-	pending := attempt{ID: id, HouseholdID: identity.HouseholdID, MemberID: identity.MemberID, SessionHash: identity.SessionHash, ExpiresAt: time.Now().Add(AttemptLifetime)}
+	pending := attempt{ID: id, HouseholdID: identity.HouseholdID, MemberID: identity.MemberID, SessionHash: identity.SessionHash, ExpiresAt: time.Now().Add(AttemptLifetime), Purpose: "balances"}
+	if request.Purpose != nil {
+		pending.Purpose = string(*request.Purpose)
+	}
 	tx, err := s.db.Pool.Begin(ctx)
 	if err != nil {
 		return pending, "", err
@@ -72,7 +77,7 @@ func (s *Service) reserveAttempt(ctx context.Context, identity Identity, request
 	if err != nil {
 		return pending, "", err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO bank_link_attempts(id,household_id,member_id,session_hash,connection_id,is_update,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, id, identity.HouseholdID, identity.MemberID, identity.SessionHash, pending.ConnectionID, pending.Update, pending.ExpiresAt)
+	_, err = tx.Exec(ctx, `INSERT INTO bank_link_attempts(id,household_id,member_id,session_hash,connection_id,is_update,expires_at,purpose,activity_revision) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, id, identity.HouseholdID, identity.MemberID, identity.SessionHash, pending.ConnectionID, pending.Update, pending.ExpiresAt, pending.Purpose, pending.ActivityRevision)
 	if err != nil {
 		return pending, "", err
 	}
@@ -81,17 +86,7 @@ func (s *Service) reserveAttempt(ctx context.Context, identity Identity, request
 
 func (s *Service) prepareConnection(ctx context.Context, tx pgx.Tx, identity Identity, request budget.LinkTokenRequest, pending *attempt) (string, error) {
 	if request.ConnectionID != nil {
-		if request.Kind != nil {
-			return "", ErrInvalid
-		}
-		pending.Update = true
-		pending.ConnectionID = *request.ConnectionID
-		var cipher string
-		err := tx.QueryRow(ctx, `SELECT kind,token_cipher FROM bank_connections WHERE id=$1 AND household_id=$2 AND member_id=$3 AND state NOT IN ('pending','disconnecting','disconnected') AND environment=$4`, pending.ConnectionID, identity.HouseholdID, identity.MemberID, s.config.Environment).Scan(&pending.Kind, &cipher)
-		if err != nil {
-			return "", notFound(err)
-		}
-		return s.vault.Open(cipher, credentialContext(identity.HouseholdID, pending.ConnectionID, "access"))
+		return s.prepareUpdate(ctx, tx, identity, *request.ConnectionID, pending)
 	}
 	if request.Kind == nil || (*request.Kind != "depository" && *request.Kind != "investment") {
 		return "", ErrInvalid
@@ -107,6 +102,21 @@ func (s *Service) prepareConnection(ctx context.Context, tx pgx.Tx, identity Ide
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO bank_connections(id,household_id,member_id,kind,environment) VALUES($1,$2,$3,$4,$5)`, id, identity.HouseholdID, identity.MemberID, pending.Kind, s.config.Environment)
 	return "", err
+}
+
+func (s *Service) prepareUpdate(ctx context.Context, tx pgx.Tx, identity Identity, id string, pending *attempt) (string, error) {
+	pending.Update, pending.ConnectionID = true, id
+	var cipher string
+	err := tx.QueryRow(ctx, `SELECT kind,token_cipher FROM bank_connections WHERE id=$1 AND household_id=$2 AND member_id=$3 AND state NOT IN ('pending','disconnecting','disconnected') AND environment=$4`, id, identity.HouseholdID, identity.MemberID, s.config.Environment).Scan(&pending.Kind, &cipher)
+	if err != nil {
+		return "", notFound(err)
+	}
+	if pending.Purpose == "activity" {
+		if err := s.prepareActivityConsent(ctx, tx, pending); err != nil {
+			return "", err
+		}
+	}
+	return s.vault.Open(cipher, credentialContext(identity.HouseholdID, id, "access"))
 }
 
 func (s *Service) reserveBudget(ctx context.Context, tx pgx.Tx) error {
@@ -135,7 +145,8 @@ func (s *Service) PendingLink(ctx context.Context, identity Identity) (budget.Li
 	var result budget.LinkTokenResponse
 	var encrypted string
 	var expires time.Time
-	err := s.db.Pool.QueryRow(ctx, `SELECT id,connection_id,token_cipher,expires_at FROM bank_link_attempts WHERE household_id=$1 AND member_id=$2 AND session_hash=$3 AND state='pending' AND expires_at>now() AND token_cipher IS NOT NULL AND EXISTS(SELECT 1 FROM bank_connections c WHERE c.id=connection_id AND c.environment=$4) ORDER BY created_at DESC LIMIT 1`, identity.HouseholdID, identity.MemberID, identity.SessionHash, s.config.Environment).Scan(&result.AttemptID, &result.ConnectionID, &encrypted, &expires)
+	var purpose string
+	err := s.db.Pool.QueryRow(ctx, `SELECT id,connection_id,token_cipher,expires_at,purpose FROM bank_link_attempts WHERE household_id=$1 AND member_id=$2 AND session_hash=$3 AND state='pending' AND expires_at>now() AND token_cipher IS NOT NULL AND EXISTS(SELECT 1 FROM bank_connections c WHERE c.id=connection_id AND c.environment=$4) ORDER BY created_at DESC LIMIT 1`, identity.HouseholdID, identity.MemberID, identity.SessionHash, s.config.Environment).Scan(&result.AttemptID, &result.ConnectionID, &encrypted, &expires, &purpose)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return result, ErrNotFound
 	}
@@ -144,5 +155,6 @@ func (s *Service) PendingLink(ctx context.Context, identity Identity) (budget.Li
 	}
 	result.LinkToken, err = s.vault.Open(encrypted, credentialContext(identity.HouseholdID, result.AttemptID, "link"))
 	result.ExpiresAt = expires.UTC().Format(time.RFC3339)
+	result.Purpose = activityPurpose(purpose)
 	return result, err
 }

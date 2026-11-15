@@ -20,6 +20,12 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+.flowNote {
+  margin: 8px 0 0;
+  color: var(--walnut-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
 .empty {
   flex: 1;
   min-height: 220px;

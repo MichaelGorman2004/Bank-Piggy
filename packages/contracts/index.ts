@@ -42,6 +42,7 @@ export type Goal = {
   purchase?: PurchaseTarget;
   savingsTarget?: SavingsTarget;
   contributionYear?: ContributionYear;
+  purpose?: "investment";
 };
 
 export type Household = {
@@ -330,6 +331,7 @@ export type ConnectionList = {
 export type LinkTokenRequest = {
   kind?: ConnectionKind;
   connectionId?: string;
+  purpose?: LinkPurpose;
 };
 
 export type LinkTokenResponse = {
@@ -337,9 +339,222 @@ export type LinkTokenResponse = {
   linkToken: string;
   expiresAt: string;
   connectionId: string;
+  purpose?: LinkPurpose;
 };
 
 export type ExchangeRequest = {
   attemptId: string;
   publicToken?: string;
+};
+
+export type LinkPurpose = "balances" | "activity";
+
+export type ActivityCategory = "paycheck" | "income" | "spending" | "contribution" | "withdrawal" | "transfer" | "trade" | "investment_income" | "excluded" | "review";
+
+export type ActivityAccountSelection = {
+  accountId: string;
+  enabled: boolean;
+  ownership: "member-1" | "member-2" | "shared";
+};
+
+export type ActivityAccount = {
+  accountId: string;
+  name: string;
+  providerType: string;
+  currency: string | null;
+  available: boolean;
+  enabled: boolean;
+  ownership: "member-1" | "member-2" | "shared";
+};
+
+export type ActivitySettingsRequest = {
+  expectedRevision: number;
+  enabled: boolean;
+  accounts: Array<ActivityAccountSelection>;
+};
+
+export type ActivitySource = {
+  connectionId: string;
+  institutionName: string;
+  kind: ConnectionKind;
+  enabled: boolean;
+  allowed: boolean;
+  canManage: boolean;
+  revision: number;
+  needsConsent: boolean;
+  state: "disabled" | "consent_required" | "initializing" | "ready" | "delayed" | "reconnect" | "unsupported";
+  lastSyncedAt: string | null;
+  historyStart: string | null;
+  historyEnd: string | null;
+  errorCode: string | null;
+  accounts: Array<ActivityAccount>;
+};
+
+export type ActivityTransferCandidate = {
+  recordId: string;
+  revision: number;
+  date: CalendarDate;
+  accountName: string;
+  amountCents: number;
+};
+
+export type ActivityRecord = {
+  id: string;
+  connectionId: string;
+  accountId: string;
+  accountName: string;
+  ownership: "member-1" | "member-2" | "shared";
+  kind: "bank" | "investment";
+  date: CalendarDate;
+  name: string;
+  counterparty: string;
+  currency: string | null;
+  amountCents: number | null;
+  activityType: string;
+  activitySubtype: string;
+  primaryCategory: string;
+  detailedCategory: string;
+  categoryConfidence: string;
+  pending: boolean;
+  cancelled: boolean;
+  category: ActivityCategory;
+  isReviewed: boolean;
+  reviewReason: string | null;
+  revision: number;
+  transferPeerId: string | null;
+  transferCandidates: Array<ActivityTransferCandidate>;
+  expenseId: string | null;
+  goalId: string | null;
+  allocation: ActivityAllocation | null;
+  scopeAmountCents: number | null;
+};
+
+export type ActivityReviewRequest = {
+  expectedRevision: number;
+  category: ActivityCategory | null;
+  transferPeerId: string | null;
+  expectedPeerRevision: number | null;
+  expectedPlanRevision: number;
+  expenseId: string | null;
+  goalId: string | null;
+};
+
+export type ActivityTotals = {
+  incomeCents: number;
+  spendingCents: number;
+  investmentDepositsCents: number;
+  investmentWithdrawalsCents: number;
+  netInvestmentContributionsCents: number;
+  investmentIncomeCents: number;
+  investmentFeesCents: number;
+};
+
+export type ActivityCategoryTotal = {
+  name: string;
+  amountCents: number;
+};
+
+export type ActivityContribution = {
+  accountId: string;
+  accountName: string;
+  ownership: "member-1" | "member-2" | "shared";
+  depositsCents: number;
+  withdrawalsCents: number;
+  netContributionsCents: number;
+};
+
+export type PaycheckDeposit = {
+  date: CalendarDate;
+  amountCents: number;
+};
+
+export type PaycheckSuggestion = {
+  id: string;
+  source: string;
+  ownership: "member-1" | "member-2" | "shared";
+  memberId: "member-1" | "member-2" | null;
+  depositCount: number;
+  lastPayDate: CalendarDate;
+  typicalPaycheckCents: number;
+  monthlyTakeHomeCents: number;
+  frequency: "weekly" | "biweekly" | "semimonthly" | "monthly";
+  paySchedule: PaySchedule;
+  nextPayDate: CalendarDate | null;
+  variableAmount: boolean;
+  deposits: Array<PaycheckDeposit>;
+};
+
+export type ApplyPaycheckRequest = {
+  expectedPlanRevision: number;
+  memberId: "member-1" | "member-2";
+};
+
+export type ActivityResponse = {
+  month: string;
+  scope: string;
+  planRevision: number;
+  environment: string;
+  coverage: "disabled" | "not_connected" | "incomplete" | "ready";
+  notice: string;
+  totals: ActivityTotals;
+  categories: Array<ActivityCategoryTotal>;
+  contributions: Array<ActivityContribution>;
+  records: Array<ActivityRecord>;
+  reviewCount: number;
+  totalRecordCount: number;
+  nextCursor: string | null;
+  suggestions: Array<PaycheckSuggestion>;
+  sources: Array<ActivitySource>;
+  comparison: ActivityComparison;
+};
+
+export type ActivityAllocation = {
+  ownership: "member-1" | "member-2" | "shared";
+  firstMemberCents: number;
+};
+
+export type ActivityExpenseComparison = {
+  expenseId: string;
+  name: string;
+  category: string;
+  budgetCents: number;
+  spentCents: number;
+  remainingCents: number;
+  recordCount: number;
+};
+
+export type ActivityGoalComparison = {
+  goalId: string;
+  name: string;
+  budgetCents: number;
+  netContributionsCents: number;
+  remainingCents: number;
+  recordCount: number;
+};
+
+export type ActivityFlowAmount = {
+  id: string;
+  name: string;
+  amountCents: number;
+};
+
+export type ActivityBankFlow = {
+  inflows: Array<ActivityFlowAmount>;
+  outflows: Array<ActivityFlowAmount>;
+  totalCents: number;
+};
+
+export type ActivityComparison = {
+  bankAvailable: boolean;
+  investmentAvailable: boolean;
+  expenses: Array<ActivityExpenseComparison>;
+  investmentGoals: Array<ActivityGoalComparison>;
+  unmatchedSpendingCents: number;
+  unmatchedSpendingCount: number;
+  unmatchedInvestmentNetCents: number;
+  investmentGoalBudgetCents: number;
+  payrollBudgetCents: number;
+  investmentBudgetCents: number;
+  investmentRemainingCents: number;
+  bankFlow: ActivityBankFlow;
 };

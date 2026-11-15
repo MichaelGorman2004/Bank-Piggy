@@ -10,7 +10,8 @@ interface DashboardHeaderProps {
   readonly members: ReadonlyArray<Member>;
   readonly scope: string;
   readonly period: Period;
-  readonly view: Exclude<View, 'accounts'>;
+  readonly actual: boolean;
+  readonly view: Exclude<View, 'accounts' | 'activity'>;
   readonly onScope: (scope: string) => void;
   readonly onPeriod: (period: Period) => void;
   readonly onAdd: () => void;
@@ -77,7 +78,7 @@ function HeaderFilters(props: DashboardHeaderProps) {
         </select>
         <ChevronDown className={ownStyles.selectChevron} size={14} aria-hidden="true" />
       </span>
-      {props.view !== 'todos' && <PeriodFilter {...props} />}
+      {props.view !== 'todos' && !props.actual && <PeriodFilter {...props} />}
     </div>
   );
 }
@@ -108,21 +109,13 @@ function HeaderAction(props: DashboardHeaderProps) {
  * @returns Rendered interface.
  */
 export function DashboardHeader(props: DashboardHeaderProps) {
-  const selected = props.members.find((item) => item.id === props.scope);
+  const copy = headerCopy(props);
   return (
     <>
       <header className={ownStyles.header}>
         <div className={ownStyles.heading}>
-          <h1>{VIEW_DETAILS[props.view].title}</h1>
-          <p>
-            {props.view === 'todos'
-              ? 'Manual payments and goal contributions for each pay period.'
-              : props.view === 'flow'
-                ? 'Income and planned allocations.'
-                : props.scope === HOUSEHOLD_SCOPE
-                  ? `${props.members.map((item) => item.name).join(' & ')}’s household plan`
-                  : `${selected?.name ?? 'Your'}’s share of the plan`}
-          </p>
+          <h1>{copy.title}</h1>
+          <p>{copy.description}</p>
         </div>
         <HeaderAction {...props} />
         <HeaderFilters {...props} />
@@ -137,4 +130,27 @@ export function DashboardHeader(props: DashboardHeaderProps) {
       )}
     </>
   );
+}
+
+/** Names recorded reports separately from forecasts without changing either source.
+ * @param props Selected task, scope, and reporting basis.
+ * @returns The task heading and short source description.
+ */
+function headerCopy(props: DashboardHeaderProps) {
+  const title =
+    props.actual && props.view === 'goals'
+      ? 'Investment contributions'
+      : VIEW_DETAILS[props.view].title;
+  if (props.view === 'todos')
+    return { title, description: 'Manual payments and goal contributions for each pay period.' };
+  if (props.actual) return { title, description: 'Recorded monthly activity and your saved plan.' };
+  if (props.view === 'flow') return { title, description: 'Income and planned allocations.' };
+  const selected = props.members.find((item) => item.id === props.scope);
+  return {
+    title,
+    description:
+      props.scope === HOUSEHOLD_SCOPE
+        ? `${props.members.map((item) => item.name).join(' & ')}’s household plan`
+        : `${selected?.name ?? 'Your'}’s share of the plan`,
+  };
 }

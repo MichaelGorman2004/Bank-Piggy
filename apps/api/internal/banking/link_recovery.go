@@ -31,6 +31,9 @@ func (s *Service) failLink(pending attempt, original error) error {
 }
 
 func validateLinkRequest(request budget.LinkTokenRequest) error {
+	if err := validateLinkPurpose(request); err != nil {
+		return err
+	}
 	if request.ConnectionID != nil {
 		if request.Kind != nil || *request.ConnectionID == "" {
 			return ErrInvalid
@@ -41,6 +44,19 @@ func validateLinkRequest(request budget.LinkTokenRequest) error {
 		return ErrInvalid
 	}
 	if *request.Kind != "depository" && *request.Kind != "investment" {
+		return ErrInvalid
+	}
+	return nil
+}
+
+func validateLinkPurpose(request budget.LinkTokenRequest) error {
+	if request.Purpose == nil {
+		return nil
+	}
+	if *request.Purpose != "balances" && *request.Purpose != "activity" {
+		return ErrInvalid
+	}
+	if *request.Purpose == "activity" && request.ConnectionID == nil {
 		return ErrInvalid
 	}
 	return nil

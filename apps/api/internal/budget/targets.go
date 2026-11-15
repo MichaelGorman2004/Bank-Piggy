@@ -3,6 +3,9 @@ package budget
 import "errors"
 
 func validateGoalTarget(goal Goal) error {
+	if err := validateGoalPurpose(goal); err != nil {
+		return err
+	}
 	var kinds int
 	for _, present := range []bool{goal.Trip != nil, goal.Purchase != nil, goal.SavingsTarget != nil} {
 		if present {
@@ -22,6 +25,18 @@ func validateGoalTarget(goal Goal) error {
 		return err
 	}
 	return validateContributionYear(goal)
+}
+
+func validateGoalPurpose(goal Goal) error {
+	if goal.Purpose != "" && (goal.Purpose != "investment" || goal.Trip != nil || goal.Purchase != nil) {
+		return errors.New("investment purpose cannot be used with a trip or purchase target")
+	}
+	return nil
+}
+
+// IsInvestmentGoal identifies explicit investment plans without reading editable names.
+func IsInvestmentGoal(goal Goal) bool {
+	return goal.Purpose == "investment" || goal.ContributionYear != nil
 }
 
 func validateContributionYear(goal Goal) error {

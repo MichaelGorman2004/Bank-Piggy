@@ -36,8 +36,12 @@ export function ConnectedAccounts(props: {
       </button>
       {link.open && (
         <Modal
-          title="Connected accounts"
-          description="Read-only balances for your shared household. Your budget and goal progress stay separate."
+          title={
+            link.link?.attempt.purpose === 'activity'
+              ? 'Authorize activity history'
+              : 'Connected accounts'
+          }
+          description={connectionDescription(link)}
           onClose={link.close}
           busy={state.busy || link.preparing}
           suspended={link.external}
@@ -205,4 +209,14 @@ function ConnectionAvailability(props: {
       )}
     </>
   );
+}
+
+/** Names the permission being recovered after an institution redirect.
+ * @param link Current server-owned Link lifecycle.
+ * @returns The relevant read-only consent description.
+ */
+function connectionDescription(link: ReturnType<typeof useConnectionLink>): string {
+  return link.link?.attempt.purpose === 'activity'
+    ? 'Read-only history for your consented accounts. Open Activity after permission is saved.'
+    : 'Read-only balances for your shared household. Your budget and goal progress stay separate.';
 }

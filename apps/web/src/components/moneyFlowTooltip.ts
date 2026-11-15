@@ -1,7 +1,7 @@
 import type { TooltipComponentFormatterCallbackParams, TooltipComponentOption } from 'echarts';
 import { format } from 'echarts/core';
 import { money } from '../features/plan/format.ts';
-import type { FlowGraph } from './moneyFlowOption';
+import type { FlowGraph } from './moneyFlowChart';
 
 const TOOLTIP_TEXT_WIDTH = 200;
 const GRAPHEMES = new Intl.Segmenter(undefined, { granularity: 'grapheme' });

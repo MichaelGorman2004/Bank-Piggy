@@ -46,7 +46,7 @@ func personalPaymentAmount(h Household, index int, expense Expense) (int64, stri
 	if expense.OwnerID == "shared" && len(h.Members) > 1 {
 		name += " (your share)"
 	}
-	first, second := splitExpense(h, expense)
+	first, second := SplitExpense(h, expense)
 	if index == 0 {
 		return first, name
 	}

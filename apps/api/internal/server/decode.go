@@ -49,6 +49,9 @@ func requireObjectFields(data json.RawMessage, kind reflect.Type) error {
 		if !present {
 			return errors.New("missing required field: " + name)
 		}
+		if field.Tag.Get("nullable") == "true" && bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+			continue
+		}
 		if err := requireFields(value, field.Type); err != nil {
 			return err
 		}

@@ -9,6 +9,7 @@ import { useWorkspace } from './useWorkspace';
 import styles from './Workspace.module.css';
 import { plaidReturn } from './features/connections/oauthReturn';
 import { ConnectionsProvider } from './features/connections/ConnectionsContext';
+import { ActivityProvider } from './features/activity/ActivityContext';
 
 export interface WorkspaceProps {
   readonly session: Session;
@@ -42,36 +43,62 @@ export function Workspace(props: WorkspaceProps) {
       revision={props.data.household.revision}
       csrfToken={props.session.csrfToken ?? ''}
     >
-      <div className={styles.app}>
-        <a href="#main" className={styles.skip}>
-          Skip to main content
-        </a>
-        <Sidebar
-          session={props.session}
-          members={props.data.household.members}
+      <ActivityProvider
+        month={props.data.planningMonth}
+        scope={ui.scope}
+        revision={props.data.household.revision}
+        onReloadPlan={props.onReload}
+      >
+        <WorkspaceLayout app={props} ui={ui} sharing={sharing} />
+      </ActivityProvider>
+    </ConnectionsProvider>
+  );
+}
+
+interface WorkspaceLayoutProps {
+  readonly app: WorkspaceProps;
+  readonly ui: ReturnType<typeof useWorkspace>;
+  readonly sharing: ReturnType<typeof useWorkspaceSharing>;
+}
+
+/** Keeps navigation and dialogs mounted while financial report content changes.
+ * @param props Saved household, transient view state, and invitation actions.
+ * @param props.app Saved household and persistence feedback.
+ * @param props.ui Navigation, reporting mode, and editor state.
+ * @param props.sharing Current invitation dialog and save actions.
+ * @returns The bounded application frame inside its financial data providers.
+ */
+function WorkspaceLayout({ app, ui, sharing }: WorkspaceLayoutProps) {
+  return (
+    <div className={styles.app}>
+      <a href="#main" className={styles.skip}>
+        Skip to main content
+      </a>
+      <Sidebar
+        session={app.session}
+        members={app.data.household.members}
+        view={ui.view}
+        open={ui.mobileOpen}
+        onView={ui.setView}
+        onClose={ui.closeMobile}
+        onSignout={app.onSignout}
+        onShare={() => {
+          void sharing.show();
+        }}
+      />
+      <div className={styles.workspace}>
+        <WorkspaceBar
           view={ui.view}
-          open={ui.mobileOpen}
-          onView={ui.setView}
-          onClose={ui.closeMobile}
-          onSignout={props.onSignout}
-          onShare={() => {
-            void sharing.show();
+          saving={app.saving}
+          mobileOpen={ui.mobileOpen}
+          onMenu={() => {
+            ui.setMobileOpen(true);
           }}
         />
-        <div className={styles.workspace}>
-          <WorkspaceBar
-            view={ui.view}
-            saving={props.saving}
-            mobileOpen={ui.mobileOpen}
-            onMenu={() => {
-              ui.setMobileOpen(true);
-            }}
-          />
-          <WorkspaceContent app={props} ui={ui} />
-        </div>
-        <WorkspaceDialogs app={props} ui={ui} sharing={sharing} />
+        <WorkspaceContent app={app} ui={ui} />
       </div>
-    </ConnectionsProvider>
+      <WorkspaceDialogs app={app} ui={ui} sharing={sharing} />
+    </div>
   );
 }
 
@@ -83,11 +110,7 @@ export function Workspace(props: WorkspaceProps) {
  * @param props.sharing Household invitation and save actions.
  * @returns Household dialogs without replacing their editable drafts on balance refresh.
  */
-function WorkspaceDialogs(props: {
-  readonly app: WorkspaceProps;
-  readonly ui: ReturnType<typeof useWorkspace>;
-  readonly sharing: ReturnType<typeof useWorkspaceSharing>;
-}) {
+function WorkspaceDialogs(props: WorkspaceLayoutProps) {
   return (
     <>
       <PlanDialogs

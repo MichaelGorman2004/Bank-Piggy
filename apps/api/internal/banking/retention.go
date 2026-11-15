@@ -24,5 +24,8 @@ func (s *Service) retireExpiredAttempts(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if err := pruneExpiredActivity(ctx, tx, s.config.Environment); err != nil {
+		return err
+	}
 	return tx.Commit(ctx)
 }
