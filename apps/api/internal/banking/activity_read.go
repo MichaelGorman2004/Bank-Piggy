@@ -19,7 +19,7 @@ type activityLedger struct {
 }
 
 // MonthlyActivity reads one consistent saved snapshot. It never contacts Plaid or changes the plan.
-func (s *Service) MonthlyActivity(ctx context.Context, identity Identity, month time.Time, scope, cursor string) (budget.ActivityResponse, error) {
+func (s *Service) MonthlyActivity(ctx context.Context, identity Identity, month time.Time, scope string) (budget.ActivityResponse, error) {
 	tx, err := s.db.Pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
 		return budget.ActivityResponse{}, err
@@ -36,9 +36,6 @@ func (s *Service) MonthlyActivity(ctx context.Context, identity Identity, month 
 	result.Environment = s.config.Environment
 	if !s.config.Enabled {
 		result.Environment = "disabled"
-	}
-	if err := pageActivity(&result, cursor); err != nil {
-		return result, err
 	}
 	return result, tx.Commit(ctx)
 }
@@ -133,7 +130,7 @@ func scanActivityRecord(row pgx.Row) (budget.ActivityRecord, error) {
 			return record, err
 		}
 	}
-	// Review responses have no selected scope. Only the monthly projection can allocate this amount.
+	// Stored facts have no selected scope; the monthly projection allocates this amount.
 	raw.ScopeAmountCents = nil
 	if category != nil {
 		raw.Category = *category

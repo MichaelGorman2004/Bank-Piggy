@@ -52,11 +52,6 @@ func TestMonthlyActualsUsePostedHistoryAndExactSharedCents(t *testing.T) {
 	if first.Totals.IncomeCents+second.Totals.IncomeCents != want.IncomeCents || first.Totals.NetInvestmentContributionsCents+second.Totals.NetInvestmentContributionsCents != want.NetInvestmentContributionsCents {
 		t.Fatal("shared cents do not reconcile")
 	}
-	for _, result := range []budget.ActivityResponse{household, first, second} {
-		if len(result.Contributions) != 1 || result.Contributions[0].NetContributionsCents != result.Totals.NetInvestmentContributionsCents {
-			t.Fatal("contribution rows differ from headline")
-		}
-	}
 }
 
 func TestCoverageDoesNotRepresentMissingOrUnreviewedHistoryAsComplete(t *testing.T) {
@@ -76,11 +71,11 @@ func TestCoverageDoesNotRepresentMissingOrUnreviewedHistoryAsComplete(t *testing
 	sources[0].HistoryStart = pointer("2026-08-01")
 	unknown := bankRecord("unknown", "2026-11-05", 100, "OTHER", "")
 	result := projectFor(t, []budget.ActivityRecord{unknown}, sources, "household")
-	if result.Coverage != "incomplete" || result.ReviewCount != 1 || result.Totals.SpendingCents != 0 {
+	if result.Coverage != "incomplete" || result.Totals.SpendingCents != 0 {
 		t.Fatal("unreviewed record entered complete totals")
 	}
 	sources[0].Allowed = false
-	if len(projectFor(t, []budget.ActivityRecord{unknown}, sources, "household").Records) != 0 {
+	if projectFor(t, recordsWithKnownSpending(), sources, "household").Totals.SpendingCents != 0 {
 		t.Fatal("closed product gate exposed history actuals")
 	}
 }
@@ -121,12 +116,20 @@ func TestUnsupportedPostedCurrencyMakesZeroIncomplete(t *testing.T) {
 func TestFuturePostingDatesDoNotEnterCurrentActuals(t *testing.T) {
 	records := []budget.ActivityRecord{bankRecord("future", "2026-11-14", 1000, "FOOD_AND_DRINK", ""), investmentRecord("future-invested", "roth", "2026-11-14", "buy", "contribution", 10000)}
 	result := projectFor(t, records, sourcesFor("checking", "roth"), "household")
-	if result.Totals.SpendingCents != 0 || result.Totals.NetInvestmentContributionsCents != 0 || len(result.Records) != 2 {
+	if result.Totals.SpendingCents != 0 || result.Totals.NetInvestmentContributionsCents != 0 {
 		t.Fatal("future activity entered actuals or disappeared")
 	}
-	for _, record := range result.Records {
+	monthly, _, err := monthlyRecords(Reconcile(records), IncludedAccounts(sourcesFor("checking", "roth")), budget.Blank("One", "Two"), "2026-11", "household", testNow)
+	if err != nil || len(monthly) != 2 {
+		t.Fatal("future records were lost from internal classification", err)
+	}
+	for _, record := range monthly {
 		if record.Category != "excluded" || record.ReviewReason == nil {
 			t.Fatal("future-date exclusion is not explained")
 		}
 	}
+}
+
+func recordsWithKnownSpending() []budget.ActivityRecord {
+	return []budget.ActivityRecord{bankRecord("known", "2026-11-05", 100, "FOOD_AND_DRINK", "")}
 }

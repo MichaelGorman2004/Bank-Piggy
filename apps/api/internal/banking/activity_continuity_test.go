@@ -35,7 +35,7 @@ func TestInvestmentCoverageRequiresContinuousHistoryWindows(t *testing.T) {
 				t.Fatal("saved coverage did not preserve only a continuous history range")
 			}
 			month := first.AddDate(0, 0, -1)
-			result, err := s.MonthlyActivity(t.Context(), identity, month, "household", "")
+			result, err := s.MonthlyActivity(t.Context(), identity, month, "household")
 			if err != nil || result.Coverage != wantCoverage {
 				t.Fatal("coverage certified a missing day or lost continuous history", err, result.Coverage)
 			}

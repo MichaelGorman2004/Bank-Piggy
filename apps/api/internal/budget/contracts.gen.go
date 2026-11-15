@@ -488,17 +488,6 @@ type ActivityRecord struct {
 	ScopeAmountCents   *int64                      `json:"scopeAmountCents" nullable:"true"`
 }
 
-// ActivityReviewRequest is defined in the canonical OpenAPI contract.
-type ActivityReviewRequest struct {
-	ExpectedRevision     int64             `json:"expectedRevision"`
-	Category             *ActivityCategory `json:"category" nullable:"true"`
-	TransferPeerID       *string           `json:"transferPeerId" nullable:"true"`
-	ExpectedPeerRevision *int64            `json:"expectedPeerRevision" nullable:"true"`
-	ExpectedPlanRevision int64             `json:"expectedPlanRevision"`
-	ExpenseID            *string           `json:"expenseId" nullable:"true"`
-	GoalID               *string           `json:"goalId" nullable:"true"`
-}
-
 // ActivityTotals is defined in the canonical OpenAPI contract.
 type ActivityTotals struct {
 	IncomeCents                     int64 `json:"incomeCents"`
@@ -510,43 +499,20 @@ type ActivityTotals struct {
 	InvestmentFeesCents             int64 `json:"investmentFeesCents"`
 }
 
-// ActivityCategoryTotal is defined in the canonical OpenAPI contract.
-type ActivityCategoryTotal struct {
-	Name        string `json:"name"`
-	AmountCents int64  `json:"amountCents"`
-}
-
-// ActivityContribution is defined in the canonical OpenAPI contract.
-type ActivityContribution struct {
-	AccountID             string `json:"accountId"`
-	AccountName           string `json:"accountName"`
-	Ownership             string `json:"ownership"`
-	DepositsCents         int64  `json:"depositsCents"`
-	WithdrawalsCents      int64  `json:"withdrawalsCents"`
-	NetContributionsCents int64  `json:"netContributionsCents"`
-}
-
-// PaycheckDeposit is defined in the canonical OpenAPI contract.
-type PaycheckDeposit struct {
-	Date        CalendarDate `json:"date"`
-	AmountCents int64        `json:"amountCents"`
-}
-
 // PaycheckSuggestion is defined in the canonical OpenAPI contract.
 type PaycheckSuggestion struct {
-	ID                   string            `json:"id"`
-	Source               string            `json:"source"`
-	Ownership            string            `json:"ownership"`
-	MemberID             *string           `json:"memberId" nullable:"true"`
-	DepositCount         int64             `json:"depositCount"`
-	LastPayDate          CalendarDate      `json:"lastPayDate"`
-	TypicalPaycheckCents int64             `json:"typicalPaycheckCents"`
-	MonthlyTakeHomeCents int64             `json:"monthlyTakeHomeCents"`
-	Frequency            string            `json:"frequency"`
-	PaySchedule          PaySchedule       `json:"paySchedule"`
-	NextPayDate          *CalendarDate     `json:"nextPayDate" nullable:"true"`
-	VariableAmount       bool              `json:"variableAmount"`
-	Deposits             []PaycheckDeposit `json:"deposits"`
+	ID                   string        `json:"id"`
+	Source               string        `json:"source"`
+	Ownership            string        `json:"ownership"`
+	MemberID             *string       `json:"memberId" nullable:"true"`
+	DepositCount         int64         `json:"depositCount"`
+	LastPayDate          CalendarDate  `json:"lastPayDate"`
+	TypicalPaycheckCents int64         `json:"typicalPaycheckCents"`
+	MonthlyTakeHomeCents int64         `json:"monthlyTakeHomeCents"`
+	Frequency            string        `json:"frequency"`
+	PaySchedule          PaySchedule   `json:"paySchedule"`
+	NextPayDate          *CalendarDate `json:"nextPayDate" nullable:"true"`
+	VariableAmount       bool          `json:"variableAmount"`
 }
 
 // ApplyPaycheckRequest is defined in the canonical OpenAPI contract.
@@ -557,49 +523,22 @@ type ApplyPaycheckRequest struct {
 
 // ActivityResponse is defined in the canonical OpenAPI contract.
 type ActivityResponse struct {
-	Month            string                  `json:"month"`
-	Scope            string                  `json:"scope"`
-	PlanRevision     int64                   `json:"planRevision"`
-	Environment      string                  `json:"environment"`
-	Coverage         string                  `json:"coverage"`
-	Notice           string                  `json:"notice"`
-	Totals           ActivityTotals          `json:"totals"`
-	Categories       []ActivityCategoryTotal `json:"categories"`
-	Contributions    []ActivityContribution  `json:"contributions"`
-	Records          []ActivityRecord        `json:"records"`
-	ReviewCount      int64                   `json:"reviewCount"`
-	TotalRecordCount int64                   `json:"totalRecordCount"`
-	NextCursor       *string                 `json:"nextCursor" nullable:"true"`
-	Suggestions      []PaycheckSuggestion    `json:"suggestions"`
-	Sources          []ActivitySource        `json:"sources"`
-	Comparison       ActivityComparison      `json:"comparison"`
+	Month        string               `json:"month"`
+	Scope        string               `json:"scope"`
+	PlanRevision int64                `json:"planRevision"`
+	Environment  string               `json:"environment"`
+	Coverage     string               `json:"coverage"`
+	Notice       string               `json:"notice"`
+	Totals       ActivityTotals       `json:"totals"`
+	Suggestions  []PaycheckSuggestion `json:"suggestions"`
+	Sources      []ActivitySource     `json:"sources"`
+	Comparison   ActivityComparison   `json:"comparison"`
 }
 
 // ActivityAllocation is defined in the canonical OpenAPI contract.
 type ActivityAllocation struct {
 	Ownership        string `json:"ownership"`
 	FirstMemberCents int64  `json:"firstMemberCents"`
-}
-
-// ActivityExpenseComparison is defined in the canonical OpenAPI contract.
-type ActivityExpenseComparison struct {
-	ExpenseID      string `json:"expenseId"`
-	Name           string `json:"name"`
-	Category       string `json:"category"`
-	BudgetCents    int64  `json:"budgetCents"`
-	SpentCents     int64  `json:"spentCents"`
-	RemainingCents int64  `json:"remainingCents"`
-	RecordCount    int64  `json:"recordCount"`
-}
-
-// ActivityGoalComparison is defined in the canonical OpenAPI contract.
-type ActivityGoalComparison struct {
-	GoalID                string `json:"goalId"`
-	Name                  string `json:"name"`
-	BudgetCents           int64  `json:"budgetCents"`
-	NetContributionsCents int64  `json:"netContributionsCents"`
-	RemainingCents        int64  `json:"remainingCents"`
-	RecordCount           int64  `json:"recordCount"`
 }
 
 // ActivityFlowAmount is defined in the canonical OpenAPI contract.
@@ -618,16 +557,13 @@ type ActivityBankFlow struct {
 
 // ActivityComparison is defined in the canonical OpenAPI contract.
 type ActivityComparison struct {
-	BankAvailable               bool                        `json:"bankAvailable"`
-	InvestmentAvailable         bool                        `json:"investmentAvailable"`
-	Expenses                    []ActivityExpenseComparison `json:"expenses"`
-	InvestmentGoals             []ActivityGoalComparison    `json:"investmentGoals"`
-	UnmatchedSpendingCents      int64                       `json:"unmatchedSpendingCents"`
-	UnmatchedSpendingCount      int64                       `json:"unmatchedSpendingCount"`
-	UnmatchedInvestmentNetCents int64                       `json:"unmatchedInvestmentNetCents"`
-	InvestmentGoalBudgetCents   int64                       `json:"investmentGoalBudgetCents"`
-	PayrollBudgetCents          int64                       `json:"payrollBudgetCents"`
-	InvestmentBudgetCents       int64                       `json:"investmentBudgetCents"`
-	InvestmentRemainingCents    int64                       `json:"investmentRemainingCents"`
-	BankFlow                    ActivityBankFlow            `json:"bankFlow"`
+	BankAvailable             bool             `json:"bankAvailable"`
+	InvestmentAvailable       bool             `json:"investmentAvailable"`
+	InvestmentGoalBudgetCents int64            `json:"investmentGoalBudgetCents"`
+	PayrollBudgetCents        int64            `json:"payrollBudgetCents"`
+	InvestmentBudgetCents     int64            `json:"investmentBudgetCents"`
+	InvestmentRemainingCents  int64            `json:"investmentRemainingCents"`
+	BankFlow                  ActivityBankFlow `json:"bankFlow"`
+	ExpenseBudgetCents        int64            `json:"expenseBudgetCents"`
+	ExpenseRemainingCents     int64            `json:"expenseRemainingCents"`
 }

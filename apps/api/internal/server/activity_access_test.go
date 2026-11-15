@@ -12,7 +12,6 @@ func TestActivityHTTPRequiresSessionOriginAndCSRF(t *testing.T) {
 	endpoints := []struct{ method, path string }{
 		{"GET", "/api/activity?month=2026-11"},
 		{"PUT", "/api/connections/foreign/activity"},
-		{"PUT", "/api/activity/records/foreign"},
 		{"POST", "/api/activity/paychecks/foreign/apply?month=2026-11"},
 	}
 	for _, endpoint := range endpoints {
@@ -38,7 +37,7 @@ func TestActivityHTTPReadIsSnapshotOnly(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.Month != "2026-11" || result.Scope != "household" || len(result.Records) != 0 {
+	if result.Month != "2026-11" || result.Scope != "household" {
 		t.Fatal("empty activity response did not preserve month and scope")
 	}
 	if readPlan(t, client).Revision != before.Revision || provider.links.Load() != 0 || provider.exchanges.Load() != 0 {

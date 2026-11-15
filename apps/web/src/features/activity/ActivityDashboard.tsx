@@ -9,7 +9,7 @@ import styles from './Activity.module.css';
 import { monthLabel } from '../plan/month';
 
 /**
- * Keeps actuals, review drafts, source choices, and one permission flow in a bounded card.
+ * Keeps monthly totals, source choices, and one permission flow in a bounded card.
  * @param props Saved plan identity and the shared scope and month controls.
  * @returns Monthly actual activity with body-owned scrolling.
  */
@@ -31,7 +31,7 @@ export function ActivityDashboard(props: ActivityDashboardProps) {
             blocked={blocked}
           />
         }
-        footer={<ActivityFooter state={state} section={section} />}
+        footer={<ActivityFooter />}
       >
         <ActivityFeedback state={state} />
         {state.snapshot && (

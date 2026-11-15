@@ -130,7 +130,7 @@ func paycheckResult(stream paycheckStream, calendar paycheckCalendar, typical, m
 		Ownership: stream.account.Ownership, DepositCount: int64(len(stream.records)),
 		LastPayDate: stream.records[len(stream.records)-1].Date, TypicalPaycheckCents: typical,
 		MonthlyTakeHomeCents: monthly, Frequency: calendar.frequency, PaySchedule: calendar.schedule,
-		VariableAmount: paycheckVariableAmount(amounts, typical), Deposits: []budget.PaycheckDeposit{}}
+		VariableAmount: paycheckVariableAmount(amounts, typical)}
 	if stream.account.Ownership != "shared" {
 		owner := stream.account.Ownership
 		result.MemberID = &owner
@@ -138,9 +138,6 @@ func paycheckResult(stream paycheckStream, calendar paycheckCalendar, typical, m
 	if next := calendar.next.Format(paycheckDateLayout); budget.ValidDate(next) {
 		date := budget.CalendarDate(next)
 		result.NextPayDate = &date
-	}
-	for _, record := range stream.records {
-		result.Deposits = append(result.Deposits, budget.PaycheckDeposit{Date: record.Date, AmountCents: -*record.AmountCents})
 	}
 	return result
 }

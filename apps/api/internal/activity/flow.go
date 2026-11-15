@@ -2,19 +2,17 @@ package activity
 
 import "bankpiggy/api/internal/budget"
 
-func bankFlow(income int64, categories []budget.ActivityCategoryTotal) (budget.ActivityBankFlow, error) {
+func bankFlow(income, spending int64) (budget.ActivityBankFlow, error) {
 	result := budget.ActivityBankFlow{Inflows: []budget.ActivityFlowAmount{}, Outflows: []budget.ActivityFlowAmount{}}
 	if income > 0 {
 		result.Inflows = append(result.Inflows, budget.ActivityFlowAmount{ID: "income", Name: "Recorded income", AmountCents: income})
 	} else if income < 0 {
 		result.Outflows = append(result.Outflows, budget.ActivityFlowAmount{ID: "income-reversals", Name: "Income reversals", AmountCents: -income})
 	}
-	for _, row := range categories {
-		if row.AmountCents > 0 {
-			result.Outflows = append(result.Outflows, budget.ActivityFlowAmount{ID: "spending-" + row.Name, Name: row.Name, AmountCents: row.AmountCents})
-		} else if row.AmountCents < 0 {
-			result.Inflows = append(result.Inflows, budget.ActivityFlowAmount{ID: "refund-" + row.Name, Name: "Refunds: " + row.Name, AmountCents: -row.AmountCents})
-		}
+	if spending > 0 {
+		result.Outflows = append(result.Outflows, budget.ActivityFlowAmount{ID: "spending", Name: "Spending", AmountCents: spending})
+	} else if spending < 0 {
+		result.Inflows = append(result.Inflows, budget.ActivityFlowAmount{ID: "net-refunds", Name: "Net refunds", AmountCents: -spending})
 	}
 	return balanceBankFlow(result)
 }

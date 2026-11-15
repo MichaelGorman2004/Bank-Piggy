@@ -18,8 +18,8 @@ interface PaycheckProps {
 
 /**
  * Requires a named member and explicit confirmation before updating saved net pay.
- * @param props Suggested bank deposits, saved members, and plan update action.
- * @returns Paycheck evidence and a review-before-apply disclosure.
+ * @param props Aggregate pay estimates, saved members, and plan update action.
+ * @returns Pay estimates and an explicit plan confirmation action.
  */
 export function PaycheckSuggestionPanel(props: PaycheckProps) {
   const [memberId, setMemberId] = useState('');
@@ -34,7 +34,7 @@ export function PaycheckSuggestionPanel(props: PaycheckProps) {
   return (
     <details className={styles.suggestion}>
       <summary>
-        <strong>{suggestion.source || 'Recorded paycheck deposits'}</strong>
+        <strong>Pay estimate</strong>
         <span>{suggestion.depositCount} deposits · Review pay suggestion</span>
       </summary>
       <div className={styles.form}>
@@ -44,7 +44,7 @@ export function PaycheckSuggestionPanel(props: PaycheckProps) {
         </p>
         <PaycheckMember members={props.members} memberId={memberId} onMember={setMemberId} />
         <PaycheckFields suggestion={suggestion} member={member} />
-        <PaycheckEvidence suggestion={suggestion} />
+        <PaycheckNotes />
         <button
           className={formStyles.button}
           type="button"
@@ -127,25 +127,12 @@ function scheduleLabel(suggestion: PaycheckSuggestion): string {
     : `Day ${schedule.anchorDate.slice(8, 10)} each month`;
 }
 
-/** Shows the deposits used by a pay suggestion before plan confirmation.
- * @param props Recorded pay suggestion.
- * @param props.suggestion Net bank deposits and proposed pay fields.
- * @returns Deposit evidence and the exact plan fields that will change.
+/** Explains estimate limits and saved plan changes before confirmation.
+ * @returns Aggregate-pay coverage and the exact plan fields that will change.
  */
-function PaycheckEvidence(props: { readonly suggestion: PaycheckSuggestion }) {
-  const { suggestion } = props;
+function PaycheckNotes() {
   return (
     <>
-      <details className={styles.evidence}>
-        <summary>Review deposit evidence</summary>
-        <ul>
-          {suggestion.deposits.map((deposit, index) => (
-            <li key={`${deposit.date}-${String(index)}`}>
-              {activityDate(deposit.date)}: {money(deposit.amountCents, 1, true)}
-            </li>
-          ))}
-        </ul>
-      </details>
       <p className={styles.notice}>
         This suggestion covers deposits from one payer into one account. Split direct deposits or
         multiple jobs can mean this is only part of the member’s income. Review the member’s full

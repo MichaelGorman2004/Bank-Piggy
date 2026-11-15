@@ -1,8 +1,7 @@
 import type { ActivityResponse, LinkTokenRequest } from '@bank-piggy/contracts';
 import type { ActivityDashboardProps, ActivitySection } from './activityTypes';
 import type { activityCommands } from './activityCommands';
-import { ActivitySummary, ActivityTotals } from './ActivitySummary';
-import { ActivityReviewRow } from './ActivityReview';
+import { ActivityTotals } from './ActivitySummary';
 import { ActivitySourcePanel } from './ActivitySource';
 import { PaycheckSuggestionPanel } from './PaycheckSuggestions';
 import styles from './Activity.module.css';
@@ -29,9 +28,6 @@ export function ActivityBody(props: BodyProps) {
       <div hidden={props.section !== 'summary'}>
         <SummarySection {...props} />
       </div>
-      <div hidden={props.section !== 'review'}>
-        <ReviewSection {...props} />
-      </div>
       <div hidden={props.section !== 'sources'}>
         <SourcesSection {...props} />
       </div>
@@ -45,30 +41,23 @@ export function ActivityBody(props: BodyProps) {
  * @returns Summary and explicit paycheck review panels.
  */
 function SummarySection(props: BodyProps) {
-  const members = props.dashboard.household.members;
   return (
     <>
       <ActivityTotals data={props.data} unavailable={props.totalsStale} />
-      {props.totalsStale ? (
+      {props.totalsStale && (
         <p className={styles.notice}>
           Reload activity to show current totals and pay suggestions. Your draft choices are kept.
         </p>
-      ) : (
-        <>
-          <ActivitySummary data={props.data} members={members} />
-        </>
       )}
       <section className={styles.section}>
         <h3>Pay suggestions</h3>
-        <p className={styles.note}>
-          Review recorded bank deposits before changing your saved pay plan.
-        </p>
+        <p className={styles.note}>Review pay estimates before changing your saved pay plan.</p>
         {props.data.suggestions.length ? (
           props.data.suggestions.map((suggestion) => (
             <PaycheckSuggestionPanel
               key={suggestion.id}
               suggestion={suggestion}
-              members={members}
+              members={props.dashboard.household.members}
               busy={props.blocked || props.totalsStale}
               onApply={props.commands.apply}
             />
@@ -79,35 +68,6 @@ function SummarySection(props: BodyProps) {
           </p>
         )}
       </section>
-    </>
-  );
-}
-
-/**
- * Shows reviewable record facts without treating possible transfers as confirmed income.
- * @param props Recorded monthly activity and serialized review action.
- * @returns Activity record disclosures or an explicit empty state.
- */
-function ReviewSection(props: BodyProps) {
-  return (
-    <>
-      <p className={styles.note}>
-        Review possible transfers before they count toward actual totals. Pending records stay
-        excluded.
-      </p>
-      {props.data.records.map((record) => (
-        <ActivityReviewRow
-          key={record.id}
-          record={record}
-          household={props.dashboard.household}
-          planRevision={props.dashboard.household.revision}
-          busy={props.blocked}
-          onReview={props.commands.review}
-        />
-      ))}
-      {!props.data.records.length && (
-        <p className={styles.empty}>No recorded activity for this month and view.</p>
-      )}
     </>
   );
 }

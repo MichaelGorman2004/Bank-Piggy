@@ -9,5 +9,5 @@ export interface ActivityDashboardProps extends Omit<ActivityHeaderProps, 'membe
   readonly section: ActivitySection;
   readonly onSection: (section: ActivitySection) => void;
 }
-export type ActivitySection = 'summary' | 'review' | 'sources';
+export type ActivitySection = 'summary' | 'sources';
 export type ActivityState = ReturnType<typeof useActivity>;

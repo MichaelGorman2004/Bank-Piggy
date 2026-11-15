@@ -27,8 +27,8 @@ export function actualMoneyFlowDescription(data: ActivityResponse): string {
   return [
     `Recorded income ${money(data.totals.incomeCents, 1, true)}.`,
     `Recorded spending ${money(data.totals.spendingCents, 1, true)}.`,
-    'Each stream shows selected posted bank activity for this month.',
-    'Its width shows its amount. Refunds and income reversals remain visible.',
+    'Each stream shows net totals from selected posted bank activity for this month.',
+    'Its width shows its amount. Refunds reduce spending; income reversals reduce income.',
     'A recorded surplus or spending gap is an activity difference.',
     'It is not an account balance or proof of borrowing.',
   ].join(' ');

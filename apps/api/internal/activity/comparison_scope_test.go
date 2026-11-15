@@ -21,18 +21,20 @@ func personalComparisonPlan() budget.Household {
 	return plan
 }
 
-func TestPersonalComparisonsOmitUnattributedForeignRowsButKeepOwnZeroBudgets(t *testing.T) {
+func TestAggregateBudgetsUseSelectedScopeAndReconcileCents(t *testing.T) {
 	plan := personalComparisonPlan()
-	personal := comparisonProjection(t, plan, nil, "depository", "member-1").Comparison
-	if len(personal.Expenses) != 2 || len(personal.InvestmentGoals) != 2 {
-		t.Fatal("personal comparison included unattributed foreign rows or hid own/shared zero budgets")
+	for index := range plan.Expenses {
+		plan.Expenses[index].MonthlyAmountCents = 101
+		plan.Goals[index].MonthlyAmountCents = 101
 	}
-	if personal.Expenses[0].ExpenseID != "own" || personal.Expenses[1].ExpenseID != "shared" || personal.InvestmentGoals[1].GoalID != "shared" {
-		t.Fatal("personal filtering changed saved order or ownership")
-	}
+	first := comparisonProjection(t, plan, nil, "depository", "member-1").Comparison
+	second := comparisonProjection(t, plan, nil, "depository", "member-2").Comparison
 	household := comparisonProjection(t, plan, nil, "depository", "household").Comparison
-	if len(household.Expenses) != 3 || len(household.InvestmentGoals) != 3 {
-		t.Fatal("personal comparison filtering changed household rows")
+	if first.ExpenseBudgetCents != 152 || second.ExpenseBudgetCents != 151 || household.ExpenseBudgetCents != 303 {
+		t.Fatal("aggregate expense budget duplicated or lost shared cents")
+	}
+	if first.InvestmentGoalBudgetCents != 152 || second.InvestmentGoalBudgetCents != 151 || household.InvestmentGoalBudgetCents != 303 {
+		t.Fatal("aggregate goal budget duplicated or lost shared cents")
 	}
 }
 
@@ -41,15 +43,13 @@ func TestPersonalComparisonsKeepFrozenActualsAfterTargetOwnershipChanges(t *test
 	cost := matchedCost("cost", 101, 34)
 	cost.ExpenseID = pointer("foreign")
 	result := comparisonProjection(t, plan, []budget.ActivityRecord{cost}, "depository", "member-1")
-	row := result.Comparison.Expenses[2]
-	if row.ExpenseID != "foreign" || row.BudgetCents != 0 || row.SpentCents != 34 || row.RecordCount != 1 {
+	if result.Comparison.ExpenseBudgetCents != 0 || result.Totals.SpendingCents != 34 || result.Comparison.ExpenseRemainingCents != -34 {
 		t.Fatal("new target owner hid a frozen expense allocation")
 	}
 	funding := matchedFunding("funding", -101, -51, "contribution")
 	funding.GoalID = pointer("foreign")
 	result = comparisonProjection(t, plan, []budget.ActivityRecord{funding}, "investment", "member-1")
-	goal := result.Comparison.InvestmentGoals[2]
-	if goal.GoalID != "foreign" || goal.BudgetCents != 0 || goal.NetContributionsCents != 51 || goal.RecordCount != 1 {
+	if result.Comparison.InvestmentGoalBudgetCents != 0 || result.Totals.NetInvestmentContributionsCents != 51 || result.Comparison.InvestmentRemainingCents != -51 {
 		t.Fatal("new target owner hid a frozen investment allocation")
 	}
 }

@@ -1,6 +1,7 @@
 package banking
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -17,10 +18,8 @@ func matchedProviderCost(t *testing.T) (*Service, Identity, budget.Connection, P
 	if err := s.db.Pool.QueryRow(t.Context(), `SELECT id FROM bank_activity_records WHERE provider_id='matched-cost'`).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
-	record, err := s.ReviewActivity(t.Context(), identity, id, expenseReview(1, 1))
-	if err != nil {
-		t.Fatal(err)
-	}
+	seedLegacyAllocation(t, s, id, false, "spending", 67)
+	record := budget.ActivityRecord{ID: id, Revision: 2, Allocation: &budget.ActivityAllocation{Ownership: "shared", FirstMemberCents: 67}}
 	return s, identity, connection, value, record
 }
 
@@ -35,15 +34,18 @@ func readSavedMatch(t *testing.T, s *Service, id string) (bool, int64) {
 }
 
 func TestMatchedExpenseSurvivesDisplayOnlyRefresh(t *testing.T) {
-	s, identity, connection, value, before := matchedProviderCost(t)
+	s, _, connection, value, before := matchedProviderCost(t)
 	value.Record.Name, value.Record.Counterparty = "Updated display", "Updated counterparty"
 	saveActivityBatchForTest(t, s, connection.ID, []ProviderActivityRecord{value}, nil)
 	if present, revision := readSavedMatch(t, s, before.ID); !present || revision <= before.Revision {
 		t.Fatal("display update discarded match or did not version changed facts")
 	}
-	request := expenseReview(before.Revision+1, 1)
-	after, err := s.ReviewActivity(t.Context(), identity, before.ID, request)
-	if err != nil || after.Allocation == nil || *after.Allocation != *before.Allocation {
+	var allocation budget.ActivityAllocation
+	var data []byte
+	if err := s.db.Pool.QueryRow(t.Context(), `SELECT allocation FROM bank_activity_records WHERE id=$1`, before.ID).Scan(&data); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &allocation); err != nil || allocation != *before.Allocation {
 		t.Fatal("display refresh changed exact frozen shares", err)
 	}
 }

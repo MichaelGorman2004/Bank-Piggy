@@ -101,10 +101,6 @@
   font-size: 16px;
   overflow-wrap: anywhere;
 }
-.record {
-  border-bottom: 1px solid var(--line);
-}
-.record summary,
 .suggestion > summary {
   display: flex;
   justify-content: space-between;
@@ -115,17 +111,6 @@
   cursor: pointer;
   font-size: 13px;
 }
-.record summary > span {
-  min-width: 0;
-}
-.record summary strong {
-  overflow-wrap: anywhere;
-}
-.record summary > strong {
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-}
-.record summary small,
 .sourceAccount small,
 .suggestion summary > span {
   display: block;
@@ -135,23 +120,13 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
-.record summary::before,
 .suggestion > summary::before {
   content: '+';
   flex-shrink: 0;
   color: var(--orange-dark);
 }
-.record[open] > summary::before,
 .suggestion[open] > summary::before {
   content: '−';
-}
-.record summary > span {
-  flex: 1;
-}
-.recordBody {
-  display: grid;
-  gap: 12px;
-  padding-bottom: 18px;
 }
 .form {
   display: grid;
@@ -168,8 +143,7 @@
   text-overflow: ellipsis;
 }
 .actions button,
-.form > button,
-.footer button {
+.form > button {
   min-height: 44px;
   font-size: 12px;
 }
@@ -234,19 +208,6 @@
 }
 .suggestion > .form {
   padding-bottom: 16px;
-}
-.evidence {
-  font-size: 12px;
-  color: var(--walnut-soft);
-}
-.evidence summary {
-  min-height: 44px;
-  cursor: pointer;
-  padding-block: 12px;
-}
-.evidence ul {
-  padding-left: 20px;
-  line-height: 1.8;
 }
 .empty {
   display: grid;

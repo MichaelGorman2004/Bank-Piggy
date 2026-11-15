@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ActivityRecord, ActivityResponse, ActivitySource } from '@bank-piggy/contracts';
+import type { ActivityResponse, ActivitySource } from '@bank-piggy/contracts';
 import { startAccountStatusUpdates } from '../connections/useAccountStatusUpdates';
 import { loadActivity } from './api';
 import {
   acceptActivitySource,
-  acceptActivityRecord,
   mutateActivity,
   readActivity,
   type ActivityOwner,
@@ -50,13 +49,6 @@ export function useActivity(query: ActivityQuery, revision: number, connectionVe
     feedback,
     totalsStale,
     reload,
-    more: () =>
-      current?.nextCursor && !totalsStale
-        ? readActivity(owner.current, current.nextCursor)
-        : Promise.resolve(null),
-    acceptRecord: (record: ActivityRecord) => {
-      acceptActivityRecord(owner.current, record);
-    },
     acceptSource: (source: ActivitySource) => {
       acceptActivitySource(owner.current, source);
     },

@@ -20,7 +20,6 @@ export function ActivityControls(props: {
 }) {
   const sections: ReadonlyArray<{ id: Section; label: string }> = [
     { id: 'summary', label: 'Summary' },
-    { id: 'review', label: `Review (${String(props.state.data?.reviewCount ?? 0)})` },
     { id: 'sources', label: 'Sources' },
   ];
   return (
@@ -63,7 +62,7 @@ export function ActivityFeedback(props: { readonly state: ActivityState }) {
     <div className={styles.feedback}>
       {state.error && (
         <p className={formStyles.error} role="alert">
-          {state.error} Your unsaved review and settings choices are kept.
+          {state.error} Your unsaved settings and member choices are kept.
         </p>
       )}
       {state.loading && (
@@ -82,36 +81,15 @@ export function ActivityFeedback(props: { readonly state: ActivityState }) {
 }
 
 /**
- * Keeps pagination reachable while full-month totals stay independent of loaded pages.
- * @param props Monthly data and current section.
- * @param props.state Activity request state.
- * @param props.section Visible activity section.
- * @returns Recorded-data cadence and explicit next-page action.
+ * Shows the provider update cadence outside the scroll body.
+ * @returns Plain timing guidance for recorded monthly totals.
  */
-export function ActivityFooter(props: {
-  readonly state: ActivityState;
-  readonly section: Section;
-}) {
-  const { data } = props.state;
+export function ActivityFooter() {
   return (
     <div className={styles.footer}>
       <p className={styles.note}>
-        {props.section === 'review' && data
-          ? `${String(data.records.length)} of ${String(data.totalRecordCount)} records. `
-          : ''}
-        Checks saved activity every 30 minutes.
+        Provider checks are at least 30 minutes apart. Reload reads saved totals.
       </p>
-      {props.section === 'review' && data?.nextCursor && (
-        <button
-          className={formStyles.secondary}
-          disabled={props.state.loading || props.state.busy || props.state.totalsStale}
-          onClick={() => {
-            void props.state.more();
-          }}
-        >
-          Load more activity
-        </button>
-      )}
     </div>
   );
 }

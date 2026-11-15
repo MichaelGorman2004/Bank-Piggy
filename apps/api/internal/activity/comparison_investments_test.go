@@ -41,9 +41,6 @@ func TestInvestmentComparisonUsesExplicitPlansAndSignedFunding(t *testing.T) {
 	if amounts != [4]int64{5500, 17000, 22500, 22473} {
 		t.Fatalf("incorrect explicit investment plan: %+v", comparison)
 	}
-	if len(comparison.InvestmentGoals) != 2 || comparison.InvestmentGoals[0].NetContributionsCents != -50 || comparison.UnmatchedInvestmentNetCents != 77 {
-		t.Fatal("ordinary goal name entered investments or unmatched funding disappeared")
-	}
 	requireSeparateInvestmentHistory(t, comparison)
 	if plan.Goals[2].SavingsTarget.SavedAmountCents != 0 {
 		t.Fatal("comparison changed manual goal progress")
@@ -57,11 +54,11 @@ func requireSeparateInvestmentHistory(t *testing.T, comparison budget.ActivityCo
 	}
 }
 
-func TestDeletedInvestmentGoalRemainsUnmatchedFunding(t *testing.T) {
+func TestDeletedInvestmentGoalRetainsAggregateFunding(t *testing.T) {
 	plan := investmentComparisonPlan()
 	plan.Goals = []budget.Goal{}
 	result := comparisonProjection(t, plan, []budget.ActivityRecord{matchedFunding("withdraw", 201, 101, "withdrawal")}, "investment", "member-2")
-	if result.Comparison.UnmatchedInvestmentNetCents != -100 || result.Totals.NetInvestmentContributionsCents != -100 {
+	if result.Comparison.InvestmentRemainingCents != result.Comparison.InvestmentBudgetCents+100 || result.Totals.NetInvestmentContributionsCents != -100 {
 		t.Fatal("deleted investment goal erased a recorded withdrawal")
 	}
 }

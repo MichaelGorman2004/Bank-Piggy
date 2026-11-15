@@ -13,7 +13,7 @@ func TestPotentialTransferIsReconciledBeforeMonthAndScopeFiltering(t *testing.T)
 	sources[0].Accounts[0].Ownership = "member-1"
 	sources[0].Accounts[1].Ownership = "member-2"
 	result := projectFor(t, []budget.ActivityRecord{withdraw, deposit}, sources, "member-2")
-	if len(result.Records) != 1 || result.ReviewCount != 1 || result.Totals.NetInvestmentContributionsCents != 0 || len(result.Records[0].TransferCandidates) != 1 {
+	if result.Totals.NetInvestmentContributionsCents != 0 || result.Coverage != "incomplete" {
 		t.Fatal("cross-month potential rollover counted as new funding")
 	}
 	deposit.IsReviewed, deposit.Category = true, "contribution"
@@ -24,16 +24,16 @@ func TestPotentialTransferIsReconciledBeforeMonthAndScopeFiltering(t *testing.T)
 	deposit.IsReviewed, deposit.Category, deposit.TransferPeerID = true, "transfer", &withdraw.ID
 	withdraw.IsReviewed, withdraw.Category, withdraw.TransferPeerID = true, "transfer", &deposit.ID
 	result = projectFor(t, []budget.ActivityRecord{withdraw, deposit}, sources, "member-2")
-	if result.Totals.NetInvestmentContributionsCents != 0 || len(result.Records[0].TransferCandidates) != 1 {
+	if result.Totals.NetInvestmentContributionsCents != 0 {
 		t.Fatal("saved peer outside current month or scope disappeared")
 	}
 }
 
-func TestTransferPairRequiresOppositeFundingAndBoundedDates(t *testing.T) {
+func TestTransferEvidenceRequiresOppositeFundingAndBoundedDates(t *testing.T) {
 	a := investmentRecord("out", "brokerage", "2026-11-01", "cash", "withdrawal", 10000)
 	b := investmentRecord("in", "roth", "2026-11-08", "buy", "contribution", 10000)
-	if !ValidTransferPair(a, b) {
-		t.Fatal("valid opposite funding legs were rejected")
+	if got := Reconcile([]budget.ActivityRecord{a, b}); got[0].Category != "review" || got[1].Category != "review" {
+		t.Fatal("opposite funding legs were not excluded as uncertain transfers")
 	}
 	cases := []func(*budget.ActivityRecord){
 		func(r *budget.ActivityRecord) { r.Date = "2026-11-09" },
@@ -48,8 +48,8 @@ func TestTransferPairRequiresOppositeFundingAndBoundedDates(t *testing.T) {
 	for _, change := range cases {
 		copy := b
 		change(&copy)
-		if ValidTransferPair(a, copy) {
-			t.Fatal("unsupported transfer pair accepted")
+		if got := Reconcile([]budget.ActivityRecord{a, copy}); len(got[0].TransferCandidates) != 0 {
+			t.Fatal("unsupported activity supplied transfer evidence")
 		}
 	}
 }
@@ -60,7 +60,7 @@ func TestExcludedInvestmentAccountStillSuppliesTransferEvidence(t *testing.T) {
 	sources := sourcesFor("brokerage", "roth")
 	sources[0].Accounts[0].Enabled = false
 	result := projectFor(t, []budget.ActivityRecord{withdraw, deposit}, sources, "household")
-	if len(result.Records) != 1 || result.ReviewCount != 1 || result.Totals.NetInvestmentContributionsCents != 0 {
+	if result.Totals.NetInvestmentContributionsCents != 0 {
 		t.Fatal("excluding a saved investment account created new funding")
 	}
 }
