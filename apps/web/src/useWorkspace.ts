@@ -3,6 +3,8 @@ import { HOUSEHOLD_SCOPE, type Period } from './features/plan/format';
 import { localDate } from './features/plan/payScheduleDraft';
 import type { View } from './features/plan/views';
 import type { ActiveDialog } from './features/plan/PlanDialogs';
+import type { ReportMode } from './features/reports/reporting';
+import type { ActivitySection } from './features/activity/activityTypes';
 
 interface WorkspaceStateOptions {
   readonly conflict: boolean;
@@ -20,6 +22,8 @@ export function useWorkspace(options: WorkspaceStateOptions) {
   const [todoDate, setTodoDate] = useState(() => localDate(new Date()));
   const [scope, setScope] = useState(HOUSEHOLD_SCOPE);
   const [period, setPeriod] = useState<Period>('monthly');
+  const [reportMode, setReportMode] = useState<ReportMode>('planned');
+  const [activitySection, setActivitySection] = useState<ActivitySection>('summary');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState<ActiveDialog>(options.blank ? { type: 'plan' } : null);
   const closeMobile = useCallback(() => {
@@ -51,6 +55,10 @@ export function useWorkspace(options: WorkspaceStateOptions) {
     scope,
     period,
     setPeriod,
+    reportMode,
+    setReportMode,
+    activitySection,
+    setActivitySection,
     mobileOpen,
     setMobileOpen,
     closeMobile,

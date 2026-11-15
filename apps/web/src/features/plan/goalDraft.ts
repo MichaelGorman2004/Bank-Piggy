@@ -15,7 +15,7 @@ export const TRIP_CATEGORIES: ReadonlyArray<{
   { category: 'activities', label: 'Activities' },
   { category: 'other', label: 'Other costs' },
 ];
-export type GoalKind = 'goal' | 'trip' | 'purchase' | 'roth_ira';
+export type GoalKind = 'goal' | 'investment' | 'trip' | 'purchase' | 'roth_ira';
 export interface GoalDraft {
   readonly name: string;
   readonly amount: string;
@@ -149,7 +149,8 @@ function tripCosts(draft: GoalDraft): TripCostResult {
  * @returns The selected target details, or an actionable error.
  */
 function targetValue(draft: GoalDraft): TargetResult {
-  if (draft.kind === 'goal' || draft.kind === 'roth_ira') return savingsTargetValue(draft);
+  if (draft.kind === 'goal' || draft.kind === 'investment' || draft.kind === 'roth_ira')
+    return savingsTargetValue(draft);
   const { progress, error } = targetProgress(draft);
   if (!progress) return { error };
   if (draft.kind === 'purchase') {
@@ -212,6 +213,7 @@ export function goalValue(
       ownerId: draft.ownerId,
       ...target.details,
       ...(draft.kind === 'roth_ira' ? { contributionYear: Number(draft.contributionYear) } : {}),
+      ...(draft.kind === 'investment' ? { purpose: 'investment' } : {}),
     },
   };
 }
@@ -224,7 +226,8 @@ export function goalValue(
 function savedGoalKind(goal: Goal): GoalKind {
   if (goal.trip) return 'trip';
   if (goal.purchase) return 'purchase';
-  return goal.contributionYear ? 'roth_ira' : 'goal';
+  if (goal.contributionYear) return 'roth_ira';
+  return goal.purpose === 'investment' ? 'investment' : 'goal';
 }
 
 /**
@@ -235,6 +238,7 @@ function savedGoalKind(goal: Goal): GoalKind {
 function goalMonthlyAmount(draft: GoalDraft): number | null {
   const amount = parseMoney(draft.amount);
   if (amount === null || amount > MAX_MONEY_CENTS) return null;
-  if (draft.kind === 'goal' && !draft.trackTarget && amount === 0) return null;
+  if ((draft.kind === 'goal' || draft.kind === 'investment') && !draft.trackTarget && amount === 0)
+    return null;
   return amount;
 }

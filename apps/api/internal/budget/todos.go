@@ -53,7 +53,7 @@ func newTodo(memberID, sourceID, kind, name string, amount int64, period PayPeri
 }
 
 func personalGoalAmount(h Household, index int, goal Goal) int64 {
-	first, second := splitExpense(h, Expense{OwnerID: goal.OwnerID, MonthlyAmountCents: goal.MonthlyAmountCents, Split: Split{Method: "equal"}})
+	first, second := SplitExpense(h, Expense{OwnerID: goal.OwnerID, MonthlyAmountCents: goal.MonthlyAmountCents, Split: Split{Method: "equal"}})
 	if index == 0 {
 		return first
 	}

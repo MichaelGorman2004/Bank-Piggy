@@ -10,13 +10,20 @@ func proportional(amount, numerator, denominator int64) int64 {
 	return value.Quo(value, big.NewInt(denominator)).Int64()
 }
 
-func splitExpense(h Household, expense Expense) (int64, int64) {
+// SplitExpense allocates signed cents by the expense owner and agreed split.
+// Refunds reverse the same rounded positive shares; payer information has no effect.
+// Callers supply a validated household and signed, safe whole-cent amount.
+func SplitExpense(h Household, expense Expense) (int64, int64) {
 	amount := expense.MonthlyAmountCents
+	sign := int64(1)
+	if amount < 0 {
+		amount, sign = -amount, -1
+	}
 	if len(h.Members) == 1 || expense.OwnerID == h.Members[0].ID {
-		return amount, 0
+		return amount * sign, 0
 	}
 	if expense.OwnerID == h.Members[1].ID {
-		return 0, amount
+		return 0, amount * sign
 	}
 	first := (amount + 1) / 2
 	switch expense.Split.Method {
@@ -25,7 +32,7 @@ func splitExpense(h Household, expense Expense) (int64, int64) {
 	case "salary":
 		first = proportional(amount, h.Members[0].AnnualBaseSalaryCents, h.Members[0].AnnualBaseSalaryCents+h.Members[1].AnnualBaseSalaryCents)
 	}
-	return first, amount - first
+	return first * sign, (amount - first) * sign
 }
 
 func finalSummary(summary Summary) Summary {
@@ -67,7 +74,7 @@ func expensePeriods(expense Expense, months []string) int64 {
 func addExpenses(h Household, months []string, personal []Summary) []ExpenseShare {
 	shares := make([]ExpenseShare, 0, len(h.Expenses))
 	for _, expense := range h.Expenses {
-		first, second := splitExpense(h, expense)
+		first, second := SplitExpense(h, expense)
 		count := expensePeriods(expense, months)
 		first, second = first*count, second*count
 		personal[0].MonthlyExpensesCents += first
@@ -80,7 +87,7 @@ func addExpenses(h Household, months []string, personal []Summary) []ExpenseShar
 func addGoals(h Household, count int64, personal []Summary) []GoalShare {
 	shares := make([]GoalShare, 0, len(h.Goals))
 	for _, goal := range h.Goals {
-		first, second := splitExpense(h, Expense{OwnerID: goal.OwnerID, MonthlyAmountCents: goal.MonthlyAmountCents, Split: Split{Method: "equal"}})
+		first, second := SplitExpense(h, Expense{OwnerID: goal.OwnerID, MonthlyAmountCents: goal.MonthlyAmountCents, Split: Split{Method: "equal"}})
 		first, second = first*count, second*count
 		shares = append(shares, GoalShare{goal.ID, first, second})
 		personal[0].MonthlyGoalsCents += first

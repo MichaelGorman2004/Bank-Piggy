@@ -14,6 +14,8 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Record Traditional and Roth 401(k) percentages, tiered employer matching, or an entered employer contribution. Show these estimates separately from take-home pay.
 - Track named savings, retirement, and investment accounts by type. Derive savings and investment totals from those snapshots.
 - Optionally link read-only Plaid balances, review automatic account defaults, and match existing manual snapshots. Start in Sandbox; live eligibility and exact account coverage need separate checks.
+- Opt existing connections into monthly Activity after operator approval and history consent. Review posted income, spending, net investment contributions, and possible investment transfers separately from the plan.
+- Review regular net-deposit pay suggestions from the last 180 days. Confirm a member before updating only that member's take-home estimate, pay frequency, and pay calendar.
 - Switch between the household view and the signed-in member's allocated share.
 - Divide shared expenses evenly, by custom percentage, or by annual base salary. Record the payer separately.
 - Add, edit, and remove expenses and goals. Keep several goals active in the same budget.
@@ -23,26 +25,29 @@ The first version is a working Go and TypeScript application with PostgreSQL per
 - Optionally record saved progress toward an ordinary goal. Goals without a target show their planned contribution.
 - Create a personal Roth IRA goal with an entered annual target, contribution year, and progress.
 - Anchor a pay schedule to an actual payday. Use To-do for goal contributions and manual bills, with persisted checkboxes and due dates.
-- Read a Sankey money flow, summary totals, goal allocations, and balance cards from the same server calculation.
+- Switch Money flow between Planned allocations and recorded calendar-month Actual cash flow.
+- Compare monthly expense Budget, Matched spent, and Remaining amounts. Match activity to an expense or investment goal explicitly.
+- Compare investment goals and payroll estimates with recorded net investment contributions. Keep saved goal progress manual.
 - Change the planning month to update the forecast automatically. View its next 12 months with payment schedules or an average paycheck estimate for a member with regular pay frequency.
 - Save plans in PostgreSQL. Detect concurrent edits instead of overwriting another window's changes.
 - Run an explicit loopback-only demo, or configure private access for one or two invited Google accounts.
 
-Each navigation view has one task. Planning views share the household scope, period, and planning month. To-do uses the same household scope and its own As-of date. Accounts shows full linked balances for the household with one amount per account.
+Each navigation view has one task. Planning views share the household scope, period, and planning month. To-do uses the same household scope and its own As-of date. Accounts shows full linked balances for the household with one amount per account. Activity and Actual comparisons share one monthly saved-data snapshot across Activity, Money flow, Expenses, and Goals. Actual uses the selected calendar month and household or personal scope without yearly or paycheck multipliers.
 
-| View               | Content                                                            |
-| ------------------ | ------------------------------------------------------------------ |
-| Overview (default) | Plan totals, recorded inputs, and balance snapshots.               |
-| Accounts           | All returned linked accounts and their latest balances.            |
-| Money flow         | Sankey of income and planned allocations.                          |
-| Expenses           | Bills, subscriptions, regular costs, and loans with type filters.  |
-| Goals              | Ordinary savings, investment, and debt contributions.              |
-| Trips & purchases  | Manual targets, saved progress, deadlines, and saving suggestions. |
-| To-do              | Pay-period goal contributions and manual bills with due dates.     |
+| View               | Content                                                                        |
+| ------------------ | ------------------------------------------------------------------------------ |
+| Overview (default) | Plan totals, recorded inputs, and balance snapshots.                           |
+| Accounts           | All returned linked accounts and their latest balances.                        |
+| Activity           | Recorded monthly actuals, review choices, source consent, and pay suggestions. |
+| Money flow         | Planned allocations or recorded monthly Actual cash flow.                      |
+| Expenses           | Expense plans, matched monthly spending, and remaining budgets.                |
+| Goals              | Goal plans and investment net-contribution comparisons.                        |
+| Trips & purchases  | Manual targets, saved progress, deadlines, and saving suggestions.             |
+| To-do              | Pay-period goal contributions and manual bills with due dates.                 |
 
 The application frame fits the visible viewport. Only card bodies scroll, using thin taupe scrollbars with transparent tracks. Card headers, actions, filters, and footers stay visible. Overview has Plan totals, At a glance, and Balances sections. At a glance shows the saved members in compact income and balance tables. Narrow or short layouts show one section at a time. The Money flow chart groups smaller categories when needed and preserves their full amount.
 
-New households start with one person and empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Invited members can read and edit the complete household plan. Adding a profile offers a link after the plan is saved; a verified Google sign-in must accept the link before access is granted. Optional Plaid connections add read-only balance snapshots. Transaction history, service cancellation, loan repayment, and investment advice remain outside this version.
+New households start with one person and empty manual plans. The app does not insert example income, balances, expenses, or goals. Target progress comes from the saved amount the user enters. Goal allocations and period totals are forecasts. Invited members can read and edit the complete household plan. Adding a profile offers a link after the plan is saved; a verified Google sign-in must accept the link before access is granted. Optional Plaid balances and Activity remain separate from the plan. Service cancellation, moving money, automatic goal progress, and investment advice remain outside this version.
 
 Take-home pay is entered after taxes and automatic payroll investments. Payroll estimates do not reduce it again. To-do checkboxes record acknowledgments; they do not move money or change balances. Manual bills need a due day. Automatic subscriptions stay out of the checklist by default. See the [sharing, payroll, and To-do design](docs/system-design/sharing-payroll-todos.md) for transaction boundaries and calculation examples.
 
@@ -130,13 +135,21 @@ The audit command checks npm advisories and runs the pinned official Go vulnerab
 | PostgreSQL integration tests   | Real persistence, identity binding, expiry, and competing revisions.                                                                                                              |
 | Local signed identity provider | Signature and claim verification, nonce, PKCE, and callback replay checks. This simulates Google.                                                                                 |
 | Browser review                 | Local sample data and manual plans. See the current verification note in [system design](docs/system-design/README.md#verification-boundary).                                     |
-| Live services                  | Private Railway deployment, HTTPS, PostgreSQL health, invited Google access, and production Plaid controls. Manual backup restore verified; real-bank consent remains unverified. |
+| Live services                  | Private Railway deployment, HTTPS, PostgreSQL health, invited Google access, and production Plaid controls. Activity history consent and its deployed behavior remain unverified. |
 
-## Optional Plaid balances
+## Optional Plaid balances and Activity
 
 For the prepared local setup, follow [Try Plaid locally](docs/plaid-local-setup.md). It lists the exact Dashboard links, private `.env` fields, startup command, and steps for real-bank mode.
 
-Plaid is disabled by default. It uses official Link, server-encrypted access tokens, separate balance snapshots, explicit manual-account mapping, and scheduled updates. Start in Sandbox. Production requires a verified eligible Trial plan and a configured remaining lifetime Item budget. No live account or institution coverage is implied. See [Plaid setup and design](docs/system-design/plaid.md) and [deployment settings](docs/system-design/deployment.md#plaid-configuration).
+Plaid is disabled by default. It uses official Link, server-encrypted access tokens, separate balance snapshots, explicit manual-account mapping, and scheduled updates. Start in Sandbox. Production requires checked team eligibility and a conservative remaining Item budget. Verify the actual Dashboard allowance and product access; local limits do not prove team capacity. No live account or institution coverage is implied.
+
+Activity adds two approvals, both false by default: `PLAID_BANK_ACTIVITY_APPROVED` and `PLAID_INVESTMENT_ACTIVITY_APPROVED`. The linking member must also save a connection opt-in. Banks require update-mode Link consent for Transactions. Existing investment consent does not avoid billing review: the first history read can add the separate Investments Transactions subscription. Turning history off stops reads and invalidates pending work; it does not cancel provider billing. Check the actual plan before enabling history. [Plaid product initialization](https://plaid.com/docs/link/initializing-products/) and [billing](https://plaid.com/docs/account/billing/) explain these provider boundaries.
+
+Opening Activity or Sources reads saved data only. Background provider reads have separate balance and history jobs, with at least 30 minutes between ordinary attempts. Provider updates can arrive later; this is not real-time data. Missing history is not zero. Account choices control totals; history returned for other eligible consented accounts can still be stored. Trades, dividends, and market gains are separate from net contributions. Activity never overwrites expense budgets, balances, or goal progress. Pay suggestions cannot establish gross pay, taxes, 401(k) splits, or employer matching.
+
+Expense and investment matches freeze the agreed personal shares at review time. Later plan edits do not rewrite those shares. Removed targets leave recorded money unmatched. Actual cash flow uses server-calculated bank amounts; its balancing gap or surplus is not an account balance or proof of borrowing. Investment contributions stay separate because payroll and employer contributions can occur outside take-home cash. These comparison changes are local and uncommitted; live behavior remains unverified.
+
+See [Plaid setup and design](docs/system-design/plaid.md), [deployment settings](docs/system-design/deployment.md#plaid-configuration), and the separate [Activity verification record](docs/system-design/activity-verification.md). Local code and provider simulations do not establish deployed behavior or live history coverage.
 
 ## Read the design
 

@@ -66,6 +66,9 @@ func (s *Service) disconnectIntent(ctx context.Context, identity Identity, id st
 	if _, err = tx.Exec(ctx, `UPDATE bank_connections SET state='disconnecting',generation=generation+1,failures=0,next_sync_at=now(),lease_owner=NULL,lease_until=NULL WHERE id=$1`, id); err != nil {
 		return nil, false, err
 	}
+	if err := stopActivity(ctx, tx, id); err != nil {
+		return nil, false, err
+	}
 	if _, err = tx.Exec(ctx, `UPDATE bank_accounts SET active=false,manual_member_id=NULL,manual_account_id=NULL WHERE connection_id=$1`, id); err != nil {
 		return nil, false, err
 	}
@@ -79,8 +82,25 @@ func (s *Service) disconnectIntent(ctx context.Context, identity Identity, id st
 }
 
 func (s *Service) finalizeEmptyDisconnect(ctx context.Context, id string) error {
-	_, err := s.db.Pool.Exec(ctx, `UPDATE bank_connections SET state='disconnected',error_code='removal_unverified' WHERE id=$1 AND state='disconnecting' AND token_cipher IS NULL`, id)
-	return err
+	tx, err := s.db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer rollback(tx)
+	var household string
+	if err := tx.QueryRow(ctx, `SELECT household_id FROM bank_connections WHERE id=$1`, id).Scan(&household); err != nil {
+		return err
+	}
+	if err := lockBankHousehold(ctx, tx, household); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `UPDATE bank_connections SET state='disconnected',error_code='removal_unverified' WHERE id=$1 AND state='disconnecting' AND token_cipher IS NULL`, id); err != nil {
+		return err
+	}
+	if err := purgeActivity(ctx, tx, id); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 func (s *Service) revokeJob(ctx context.Context, job work, token string) error {
@@ -95,12 +115,18 @@ func (s *Service) revokeJob(ctx context.Context, job work, token string) error {
 		return err
 	}
 	defer rollback(tx)
+	if err := lockBankHousehold(ctx, tx, job.HouseholdID); err != nil {
+		return err
+	}
 	tag, err := tx.Exec(ctx, `UPDATE bank_connections SET state='disconnected',token_cipher=NULL,error_code=NULL,lease_owner=NULL,lease_until=NULL WHERE id=$1 AND generation=$2 AND lease_owner=$3 AND state='disconnecting' AND lease_until>now()`, job.ID, job.Generation, job.Owner)
 	if err != nil {
 		return err
 	}
 	if tag.RowsAffected() == 0 {
 		return ErrConflict
+	}
+	if err := purgeActivity(ctx, tx, job.ID); err != nil {
+		return err
 	}
 	if _, err := tx.Exec(ctx, `DELETE FROM bank_accounts WHERE connection_id=$1`, job.ID); err != nil {
 		return err

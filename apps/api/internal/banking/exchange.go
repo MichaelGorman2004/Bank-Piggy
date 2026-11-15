@@ -52,7 +52,7 @@ func (s *Service) claimAttempt(ctx context.Context, identity Identity, request b
 		return attempt{}, err
 	}
 	var pending attempt
-	err = tx.QueryRow(ctx, `SELECT a.id,a.connection_id,a.is_update,c.kind FROM bank_link_attempts a JOIN bank_connections c ON c.id=a.connection_id WHERE a.id=$1 AND a.household_id=$2 AND a.member_id=$3 AND a.session_hash=$4 AND a.state='pending' AND a.expires_at>now() AND c.state NOT IN ('disconnecting','disconnected') AND c.environment=$5 FOR UPDATE OF a,c`, request.AttemptID, identity.HouseholdID, identity.MemberID, identity.SessionHash, s.config.Environment).Scan(&pending.ID, &pending.ConnectionID, &pending.Update, &pending.Kind)
+	err = tx.QueryRow(ctx, `SELECT a.id,a.connection_id,a.is_update,c.kind,a.purpose,a.activity_revision FROM bank_link_attempts a JOIN bank_connections c ON c.id=a.connection_id WHERE a.id=$1 AND a.household_id=$2 AND a.member_id=$3 AND a.session_hash=$4 AND a.state='pending' AND a.expires_at>now() AND c.state NOT IN ('disconnecting','disconnected') AND c.environment=$5 FOR UPDATE OF a,c`, request.AttemptID, identity.HouseholdID, identity.MemberID, identity.SessionHash, s.config.Environment).Scan(&pending.ID, &pending.ConnectionID, &pending.Update, &pending.Kind, &pending.Purpose, &pending.ActivityRevision)
 	if err != nil {
 		return pending, notFound(err)
 	}
@@ -69,6 +69,9 @@ func (s *Service) claimAttempt(ctx context.Context, identity Identity, request b
 }
 
 func (s *Service) finishUpdate(ctx context.Context, pending attempt) error {
+	if pending.Purpose == "activity" {
+		return s.finishActivityConsent(ctx, pending)
+	}
 	tx, err := s.db.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -83,6 +86,9 @@ func (s *Service) finishUpdate(ctx context.Context, pending attempt) error {
 	}
 	if tag.RowsAffected() != 1 {
 		return ErrConflict
+	}
+	if err := resetActivityCoverage(ctx, tx, pending.ConnectionID); err != nil {
+		return err
 	}
 	_, err = tx.Exec(ctx, `UPDATE bank_link_attempts SET state='completed',token_cipher=NULL WHERE id=$1`, pending.ID)
 	if err != nil {

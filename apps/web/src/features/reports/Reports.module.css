@@ -1,0 +1,124 @@
+.mode {
+  display: inline-flex;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--glass);
+  padding: 3px;
+  gap: 2px;
+}
+.mode button,
+.action {
+  min-height: 44px;
+  padding: 8px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  background: var(--clear);
+}
+.mode button[aria-pressed='true'] {
+  background: var(--orange-wash);
+  color: var(--orange-dark);
+}
+.page {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.action {
+  border: 1px solid var(--line);
+}
+.note,
+.notice,
+.error {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--walnut-soft);
+  overflow-wrap: anywhere;
+}
+.notice {
+  border-left: 2px solid var(--taupe);
+  padding-left: 10px;
+  margin-block: 10px 16px;
+}
+.error {
+  color: var(--danger);
+  margin-bottom: 12px;
+}
+.section {
+  margin-block: 0 20px;
+}
+.section h3 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+.row {
+  padding-block: 16px;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.rowHeading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.rowHeading h3,
+.rowHeading h4 {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.amounts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+.amounts > div {
+  min-width: 0;
+}
+.amounts dt {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--walnut-soft);
+}
+.amounts dd {
+  margin: 5px 0 0;
+  font-weight: 600;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.negative {
+  color: var(--danger);
+}
+.empty {
+  padding-block: 20px;
+  color: var(--walnut-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+@media (max-width: 500px) {
+  .mode button {
+    padding-inline: 9px;
+  }
+  .amounts {
+    gap: 8px;
+  }
+  .amounts dd {
+    font-size: 13px;
+  }
+}

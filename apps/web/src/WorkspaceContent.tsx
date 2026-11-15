@@ -13,6 +13,10 @@ import type { ActiveDialog } from './features/plan/PlanDialogs';
 import { VIEW_DETAILS, type View } from './features/plan/views';
 import styles from './Workspace.module.css';
 import { AccountsDashboard } from './features/connections/AccountsDashboard';
+import { ActivityDashboard } from './features/activity/ActivityDashboard';
+import { ActualReports } from './features/reports/ActualReports';
+import { ReportModeControl } from './features/reports/ReportMode';
+import { reportingPeriod, supportsActuals } from './features/reports/reporting';
 
 interface WorkspaceContentProps {
   readonly app: WorkspaceProps;
@@ -39,7 +43,7 @@ function displayPeriod(requested: Period, member: Member | undefined): Period {
  */
 export function WorkspaceContent({ app, ui }: WorkspaceContentProps) {
   const member = app.data.household.members.find((item) => item.id === ui.scope);
-  const period = displayPeriod(ui.period, member);
+  const period = reportingPeriod(ui.view, ui.reportMode, displayPeriod(ui.period, member));
   const yearlyData = useMemo(() => ({ ...app.data, summary: app.data.yearlySummary }), [app.data]);
   const data = period === 'yearly' ? yearlyData : app.data;
   const summary =
@@ -49,15 +53,16 @@ export function WorkspaceContent({ app, ui }: WorkspaceContentProps) {
     <main id="main" className={styles.main} tabIndex={-1}>
       <WorkspaceFilters app={app} ui={ui} period={period} />
       <ReloadNotice conflict={app.conflict} error={app.error} onReload={app.onReload} />
-      {ui.view !== 'todos' && ui.view !== 'accounts' && ui.view !== 'overview' && (
-        <PlanCompleteness
-          incomeCents={app.data.summary.household.monthlyTakeHomeCents}
-          expenseCount={app.data.household.expenses.length}
-          onEdit={() => {
-            ui.open({ type: 'plan' });
-          }}
-        />
-      )}
+      {!['todos', 'accounts', 'activity', 'overview'].includes(ui.view) &&
+        !(ui.reportMode === 'actual' && supportsActuals(ui.view)) && (
+          <PlanCompleteness
+            incomeCents={app.data.summary.household.monthlyTakeHomeCents}
+            expenseCount={app.data.household.expenses.length}
+            onEdit={() => {
+              ui.open({ type: 'plan' });
+            }}
+          />
+        )}
       <WorkspaceView app={app} ui={ui} data={data} summary={summary} factor={factor} />
     </main>
   );
@@ -98,8 +103,27 @@ function WorkspaceTask(
     readonly factor: number;
   },
 ) {
-  const { ui, data, summary, factor } = props;
+  const { ui, data } = props;
   if (ui.view === 'accounts') return <AccountsDashboard household={data.household} />;
+  if (ui.view === 'activity') return <WorkspaceActivity app={props.app} ui={ui} />;
+  if (ui.reportMode === 'actual' && supportsActuals(ui.view))
+    return (
+      <ActualReports
+        view={ui.view}
+        plan={props.app.data}
+        scope={ui.scope}
+        onExpense={(expense) => {
+          ui.open({ type: 'expense', expense, initialKind: expense.kind ?? 'bill' });
+        }}
+        onGoal={(goal) => {
+          ui.open({ type: 'goal', goal, initialKind: 'goal' });
+        }}
+        onReview={() => {
+          ui.setActivitySection('review');
+          ui.setView('activity');
+        }}
+      />
+    );
   return ui.view === 'todos' ? (
     <TodoPanel
       household={data.household}
@@ -115,12 +139,28 @@ function WorkspaceTask(
       }}
     />
   ) : (
+    <WorkspacePlannedDashboard {...props} view={ui.view} />
+  );
+}
+
+/** Binds planned views to their existing saved-record editors.
+ * @param props Selected forecast and a view that supports its saved plan.
+ * @param props.view Current planned dashboard task.
+ * @returns The planned dashboard with stable financial inputs and edit actions.
+ */
+function WorkspacePlannedDashboard(
+  props: Parameters<typeof WorkspaceTask>[0] & {
+    readonly view: Exclude<View, 'accounts' | 'activity' | 'todos'>;
+  },
+) {
+  const { ui } = props;
+  return (
     <Dashboard
-      data={data}
-      summary={summary}
+      data={props.data}
+      summary={props.summary}
       scope={ui.scope}
-      factor={factor}
-      view={ui.view}
+      factor={props.factor}
+      view={props.view}
       onPlan={() => {
         ui.open({ type: 'plan' });
       }}
@@ -132,7 +172,7 @@ function WorkspaceTask(
         });
       }}
       onGoal={(goal) => {
-        ui.open({ type: 'goal', goal, initialKind: ui.view === 'targets' ? 'trip' : 'goal' });
+        ui.open({ type: 'goal', goal, initialKind: props.view === 'targets' ? 'trip' : 'goal' });
       }}
     />
   );
@@ -146,7 +186,7 @@ function WorkspaceTask(
 function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Period }) {
   const { app, ui, period } = props;
   const view = ui.view;
-  if (view === 'accounts') return null;
+  if (view === 'accounts' || view === 'activity') return null;
   return (
     <div className={styles.filters}>
       <div className={styles.headingArea}>
@@ -155,6 +195,7 @@ function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Peri
           members={app.data.household.members}
           scope={ui.scope}
           period={period}
+          actual={ui.reportMode === 'actual' && supportsActuals(view)}
           view={view}
           onScope={ui.changeScope}
           onPeriod={ui.setPeriod}
@@ -175,6 +216,9 @@ function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Peri
             onMonth={app.onMonth}
           />
         )}
+        {supportsActuals(view) && (
+          <ReportModeControl mode={ui.reportMode} onChange={ui.setReportMode} />
+        )}
       </div>
     </div>
   );
@@ -185,9 +229,34 @@ function WorkspaceFilters(props: WorkspaceContentProps & { readonly period: Peri
  * @param view Selected finance task.
  * @returns A draft dialog with the appropriate new-record defaults.
  */
-function newRecordDialog(view: Exclude<View, 'accounts'>): ActiveDialog {
+function newRecordDialog(view: Exclude<View, 'accounts' | 'activity'>): ActiveDialog {
   if (view === 'overview' || view === 'flow' || view === 'todos') return { type: 'plan' };
   if (view === 'goals' || view === 'targets')
     return { type: 'goal', initialKind: view === 'targets' ? 'trip' : 'goal' };
   return { type: 'expense', initialKind: 'bill' };
+}
+
+/** Uses the monthly Activity view without plan period multipliers.
+ * @param props Saved workspace and shared scope.
+ * @returns Actual monthly activity.
+ */
+function WorkspaceActivity(props: WorkspaceContentProps) {
+  const { app, ui } = props;
+  return (
+    <ActivityDashboard
+      household={app.data.household}
+      section={ui.activitySection}
+      onSection={ui.setActivitySection}
+      session={app.session}
+      month={app.data.planningMonth}
+      scope={ui.scope}
+      monthLoading={app.loading}
+      onMonth={app.onMonth}
+      onScope={ui.changeScope}
+      onReload={app.onReload}
+      onAccounts={() => {
+        ui.setView('accounts');
+      }}
+    />
+  );
 }

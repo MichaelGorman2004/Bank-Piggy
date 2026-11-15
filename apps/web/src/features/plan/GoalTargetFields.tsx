@@ -25,11 +25,17 @@ function GoalType(props: GoalTargetFieldsProps) {
           const kind = event.target.value;
           if (kind === 'roth_ira')
             props.onChange({ kind, name: props.draft.name || 'Roth IRA', trackTarget: true });
-          else if (kind === 'goal' || kind === 'trip' || kind === 'purchase')
+          else if (
+            kind === 'goal' ||
+            kind === 'investment' ||
+            kind === 'trip' ||
+            kind === 'purchase'
+          )
             props.onChange({ kind });
         }}
       >
-        <option value="goal">Savings, investing, or debt goal</option>
+        <option value="goal">Savings or debt goal</option>
+        <option value="investment">Investment goal</option>
         <option value="roth_ira">Roth IRA annual contribution</option>
         <option value="trip">Trip or vacation</option>
         <option value="purchase">Purchase to save for</option>
@@ -105,7 +111,9 @@ export function GoalTargetFields(props: GoalTargetFieldsProps) {
   return (
     <>
       <GoalType {...props} />
-      {props.draft.kind === 'goal' && <SavingsTargetFields {...props} />}
+      {(props.draft.kind === 'goal' || props.draft.kind === 'investment') && (
+        <SavingsTargetFields {...props} />
+      )}
       {props.draft.kind === 'roth_ira' && <RothIraFields {...props} />}
       {(props.draft.kind === 'trip' || props.draft.kind === 'purchase') && (
         <>

@@ -18,6 +18,8 @@ func providerError(err error) error {
 	if errors.As(err, &sdk) {
 		if model, ok := sdk.Model().(plaid.PlaidError); ok {
 			switch model.ErrorCode {
+			case "TRANSACTIONS_SYNC_MUTATION_DURING_PAGINATION":
+				return &ProviderError{Code: "activity_pagination_changed"}
 			case "ITEM_LOGIN_REQUIRED", "INVALID_CREDENTIALS", "INSUFFICIENT_CREDENTIALS", "USER_PERMISSION_REVOKED":
 				return &ProviderError{Code: "reconnect_required"}
 			case "INVALID_ACCESS_TOKEN", "ITEM_NOT_FOUND":
