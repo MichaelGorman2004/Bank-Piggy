@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Modal } from '../../components/Modal';
 import type { useConnectionLink } from '../connections/useConnectionLink';
 import { useConnectionData } from '../connections/ConnectionsContext';
+import { ConnectionLoading } from '../connections/ConnectionStatus';
 import styles from './Activity.module.css';
 import formStyles from '../plan/Editors.module.css';
 
@@ -71,11 +72,7 @@ function ActivityLinkFeedback(props: { readonly link: ReturnType<typeof useConne
           {state.feedback}
         </p>
       )}
-      {(link.preparing || link.link) && (
-        <p className={styles.note} role="status">
-          Opening official Plaid Link…
-        </p>
-      )}
+      {(link.preparing || link.link) && <ConnectionLoading label="Opening Plaid…" />}
       <ActivityLinkRetry link={link} />
       <ActivityLinkActions link={link} />
     </div>
