@@ -107,10 +107,10 @@ function ManualBalanceCategories(props: Omit<BalancePanelProps, 'onEdit'>) {
  */
 function balanceHelp(failed: boolean, connected: boolean, hasManualAccounts: boolean): string {
   if (failed)
-    return 'Connected balances could not load. Showing the last saved view; open Connected accounts to retry.';
+    return 'Connected balances could not load. Showing the last saved view; open Manage connections to retry.';
   if (!connected)
-    return 'Manual balances do not update automatically. Connect an institution for scheduled balance snapshots.';
+    return 'Manual balances do not update automatically. To link an institution, open Accounts.';
   return hasManualAccounts
-    ? 'If a linked account is also entered manually, match it in Connected accounts to count it once.'
+    ? 'If a linked account is also entered manually, match it in Manage connections to count it once.'
     : 'Bank Piggy checks Plaid balances every 30 minutes. Budgets and goal progress stay separate.';
 }
