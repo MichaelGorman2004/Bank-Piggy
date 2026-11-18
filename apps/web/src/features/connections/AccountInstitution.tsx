@@ -1,6 +1,7 @@
 import type { Connection, Household } from '@bank-piggy/contracts';
 import { AccountSnapshotRow } from './AccountSnapshotRow';
-import { CONNECTION_STATE_LABELS, connectionNotice } from './presentation';
+import { ConnectionStatus } from './ConnectionStatus';
+import { connectionNotice } from './presentation';
 import styles from './AccountsDashboard.module.css';
 
 /**
@@ -24,12 +25,14 @@ export function AccountInstitution(props: {
           <h3>{connection.institutionName}</h3>
           <p className={styles.note}>Plaid · Linked by {member?.name ?? 'household member'}</p>
         </div>
-        <span className={styles.state}>{CONNECTION_STATE_LABELS[connection.state]}</span>
+        <span className={styles.state}>
+          <ConnectionStatus state={connection.state} />
+        </span>
       </div>
       {notice && <p className={styles.notice}>{notice}</p>}
       {connection.accounts.length === 0 && (
         <p className={styles.message}>
-          No account balances received yet. Use Connect accounts to review this connection.
+          No account balances received yet. Open Manage connections to review it.
         </p>
       )}
       <div className={styles.accounts}>
