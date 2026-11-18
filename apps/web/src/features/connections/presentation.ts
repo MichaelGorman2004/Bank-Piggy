@@ -39,7 +39,7 @@ export const UNVERIFIED_REMOVAL_NOTICE =
 const CONNECTION_NOTICES: Readonly<Partial<Record<string, string>>> = {
   removal_unverified: UNVERIFIED_REMOVAL_NOTICE,
   exchange_uncertain:
-    'The connection result is uncertain. Do not create another connection. Reload status. An operator must check Plaid before another attempt.',
+    'The connection result is uncertain. Do not create another connection. Check saved status. An operator must check Plaid before another attempt.',
   new_accounts_available:
     'New accounts are available. The connecting member can use Reconnect to review shared accounts.',
   pending_disconnect:
@@ -79,6 +79,8 @@ export function disconnectFeedback(result: ConnectionList, id: string): string {
  */
 export function linkFailureMessage(code: string | null): string | null {
   if (!code) return null;
+  if (code === 'LINK_LOAD_FAILED')
+    return 'Plaid did not finish loading. Try again. If it keeps getting stuck, open Bank Piggy in Safari or Chrome and start there.';
   return code === 'INVALID_LINK_TOKEN'
     ? 'This Plaid session is no longer valid. Choose Connect or Reconnect again to open a new session. Your saved account settings are kept.'
     : 'Plaid could not finish the connection. Your saved plan and account settings are kept. Try the connection again.';
