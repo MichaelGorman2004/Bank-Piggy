@@ -3,7 +3,8 @@ import type { Connection, Household } from '@bank-piggy/contracts';
 import { disconnectConnection, refreshConnection } from './api';
 import { useConnectionData } from './ConnectionsContext';
 import { ConnectedAccountRow } from './ConnectedAccountRow';
-import { CONNECTION_STATE_LABELS, connectionNotice, disconnectFeedback } from './presentation';
+import { ConnectionStatus } from './ConnectionStatus';
+import { connectionNotice, disconnectFeedback } from './presentation';
 import styles from './Connections.module.css';
 import formStyles from '../plan/Editors.module.css';
 
@@ -60,7 +61,7 @@ function ConnectionMetadata(props: {
   const notice = connectionNotice(connection.errorCode);
   return (
     <p className={styles.meta}>
-      {CONNECTION_STATE_LABELS[connection.state]} · Linked by {props.memberName}
+      <ConnectionStatus state={connection.state} /> · Linked by {props.memberName}
       {notice && (
         <>
           <br />
