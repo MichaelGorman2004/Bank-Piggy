@@ -46,7 +46,7 @@ function SummarySection(props: BodyProps) {
       <ActivityTotals data={props.data} unavailable={props.totalsStale} />
       {props.totalsStale && (
         <p className={styles.notice}>
-          Reload activity to show current totals and pay suggestions. Your draft choices are kept.
+          Retry activity to show current totals and pay suggestions. Your draft choices are kept.
         </p>
       )}
       <section className={styles.section}>
@@ -81,8 +81,8 @@ function SourcesSection(props: BodyProps) {
   return (
     <>
       <p className={styles.notice}>
-        Choose which accounts count in activity totals. Shared accounts use equal personal shares.
-        Balance mappings are separate.
+        Choose history access and the accounts that count in totals. Shared accounts use equal
+        personal shares. These settings do not change balances, budgets, or goal progress.
       </p>
       {props.data.sources.map((source) => (
         <ActivitySourcePanel
