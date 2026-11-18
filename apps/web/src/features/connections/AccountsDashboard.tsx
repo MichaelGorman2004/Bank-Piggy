@@ -1,9 +1,9 @@
-import { RefreshCw } from 'lucide-react';
 import type { Household } from '@bank-piggy/contracts';
 import { FinanceCard } from '../../components/FinanceCard';
 import { ConnectedAccounts } from './ConnectedAccounts';
 import { useConnectionData } from './ConnectionsContext';
 import { AccountInstitution } from './AccountInstitution';
+import { ConnectionLoading } from './ConnectionStatus';
 import styles from './AccountsDashboard.module.css';
 
 /**
@@ -18,14 +18,19 @@ export function AccountsDashboard(props: { readonly household: Household }) {
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <h1>Accounts</h1>
-        <p>Latest balance snapshots from your linked institutions.</p>
       </header>
       <FinanceCard
-        title="Latest linked balances"
-        description="All household accounts · Full account balances"
+        title="Linked accounts"
+        description="Latest balances for your household"
         actions={null}
-        controls={<AccountsActions household={props.household} />}
-        footer={<p className={styles.note}>Checks for updated balances every 30 minutes.</p>}
+        controls={
+          <div className={styles.controls}>
+            <ConnectedAccounts household={props.household} showAdd />
+          </div>
+        }
+        footer={
+          <p className={styles.note}>Automatically checks for balance updates every 30 minutes.</p>
+        }
       >
         <AccountsContent household={props.household} />
       </FinanceCard>
@@ -57,38 +62,10 @@ function AccountsContent(props: { readonly household: Household }) {
       {connections?.length === 0 && (
         <div className={styles.empty}>
           <h3>No accounts linked yet</h3>
-          <p>Use Connect accounts to link an institution or review an incomplete connection.</p>
-          <p>Your manual account balances remain in Overview.</p>
+          <p>Choose Add institution to link your first bank or brokerage.</p>
         </div>
       )}
     </>
-  );
-}
-
-/**
- * Reloads saved status without requesting a new provider read or changing mappings.
- * @param props Saved household for the existing connection manager.
- * @param props.household Saved household members and manual accounts.
- * @returns Fixed account connection and saved-status actions.
- */
-function AccountsActions(props: { readonly household: Household }) {
-  const state = useConnectionData();
-  return (
-    <div className={styles.controls}>
-      <div className={styles.actions}>
-        <ConnectedAccounts household={props.household} label="Connect accounts" connectOnOpen />
-        <button
-          className={styles.reload}
-          disabled={state.loading || state.busy}
-          onClick={() => {
-            void state.reload();
-          }}
-        >
-          <RefreshCw size={14} />
-          {state.loading ? 'Loading…' : 'Reload status'}
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -101,15 +78,20 @@ function AccountsFeedback() {
   return (
     <div className={styles.feedback}>
       {state.error && (
-        <p className={styles.error} role="alert">
-          {state.error} Reload status to try again.
-        </p>
+        <div className={styles.error}>
+          <p role="alert">{state.error}</p>
+          <button
+            className={styles.reload}
+            disabled={state.busy || state.loading}
+            onClick={() => {
+              void state.reload();
+            }}
+          >
+            Retry loading accounts
+          </button>
+        </div>
       )}
-      {state.loading && (
-        <p className={styles.note} role="status">
-          {state.data ? 'Reloading saved connection status…' : 'Loading linked account balances…'}
-        </p>
-      )}
+      {state.loading && !state.data && <ConnectionLoading label="Loading linked accounts…" />}
       {state.feedback && (
         <p className={styles.note} role="status">
           {state.feedback}
