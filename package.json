@@ -50,7 +50,7 @@
     "globals": "^17.0.0",
     "knip": "^6.45.0",
     "oxlint": "^1.93.0",
-    "oxlint-tsgolint": "~7.0.2006",
+    "oxlint-tsgolint": "~7.0.2007",
     "prettier": "^3.9.10",
     "simple-icons": "^16.37.0",
     "typescript": "~7.0.2"
