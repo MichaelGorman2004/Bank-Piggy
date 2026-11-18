@@ -20,7 +20,7 @@ export function ActivityControls(props: {
 }) {
   const sections: ReadonlyArray<{ id: Section; label: string }> = [
     { id: 'summary', label: 'Summary' },
-    { id: 'sources', label: 'Sources' },
+    { id: 'sources', label: 'History settings' },
   ];
   return (
     <div className={styles.controls}>
@@ -37,15 +37,17 @@ export function ActivityControls(props: {
           </button>
         ))}
       </div>
-      <button
-        className={styles.reload}
-        disabled={props.state.loading || props.blocked}
-        onClick={() => {
-          void props.state.reload();
-        }}
-      >
-        {props.state.loading ? 'Loading…' : 'Reload activity'}
-      </button>
+      {(props.state.error || props.state.totalsStale) && (
+        <button
+          className={styles.reload}
+          disabled={props.state.loading || props.blocked}
+          onClick={() => {
+            void props.state.reload();
+          }}
+        >
+          {props.state.loading ? 'Loading…' : 'Retry activity'}
+        </button>
+      )}
     </div>
   );
 }
@@ -88,7 +90,7 @@ export function ActivityFooter() {
   return (
     <div className={styles.footer}>
       <p className={styles.note}>
-        Provider checks are at least 30 minutes apart. Reload reads saved totals.
+        Activity updates automatically. Institution checks are at least 30 minutes apart.
       </p>
     </div>
   );
@@ -99,18 +101,19 @@ export function ActivityFooter() {
  * @param props.data Current monthly response.
  * @returns Coverage and environment notices.
  */
-function CoverageFeedback(props: { readonly data: NonNullable<ActivityState['data']> }) {
-  const state = { data: props.data };
+function CoverageFeedback({ data }: { readonly data: NonNullable<ActivityState['data']> }) {
+  const notice =
+    data.coverage === 'disabled' ? 'Open History settings to enable monthly totals.' : data.notice;
   return (
     <>
-      {state.data.notice && <p className={styles.notice}>{state.data.notice}</p>}
-      {state.data.coverage === 'incomplete' && (
+      {notice && <p className={styles.notice}>{notice}</p>}
+      {data.coverage === 'incomplete' && (
         <p className={styles.notice}>
           Recorded amounts cover selected accounts and available history only. Missing history is
           not a confirmed zero.
         </p>
       )}
-      {state.data.environment === 'sandbox' && (
+      {data.environment === 'sandbox' && (
         <p className={styles.notice}>
           Plaid Sandbox · Simulated activity. This is not live bank data.
         </p>
