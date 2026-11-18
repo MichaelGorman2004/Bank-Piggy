@@ -13,13 +13,7 @@
 .pageHeader {
   flex-shrink: 0;
 }
-.pageHeader p {
-  margin-top: 5px;
-  color: var(--walnut-soft);
-  font-size: 12px;
-}
 .controls,
-.actions,
 .institutionHeading {
   display: flex;
   flex-wrap: wrap;
@@ -27,17 +21,14 @@
   gap: 8px;
 }
 .controls {
-  justify-content: space-between;
   padding-bottom: 12px;
 }
-.actions {
-  gap: 6px;
-}
-.actions button {
+.controls button {
   min-height: 44px;
   font-size: 12px;
 }
 .reload {
+  margin-top: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -188,10 +179,6 @@
   }
   .pageHeader h1 {
     font-size: 24px;
-  }
-  .pageHeader p {
-    margin-top: 2px;
-    font-size: 11px;
   }
   .controls {
     padding-bottom: 8px;
