@@ -187,9 +187,8 @@ function SourceConsent(props: {
   return (
     <>
       <p className={styles.note}>
-        Enable read-only history. Account choices control activity totals. Plaid can return history
-        for other consented accounts. Review ownership below. This does not change your budget,
-        balances, or goal progress.
+        Plaid can return history for other consented accounts at this institution. Account choices
+        below control totals and ownership only.
       </p>
       {props.source.kind === 'investment' && !props.source.enabled && <InvestmentHistoryCost />}
       <label className={styles.checkbox}>
