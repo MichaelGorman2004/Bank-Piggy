@@ -14,7 +14,7 @@ export function BalanceAvailability(props: { readonly scope: string }) {
     return (
       <p className={styles.notice} role={state.error ? 'alert' : 'status'}>
         {state.error
-          ? 'Balances could not load. Open Connected accounts to retry.'
+          ? 'Balances could not load. Open Manage connections to retry.'
           : state.data && !state.loading
             ? 'The saved plan changed. Reload this page to load current balances.'
             : 'Loading current balances…'}
@@ -25,7 +25,7 @@ export function BalanceAvailability(props: { readonly scope: string }) {
   return (
     <p className={styles.notice} role="status">
       Some selected accounts have no usable current balance. Totals exclude those connected
-      balances. Open Connected accounts to review them.
+      balances. Open Manage connections to review them.
     </p>
   );
 }
