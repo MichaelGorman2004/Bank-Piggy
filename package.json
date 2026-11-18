@@ -52,7 +52,7 @@
     "oxlint": "^1.93.0",
     "oxlint-tsgolint": "~7.0.2006",
     "prettier": "^3.9.10",
-    "simple-icons": "^16.37.0",
+    "simple-icons": "^16.38.0",
     "typescript": "~7.0.2"
   },
   "overrides": {
